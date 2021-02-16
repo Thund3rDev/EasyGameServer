@@ -26,10 +26,10 @@ public class EGS_ServerManager : MonoBehaviour
     /// </summary>
     public void StartServer()
     {
+        // Check if server already started.
         if (serverStarted)
         {
-            // Should be in yellow.
-            egs_Log.Log("Easy Game Server already started");
+            egs_Log.LogWarning("Easy Game Server already started.");
             return;
         }
 

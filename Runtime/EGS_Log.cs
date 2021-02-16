@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using UnityEngine;
 using TMPro;
+using System.Text.RegularExpressions;
 
 /// <summary>
 /// Class EGS_Log, that manages the EGS log.
@@ -34,11 +35,11 @@ public class EGS_Log : MonoBehaviour
     /// <param name="version">Server version</param>
     public void StartLog(string version)
     {
-        // If logs directory doesn't exist, creates it.
+        // If logs directory doesn't exist, create it.
         if (!Directory.Exists(Application.persistentDataPath + "/logs"))
             Directory.CreateDirectory(Application.persistentDataPath + "/logs");
 
-        // Creates the log file.
+        // Create the log file.
         string dateString = GetActualDate();
         dateString = dateString.Replace('/', '-');
         dateString = dateString.Replace(' ', '_');
@@ -46,13 +47,22 @@ public class EGS_Log : MonoBehaviour
         streamWriter = File.CreateText(Application.persistentDataPath +
         "/logs/log_" + dateString + ".txt");
 
-        // Formats and logs the server start string.
-        string stringToLog = "[" + GetActualDate() + "] " + "Started EasyGameServer with version " + version + ".";
+        // Format the server start string.
+        string stringToLog = "[" + GetActualDate() + "] " + "Started <color=green>EasyGameServer</color> with version <color=green>" + version + "</color>.";
+
+        // Base string for the log.
+        string nonRichStringToLog = stringToLog;
+
+        // Check if has colors.
+        if (stringToLog.Contains("<color"))
+            nonRichStringToLog = Regex.Replace(stringToLog, "<.*?>", string.Empty);
+
+        // Log the server start string.
         lock (logLock)
         {
             Debug.Log(stringToLog);
             text_log.text = stringToLog + "\n";
-            streamWriter.WriteLine(stringToLog);
+            streamWriter.WriteLine(nonRichStringToLog);
         }
     }
 
@@ -62,14 +72,41 @@ public class EGS_Log : MonoBehaviour
     /// <param name="logString">String to add to the log</param>
     public void Log(string logString)
     {
-        // Formats the string to log and logs it.
+        // Format the string to log.
         string stringToLog = "[" + GetActualDate() + "] " + logString;
+
+        // Base string for the log.
+        string nonRichStringToLog = stringToLog;
+
+        // Check if has colors.
+        if (stringToLog.Contains("<color"))
+            nonRichStringToLog = Regex.Replace(stringToLog, "<.*?>", string.Empty);
+
+        // Log the string.
         lock (logLock)
         {
             Debug.Log(stringToLog);
             text_log.text += stringToLog + "\n";
-            streamWriter.WriteLine(stringToLog);
+            streamWriter.WriteLine(nonRichStringToLog);
         }
+    }
+
+    /// <summary>
+    /// Method LogWarning, that formats the given string to yellow as a warning.
+    /// </summary>
+    /// <param name="logString">String to add to the log as a warning</param>
+    public void LogWarning(string logString)
+    {
+        Log("<color=yellow>" + logString + "</color>");
+    }
+
+    /// <summary>
+    /// Method LogError, that formats the given string to yellow as an error.
+    /// </summary>
+    /// <param name="logString">String to add to the log as an error</param>
+    public void LogError(string logString)
+    {
+        Log("<color=red>" + logString + "</color>");
     }
 
     /// <summary>
@@ -77,7 +114,7 @@ public class EGS_Log : MonoBehaviour
     /// </summary>
     public void CloseLog()
     {
-        Log("Easy Game Server closed");
+        Log("<color=green>Easy Game Server</color> closed.");
         streamWriter.Close();
     }
 
