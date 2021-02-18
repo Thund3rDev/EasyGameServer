@@ -1,8 +1,8 @@
 using System;
 using System.IO;
+using System.Text.RegularExpressions;
 using UnityEngine;
 using TMPro;
-using System.Text.RegularExpressions;
 
 /// <summary>
 /// Class EGS_Log, that manages the EGS log.
@@ -48,7 +48,7 @@ public class EGS_Log : MonoBehaviour
         "/logs/log_" + dateString + ".txt");
 
         // Format the server start string.
-        string stringToLog = "[" + GetActualDate() + "] " + "Started <color=green>EasyGameServer</color> with version <color=green>" + version + "</color>.";
+        string stringToLog = "[" + GetActualDate() + "] " + "Started <color=green>EasyGameServer</color> with version <color=orange>" + version + "</color>.";
 
         // Base string for the log.
         string nonRichStringToLog = stringToLog;

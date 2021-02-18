@@ -18,6 +18,14 @@ public class EGS_ServerManager : MonoBehaviour
     [Tooltip("Reference to the Log")]
     [SerializeField]
     private EGS_Log egs_Log = null;
+
+    [Tooltip("Reference to the Socket Receiver")]
+    [SerializeField]
+    private EGS_SE_SocketReceiver egs_se_SocketReceiver = null;
+
+    [Tooltip("Reference to the Socket Sender")]
+    [SerializeField]
+    private EGS_CL_SocketSender egs_cl_SocketSender = null;
     #endregion
 
     #region Class Methods
@@ -35,8 +43,12 @@ public class EGS_ServerManager : MonoBehaviour
 
         // Start the server.
         serverStarted = true;
-
         egs_Log.StartLog(serverVersion);
+        egs_se_SocketReceiver.StartServer();
+
+        // Test socket connection
+        egs_cl_SocketSender.StartClient();
+
         // Read all data.
     }
 
