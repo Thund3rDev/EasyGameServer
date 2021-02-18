@@ -1495,10 +1495,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ed74f21fbbc91a46bebdead75712551, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  serverVersion: 0.0.1
   egs_Log: {fileID: 417788239}
-  egs_se_SocketReceiver: {fileID: 919490811}
-  egs_cl_SocketSender: {fileID: 662558474}
+  egs_SE_SocketListener: {fileID: 919490811}
+  egs_CL_SocketSender: {fileID: 662558474}
 --- !u!4 &1092357994
 Transform:
   m_ObjectHideFlags: 0

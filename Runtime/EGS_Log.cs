@@ -30,10 +30,9 @@ public class EGS_Log : MonoBehaviour
 
     #region Class Methods
     /// <summary>
-    /// Method StartLog, that restarts the log.
+    /// Method StartLog, that start the log.
     /// </summary>
-    /// <param name="version">Server version</param>
-    public void StartLog(string version)
+    public void StartLog()
     {
         // If logs directory doesn't exist, create it.
         if (!Directory.Exists(Application.persistentDataPath + "/logs"))
@@ -47,23 +46,8 @@ public class EGS_Log : MonoBehaviour
         streamWriter = File.CreateText(Application.persistentDataPath +
         "/logs/log_" + dateString + ".txt");
 
-        // Format the server start string.
-        string stringToLog = "[" + GetActualDate() + "] " + "Started <color=green>EasyGameServer</color> with version <color=orange>" + version + "</color>.";
-
-        // Base string for the log.
-        string nonRichStringToLog = stringToLog;
-
-        // Check if has colors.
-        if (stringToLog.Contains("<color"))
-            nonRichStringToLog = Regex.Replace(stringToLog, "<.*?>", string.Empty);
-
-        // Log the server start string.
-        lock (logLock)
-        {
-            Debug.Log(stringToLog);
-            text_log.text = stringToLog + "\n";
-            streamWriter.WriteLine(nonRichStringToLog);
-        }
+        // Erase all text that could been in the log.
+        text_log.text = "";
     }
 
     /// <summary>

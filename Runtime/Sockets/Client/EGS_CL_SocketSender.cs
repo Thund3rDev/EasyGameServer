@@ -17,13 +17,13 @@ public class EGS_CL_SocketSender : MonoBehaviour
     private EGS_Log egs_Log = null;
     #endregion
 
-    public void StartClient()
+    public void StartClient(int serverPort)
     {
-        // Obtener dirección IP y endpoint
+        // Obtain IP direction and endpoint
         IPHostEntry ipHostInfo = Dns.GetHostEntry(Dns.GetHostName());
-        // Es IPv4, para IPv6 sería la 0
+        // It is IPv4, for IPv6 it would be 0.
         IPAddress ipAddress = ipHostInfo.AddressList[1];
-        IPEndPoint ipe = new IPEndPoint(ipAddress, 11000);
+        IPEndPoint ipe = new IPEndPoint(ipAddress, serverPort);
 
         try
         {
