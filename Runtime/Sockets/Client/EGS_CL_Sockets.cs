@@ -3,7 +3,7 @@ using System.Net;
 using System.Net.Sockets;
 using UnityEngine;
 
-public class EGS_CL_SocketSender : MonoBehaviour
+public class EGS_CL_Sockets : MonoBehaviour
 {
     #region Variables
     [Header("Sockets")]

@@ -1,29 +1,44 @@
+using System;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
+using System.Threading;
 using UnityEngine;
 
-public class EGS_SE_SocketListener : MonoBehaviour
-{
+public class EGS_SE_SocketListener
+{ 
     #region Variables
-    [Header("General Variables")]
-    [Tooltip("Port where the server is")]
-    private int serverPort = -1;
+    [Header("Concurrency")]
+    [Tooltip("Thread signal")]
+    public static ManualResetEvent allDone = new ManualResetEvent(false);
+
+    [Header("Server data")]
+    [Tooltip("Server IP")]
+    private static string serverIP;
+    [Tooltip("Server Port")]
+    private static int serverPort;
 
     [Header("Sockets")]
     [Tooltip("Socket listener")]
-    private Socket socket_listener = new Socket(AddressFamily.InterNetwork,
-        SocketType.Stream, ProtocolType.Tcp);
+    private static Socket socket_listener;
 
     [Header("References")]
     [Tooltip("Reference to the Log")]
-    [SerializeField]
-    private EGS_Log egs_Log = null;
+    private static EGS_Log egs_Log = null;
     #endregion
 
-    public void StartListening(string serverIP, int serverPort_)
+    #region Constructors
+    public EGS_SE_SocketListener()
     {
-        // Assign the server port
+    }
+    #endregion
+
+    public static void StartListening(string serverIP_, int serverPort_, EGS_Log log)
+    {
+        // Assign data
+        serverIP = serverIP_;
         serverPort = serverPort_;
+        egs_Log = log;
 
         // Obtain IP direction and endpoint
         IPHostEntry ipHostInfo = Dns.GetHostEntry(serverIP);
@@ -31,24 +46,123 @@ public class EGS_SE_SocketListener : MonoBehaviour
         IPAddress ipAddress = ipHostInfo.AddressList[1];
         IPEndPoint localEndPoint = new IPEndPoint(ipAddress, serverPort);
 
-        socket_listener.Bind(localEndPoint);
-        socket_listener.Listen(100);
+        // Create a TCP/IP socket
+        socket_listener = new Socket(ipAddress.AddressFamily,
+            SocketType.Stream, ProtocolType.Tcp);
 
-        egs_Log.Log("<color=green>Easy Game Server</color> Listening at port <color=orange>" + serverPort + "</color>.");
+        // Bind the socket to the local endpoint and listen for incoming connections.  
+        try
+        {
+            socket_listener.Bind(localEndPoint);
+            socket_listener.Listen(100);
+
+            egs_Log.Log("<color=green>Easy Game Server</color> Listening at port <color=orange>" + serverPort + "</color>.");
+
+            while (true)
+            {
+                // Set the event to nonsignaled state.  
+                allDone.Reset();
+
+                // Start an asynchronous socket to listen for connections.  
+                egs_Log.Log("Waiting for a connection...");
+                socket_listener.BeginAccept(
+                    new AsyncCallback(AcceptCallback),
+                    socket_listener);
+
+                // Wait until a connection is made before continuing.  
+                allDone.WaitOne();
+            }
+        }
+        catch (Exception e)
+        {  
+            egs_Log.LogError(e.ToString());
+        } 
+
     }
 
-    /// <summary>
-    /// Method StopListening, that stop the server from listen more.
-    /// </summary>
-    public void StopListening()
+    public static void AcceptCallback(IAsyncResult ar)
     {
-        socket_listener.Close();
-        egs_Log.Log("<color=green>Easy Game Server</color> stopped listening at port <color=orange>" + serverPort + "</color>.");
+        // Signal the main thread to continue.  
+        allDone.Set();
+
+        // Get the socket that handles the client request.  
+        Socket listener = (Socket)ar.AsyncState;
+        Socket handler = listener.EndAccept(ar);
+
+        // Create the state object.  
+        StateObject state = new StateObject();
+        state.workSocket = handler;
+        handler.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
+            new AsyncCallback(ReadCallback), state);
     }
 
-    /*// Update is called once per frame
-    void Update()
+    public static void ReadCallback(IAsyncResult ar)
     {
-        
-    }*/
+        string content = string.Empty;
+
+        // Retrieve the state object and the handler socket  
+        // from the asynchronous state object.  
+        StateObject state = (StateObject)ar.AsyncState;
+        Socket handler = state.workSocket;
+
+        // Read data from the client socket.
+        int bytesRead = handler.EndReceive(ar);
+
+        if (bytesRead > 0)
+        {
+            // There  might be more data, so store the data received so far.  
+            state.sb.Append(Encoding.ASCII.GetString(
+                state.buffer, 0, bytesRead));
+
+            // Check for end-of-file tag. If it is not there, read
+            // more data.  
+            content = state.sb.ToString();
+            if (content.IndexOf("<EOF>") > -1)
+            {
+                // All the data has been read from the
+                // client. Display it on the console.  
+                Console.WriteLine("Read {0} bytes from socket. \n Data : {1}",
+                    content.Length, content);
+                // Echo the data back to the client.  
+                Send(handler, content);
+            }
+            else
+            {
+                // Not all data received. Get more.  
+                handler.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
+                new AsyncCallback(ReadCallback), state);
+            }
+        }
+    }
+
+    private static void Send(Socket handler, String data)
+    {
+        // Convert the string data to byte data using ASCII encoding.  
+        byte[] byteData = Encoding.ASCII.GetBytes(data);
+
+        // Begin sending the data to the remote device.  
+        handler.BeginSend(byteData, 0, byteData.Length, 0,
+            new AsyncCallback(SendCallback), handler);
+    }
+
+    private static void SendCallback(IAsyncResult ar)
+    {
+        try
+        {
+            // Retrieve the socket from the state object.  
+            Socket handler = (Socket)ar.AsyncState;
+
+            // Complete sending the data to the remote device.  
+            int bytesSent = handler.EndSend(ar);
+            Console.WriteLine("Sent {0} bytes to client.", bytesSent);
+
+            handler.Shutdown(SocketShutdown.Both);
+            handler.Close();
+
+        }
+        catch (Exception e)
+        {
+            egs_Log.LogError(e.ToString());
+        }
+    }
 }

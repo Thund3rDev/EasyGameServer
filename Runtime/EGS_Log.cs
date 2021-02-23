@@ -3,6 +3,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 using UnityEngine;
 using TMPro;
+using UnityEngine.UI;
 
 /// <summary>
 /// Class EGS_Log, that manages the EGS log.
@@ -69,8 +70,16 @@ public class EGS_Log : MonoBehaviour
         // Log the string.
         lock (logLock)
         {
-            Debug.Log(stringToLog);
-            text_log.text += stringToLog + "\n";
+            try
+            {
+                Debug.Log(stringToLog);
+                text_log.text += stringToLog + "\n";
+                text_log.UpdateMeshPadding();
+            }
+            catch (UnityException)
+            {
+            }
+
             streamWriter.WriteLine(nonRichStringToLog);
         }
     }
@@ -81,7 +90,24 @@ public class EGS_Log : MonoBehaviour
     /// <param name="logString">String to add to the log as a warning</param>
     public void LogWarning(string logString)
     {
-        Log("<color=yellow>" + logString + "</color>");
+        // Format the string to log.
+        string stringToLog = "[" + GetActualDate() + "] " + "<color=yellow>" + logString + "</color>";
+
+        // Log the string.
+        lock (logLock)
+        {
+            try
+            {
+                Debug.LogWarning(logString);
+                text_log.text += stringToLog + "\n";
+                text_log.UpdateMeshPadding();
+            }
+            catch (UnityException)
+            {
+            }
+
+            streamWriter.WriteLine(logString);
+        }
     }
 
     /// <summary>
@@ -90,7 +116,24 @@ public class EGS_Log : MonoBehaviour
     /// <param name="logString">String to add to the log as an error</param>
     public void LogError(string logString)
     {
-        Log("<color=red>" + logString + "</color>");
+        // Format the string to log.
+        string stringToLog = "[" + GetActualDate() + "] " + "<color=red>" + logString + "</color>";
+
+        // Log the string.
+        lock (logLock)
+        {
+            try
+            {
+                Debug.LogError(logString);
+                text_log.text += stringToLog + "\n";
+                text_log.UpdateMeshPadding();
+            }
+            catch (UnityException)
+            {
+            }
+
+            streamWriter.WriteLine(logString);
+        }
     }
 
     /// <summary>

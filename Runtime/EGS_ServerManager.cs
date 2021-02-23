@@ -18,22 +18,17 @@ public class EGS_ServerManager : MonoBehaviour
     [Tooltip("Bool that indicates if the server has started or not")]
     private bool serverStarted = false;
 
-    [Header("Tasks")]
+    /*[Header("Tasks")]
     [Tooltip("Task that manages the server listening")]
-    private Task listeningTask;
+    private Task listeningTask = null;*/
 
     [Header("References")]
     [Tooltip("Reference to the Log")]
     [SerializeField]
     private EGS_Log egs_Log = null;
 
-    [Tooltip("Reference to the Socket Listener")]
-    [SerializeField]
-    private EGS_SE_SocketListener egs_SE_SocketListener = null;
-
-    [Tooltip("Reference to the Socket Sender")]
-    [SerializeField]
-    private EGS_CL_SocketSender egs_CL_SocketSender = null;
+    [Tooltip("Reference to the socket manager")]
+    private EGS_Sockets egs_sockets = null;
     #endregion
 
     #region Class Methods
@@ -63,12 +58,20 @@ public class EGS_ServerManager : MonoBehaviour
 
         /// Read all data.
 
-        // Start listening for connections.
+        /*// Start listening for connections.
         Action listeningAction = new Action(StartListening);
         listeningTask = Task.Factory.StartNew(listeningAction);
 
         // Test socket connection.
-        egs_CL_SocketSender.StartClient(serverData.serverPort);
+        egs_CL_sockets.StartClient(serverData.serverPort);*/
+
+        // Create sockets manager
+        egs_sockets = new EGS_Sockets(egs_Log);
+        // Start listening for connections
+        egs_sockets.StartListening(serverData.serverIP, serverData.serverPort);
+
+        // Start client
+        egs_sockets.StartClient(serverData.serverIP, serverData.serverPort);
     }
 
     /// <summary>
@@ -84,7 +87,9 @@ public class EGS_ServerManager : MonoBehaviour
         serverStarted = false;
 
         // Close the socket.
-        egs_SE_SocketListener.StopListening();
+        //egs_SE_sockets.StopListening();
+        //egs_CL_sockets.StopListening();
+        egs_sockets.StopListening(serverData.serverPort);
 
         // Save all data.
         // Disconnect players.
@@ -98,7 +103,7 @@ public class EGS_ServerManager : MonoBehaviour
     /// </summary>
     private void StartListening()
     {
-        egs_SE_SocketListener.StartListening(serverData.serverIP, serverData.serverPort);
+        egs_sockets.StartListening(serverData.serverIP, serverData.serverPort);
     }
 
     /// <summary>
