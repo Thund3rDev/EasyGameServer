@@ -5,48 +5,61 @@ using System.Text;
 using System.Threading;
 using UnityEngine;
 
+/// <summary>
+/// Class EGS_SE_SocketListener, that controls the server receiver socket.
+/// </summary>
 public class EGS_SE_SocketListener
 { 
     #region Variables
-    [Header("Concurrency")]
-    [Tooltip("Thread signal")]
+    /// Concurrency
+    // Thread signal.
     public static ManualResetEvent allDone = new ManualResetEvent(false);
 
-    [Header("Server data")]
-    [Tooltip("Server IP")]
+    /// Server data
+    // Server IP.
     private static string serverIP;
-    [Tooltip("Server Port")]
+    // Server Port.
     private static int serverPort;
 
-    [Header("Sockets")]
-    [Tooltip("Socket listener")]
+    /// Sockets
+    // Socket listener.
     private static Socket socket_listener;
 
-    [Header("References")]
-    [Tooltip("Reference to the Log")]
+    /// References
+    // Reference to the Log.
     private static EGS_Log egs_Log = null;
     #endregion
 
     #region Constructors
+    /// <summary>
+    /// Empty constructor.
+    /// </summary>
     public EGS_SE_SocketListener()
     {
     }
     #endregion
 
+    #region Class Methods
+    /// <summary>
+    /// Method StartListening, that opens the socket to connections.
+    /// </summary>
+    /// <param name="serverIP_">IP where server will be set</param>
+    /// <param name="serverPort_">Port where server will be set</param>
+    /// <param name="log">Log instance</param>
     public static void StartListening(string serverIP_, int serverPort_, EGS_Log log)
     {
-        // Assign data
+        // Assign data.
         serverIP = serverIP_;
         serverPort = serverPort_;
         egs_Log = log;
 
-        // Obtain IP direction and endpoint
+        // Obtain IP direction and endpoint.
         IPHostEntry ipHostInfo = Dns.GetHostEntry(serverIP);
         // It is IPv4, for IPv6 it would be 0.
         IPAddress ipAddress = ipHostInfo.AddressList[1];
         IPEndPoint localEndPoint = new IPEndPoint(ipAddress, serverPort);
 
-        // Create a TCP/IP socket
+        // Create a TCP/IP socket.
         socket_listener = new Socket(ipAddress.AddressFamily,
             SocketType.Stream, ProtocolType.Tcp);
 
@@ -59,7 +72,7 @@ public class EGS_SE_SocketListener
             egs_Log.Log("<color=green>Easy Game Server</color> Listening at port <color=orange>" + serverPort + "</color>.");
 
             while (true)
-            {
+            { 
                 // Set the event to nonsignaled state.  
                 allDone.Reset();
 
@@ -71,7 +84,13 @@ public class EGS_SE_SocketListener
 
                 // Wait until a connection is made before continuing.  
                 allDone.WaitOne();
+
+                egs_Log.Log("<color=blue>Client</color> connected.");
             }
+        }
+        catch(ThreadAbortException)
+        {
+            //egs_Log.LogWarning("Aborted server thread");
         }
         catch (Exception e)
         {  
@@ -80,6 +99,10 @@ public class EGS_SE_SocketListener
 
     }
 
+    /// <summary>
+    /// Method AcceptCallback, called when a client connects to the server.
+    /// </summary>
+    /// <param name="ar">IAsyncResult</param>
     public static void AcceptCallback(IAsyncResult ar)
     {
         // Signal the main thread to continue.  
@@ -96,6 +119,10 @@ public class EGS_SE_SocketListener
             new AsyncCallback(ReadCallback), state);
     }
 
+    /// <summary>
+    /// Method ReadCallback, called when a client sends a message.
+    /// </summary>
+    /// <param name="ar">IAsyncResult</param>
     public static void ReadCallback(IAsyncResult ar)
     {
         string content = string.Empty;
@@ -110,7 +137,7 @@ public class EGS_SE_SocketListener
 
         if (bytesRead > 0)
         {
-            // There  might be more data, so store the data received so far.  
+            // There might be more data, so store the data received so far.  
             state.sb.Append(Encoding.ASCII.GetString(
                 state.buffer, 0, bytesRead));
 
@@ -121,8 +148,8 @@ public class EGS_SE_SocketListener
             {
                 // All the data has been read from the
                 // client. Display it on the console.  
-                Console.WriteLine("Read {0} bytes from socket. \n Data : {1}",
-                    content.Length, content);
+                egs_Log.Log("Read " + content.Length + " bytes from socket. \n Data : " + content);
+
                 // Echo the data back to the client.  
                 Send(handler, content);
             }
@@ -135,6 +162,11 @@ public class EGS_SE_SocketListener
         }
     }
 
+    /// <summary>
+    /// Method Send, to send a message to a client.
+    /// </summary>
+    /// <param name="handler">Socket</param>
+    /// <param name="data">String that contains the data to send</param>
     private static void Send(Socket handler, String data)
     {
         // Convert the string data to byte data using ASCII encoding.  
@@ -145,6 +177,10 @@ public class EGS_SE_SocketListener
             new AsyncCallback(SendCallback), handler);
     }
 
+    /// <summary>
+    /// Method SendCallback, called when a message was sent.
+    /// </summary>
+    /// <param name="ar">IAsyncResult</param>
     private static void SendCallback(IAsyncResult ar)
     {
         try
@@ -154,7 +190,7 @@ public class EGS_SE_SocketListener
 
             // Complete sending the data to the remote device.  
             int bytesSent = handler.EndSend(ar);
-            Console.WriteLine("Sent {0} bytes to client.", bytesSent);
+            egs_Log.Log("Sent " + bytesSent + " bytes to client.");
 
             handler.Shutdown(SocketShutdown.Both);
             handler.Close();
@@ -165,4 +201,14 @@ public class EGS_SE_SocketListener
             egs_Log.LogError(e.ToString());
         }
     }
+
+    /// <summary>
+    /// Method StopListening, to close the socket and stop listening to connections.
+    /// </summary>
+    public static void StopListening()
+    {
+        socket_listener.Close();
+        egs_Log.Log("<color=green>Easy Game Server</color> stopped listening at port <color=orange>" + serverPort + "</color>.");
+    }
+    #endregion
 }

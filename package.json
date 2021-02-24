@@ -1,5 +1,5 @@
 {
-  "name": "com.thund3rdev.easy_game_server",
+  "name": "com.thund3r.easy_game_server",
   "version": "0.0.1",
   "displayName": "Easy Game Server",
   "description": "A package that will allow you to set up a server for your game in an easy way.",
@@ -14,7 +14,7 @@
     "Server"
   ],
   "author": {
-    "name": "Unity",
+    "name": "Thund3r",
     "email": "samuelriosdev@gmail.com",
     "url": "https://thund3rdev.github.io"
   }

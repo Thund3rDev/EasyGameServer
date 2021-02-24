@@ -1,12 +1,10 @@
-using System;
-using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
-using UnityEngine;
 
-// State object for receiving data from remote device.
+/// <summary>
+/// State object for receiving data from remote device.
+/// </summary>
 public class StateObject
 {
     // Size of receive buffer.  
@@ -25,28 +23,23 @@ public class StateObject
 public class EGS_Sockets
 {
     #region Variables
-    [Header("Tasks")]
-    [Tooltip("Task that runs the server")]
-    private Task serverTask;
+    /// Threads
+    // Thread that runs the server.
+    private Thread serverThread;
 
-    [Tooltip("Task that runs the client")]
-    private Task clientTask;
+    // Thread that runs the client (just for testing purposes, probably unnecesary).
+    private Thread clientThread;
 
-    [Header("References")]
-    [Tooltip("Reference to the Log")]
-    [SerializeField]
+    ///  References
+    // Reference to the Log.
     private EGS_Log egs_Log = null;
-
-    /*[Tooltip("Reference to the Sockets server controller")]
-    [SerializeField]
-    private EGS_SE_Sockets egs_SE_sockets = null;
-
-    [Tooltip("Reference to the Sockets client controller")]
-    [SerializeField]
-    private EGS_CL_Sockets egs_CL_sockets = null;*/
     #endregion
 
     #region Constructors
+    /// <summary>
+    /// Main constructor that assigns the log.
+    /// </summary>
+    /// <param name="log">Log instance</param>
     public EGS_Sockets(EGS_Log log)
     {
         egs_Log = log;
@@ -54,24 +47,40 @@ public class EGS_Sockets
     #endregion
 
     #region Class Methods
+    /// <summary>
+    /// Method StartListening, that calls a thread for the server.
+    /// </summary>
+    /// 
     public void StartListening(string serverIP, int serverPort)
     {
-        serverTask = Task.Run(() => EGS_SE_SocketListener.StartListening(serverIP, serverPort, egs_Log));
-        egs_Log.Log("Called to run server task");
+        serverThread = new Thread(() => EGS_SE_SocketListener.StartListening(serverIP, serverPort, egs_Log));
+        serverThread.Start();
     }
 
+    /// <summary>
+    /// Method StartClient, that calls a thread for the client (just for testing purposes, probably unnecesary).
+    /// </summary>
+    /// <param name="serverIP">IP where server is</param>
+    /// <param name="serverPort">Port where server is</param>
     public void StartClient(string serverIP, int serverPort)
     {
-        clientTask = Task.Run(() => EGS_CL_SocketClient.StartClient(serverIP, serverPort, egs_Log));
-        egs_Log.Log("Called to run client task");
+        clientThread = new Thread(() => EGS_CL_SocketClient.StartClient(serverIP, serverPort));
+        clientThread.Start();
     }
 
-    public void StopListening(int serverPort)
+    /// <summary>
+    /// Method StopListening, that stops the threads and closes the server socket.
+    /// </summary>
+    public void StopListening()
     {
-        egs_Log.Log("<color=green>Easy Game Server</color> stopped listening at port <color=orange>" + serverPort + "</color>.");
-    }
-    #endregion
+        // Stop client thread and wait (provisional).
+        clientThread.Abort();
+        clientThread.Join();
 
-    #region Private Methods
+        // Stop server thread and wait.
+        serverThread.Abort();
+        serverThread.Join();
+        EGS_SE_SocketListener.StopListening();
+    }
     #endregion
 }

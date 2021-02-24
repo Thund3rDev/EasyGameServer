@@ -5,48 +5,55 @@ using System.Text;
 using System.Threading;
 using UnityEngine;
 
+/// <summary>
+/// Class EGS_CL_SocketClient, that controls the client sender socket.
+/// </summary>
 public class EGS_CL_SocketClient
 {
     #region Variables
-    [Header("ManualResetEvents")]
-    [Tooltip("When connection is done")]
-    private static ManualResetEvent connectDone = new ManualResetEvent(false); 
-    [Tooltip("When send is done")]
+    /// ManualResetEvents
+    // ManualResetEvent for when connection is done.
+    private static ManualResetEvent connectDone = new ManualResetEvent(false);
+    // ManualResetEvent for when send is done.
     private static ManualResetEvent sendDone = new ManualResetEvent(false);
-    [Tooltip("When receive is done")]
+    // ManualResetEvent for when receive is done.
     private static ManualResetEvent receiveDone = new ManualResetEvent(false);
 
-    [Header("Server data")]
-    [Tooltip("Server IP")]
+    /// Server data
+    // Server IP.
     private static string serverIP;
-    [Tooltip("Server Port")]
+    // Server Port.
     private static int serverPort;
 
-    [Header("Sockets")]
-    [Tooltip("Client socket")]
+    /// Sockets
+    // Client socket.
     private static Socket socket_client;
 
-    [Header("Other")]
-    [Tooltip("Response from the remote device")]
+    /// Other
+    // Response from the remote device.
     private static String response = String.Empty;
-
-    [Header("References")]
-    [Tooltip("Reference to the Log")]
-    private static EGS_Log egs_Log = null;
     #endregion
 
     #region Constructors
+    /// <summary>
+    /// Empty constructor.
+    /// </summary>
     public EGS_CL_SocketClient()
     {
     }
     #endregion
 
-    public static void StartClient(string serverIP_, int serverPort_, EGS_Log log)
+    #region Class Methods
+    /// <summary>
+    /// Method StartClient, that tries to connect to the server.
+    /// </summary>
+    /// <param name="serverIP">IP where server is</param>
+    /// <param name="serverPort">Port where server is</param>
+    public static void StartClient(string serverIP_, int serverPort_)
     {
         // Assign data
         serverIP = serverIP_;
         serverPort = serverPort_;
-        egs_Log = log;
 
         // Connect to a remote device.
         try
@@ -66,8 +73,6 @@ public class EGS_CL_SocketClient
                 new AsyncCallback(ConnectCallback), socket_client);
             connectDone.WaitOne();
 
-            egs_Log.Log("<color=blue>Client</color> connected.");
-
             // Send test data to the remote device.  
             Send(socket_client, "This is a test<EOF>");
             sendDone.WaitOne();
@@ -77,7 +82,7 @@ public class EGS_CL_SocketClient
             receiveDone.WaitOne();
 
             // Write the response to the console.  
-            egs_Log.Log("Response received : " + response);
+            Debug.Log("[CLIENT] Response received : " + response);
 
             // Release the socket.  
             socket_client.Shutdown(SocketShutdown.Both);
@@ -85,10 +90,14 @@ public class EGS_CL_SocketClient
         }
         catch (Exception e)
         {
-            egs_Log.LogError(e.ToString());
+            Debug.LogError("[CLIENT] " + e.ToString());
         }
     }
 
+    /// <summary>
+    /// Method ConnectCallback, called when connected to server.
+    /// </summary>
+    /// <param name="ar">IAsyncResult</param>
     private static void ConnectCallback(IAsyncResult ar)
     {
         try
@@ -99,7 +108,7 @@ public class EGS_CL_SocketClient
             // Complete the connection.  
             client.EndConnect(ar);
 
-            egs_Log.Log("Socket connected to " +
+            Debug.Log("[CLIENT] Socket connected to " +
                 client.RemoteEndPoint.ToString());
 
             // Signal that the connection has been made.  
@@ -111,6 +120,10 @@ public class EGS_CL_SocketClient
         }
     }
 
+    /// <summary>
+    /// Method Receive, to receive data from server.
+    /// </summary>
+    /// <param name="client">Socket</param>
     private static void Receive(Socket client)
     {
         try
@@ -125,10 +138,14 @@ public class EGS_CL_SocketClient
         }
         catch (Exception e)
         {
-            egs_Log.LogError(e.ToString());
+            Debug.LogError("[CLIENT] " + e.ToString());
         }
     }
 
+    /// <summary>
+    /// Method ReceiveCallback, called when received data from server.
+    /// </summary>
+    /// <param name="ar">IAsyncResult</param>
     private static void ReceiveCallback(IAsyncResult ar)
     {
         try
@@ -163,10 +180,15 @@ public class EGS_CL_SocketClient
         }
         catch (Exception e)
         {
-            egs_Log.LogError(e.ToString());
+            Debug.LogError("[CLIENT] " + e.ToString());
         }
     }
 
+    /// <summary>
+    /// Method Send, for send a message to the server.
+    /// </summary>
+    /// <param name="client">Socket</param>
+    /// <param name="data">String with the data to send</param>
     private static void Send(Socket client, String data)
     {
         // Convert the string data to byte data using ASCII encoding.  
@@ -177,6 +199,10 @@ public class EGS_CL_SocketClient
             new AsyncCallback(SendCallback), client);
     }
 
+    /// <summary>
+    /// Method SendCallback, called when sent data to server.
+    /// </summary>
+    /// <param name="ar">IAsyncResult</param>
     private static void SendCallback(IAsyncResult ar)
     {
         try
@@ -186,14 +212,15 @@ public class EGS_CL_SocketClient
 
             // Complete sending the data to the remote device.  
             int bytesSent = client.EndSend(ar);
-            egs_Log.Log("Sent " + bytesSent + " bytes to server.");
+            Debug.Log("[CLIENT] Sent " + bytesSent + " bytes to server.");
 
             // Signal that all bytes have been sent.  
             sendDone.Set();
         }
         catch (Exception e)
         {
-            egs_Log.LogError(e.ToString());
+            Debug.LogError("[CLIENT] " + e.ToString());
         }
     }
+    #endregion
 }

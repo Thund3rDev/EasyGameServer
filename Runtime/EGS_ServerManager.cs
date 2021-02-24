@@ -1,8 +1,5 @@
-using System;
 using System.Xml;
-using System.Threading.Tasks;
 using UnityEngine;
-
 
 /// <summary>
 /// Class EGS_ServerManager, that controls the core of EGS.
@@ -17,10 +14,6 @@ public class EGS_ServerManager : MonoBehaviour
 
     [Tooltip("Bool that indicates if the server has started or not")]
     private bool serverStarted = false;
-
-    /*[Header("Tasks")]
-    [Tooltip("Task that manages the server listening")]
-    private Task listeningTask = null;*/
 
     [Header("References")]
     [Tooltip("Reference to the Log")]
@@ -58,19 +51,12 @@ public class EGS_ServerManager : MonoBehaviour
 
         /// Read all data.
 
-        /*// Start listening for connections.
-        Action listeningAction = new Action(StartListening);
-        listeningTask = Task.Factory.StartNew(listeningAction);
-
-        // Test socket connection.
-        egs_CL_sockets.StartClient(serverData.serverPort);*/
-
         // Create sockets manager
         egs_sockets = new EGS_Sockets(egs_Log);
         // Start listening for connections
         egs_sockets.StartListening(serverData.serverIP, serverData.serverPort);
 
-        // Start client
+        // Start client (provisional, just for testing purposes)
         egs_sockets.StartClient(serverData.serverIP, serverData.serverPort);
     }
 
@@ -86,10 +72,8 @@ public class EGS_ServerManager : MonoBehaviour
         // Stop the server.
         serverStarted = false;
 
-        // Close the socket.
-        //egs_SE_sockets.StopListening();
-        //egs_CL_sockets.StopListening();
-        egs_sockets.StopListening(serverData.serverPort);
+        // Stop listening on the socket.
+        egs_sockets.StopListening();
 
         // Save all data.
         // Disconnect players.
@@ -97,22 +81,13 @@ public class EGS_ServerManager : MonoBehaviour
     }
 
     #region Private Methods
-
-    /// <summary>
-    /// Method StartListening, to start listening sockets.
-    /// </summary>
-    private void StartListening()
-    {
-        egs_sockets.StartListening(serverData.serverIP, serverData.serverPort);
-    }
-
     /// <summary>
     /// Method ReadServerData, to load all server config data.
     /// </summary>
     private void ReadServerData()
     {
         // Read server config data.
-        string configXMLPath = "Packages/com.thund3rdev.easy_game_server/config.xml";
+        string configXMLPath = "Packages/com.thund3r.easy_game_server/config.xml";
         XmlDocument doc = new XmlDocument();
         doc.Load(configXMLPath);
 
