@@ -28,6 +28,13 @@ public class EGS_Log : MonoBehaviour
     #endregion
     #endregion
 
+    #region Unity Methods
+    private void Update()
+    {
+        text_log.UpdateMeshPadding();
+    }
+    #endregion
+
     #region Class Methods
     /// <summary>
     /// Method StartLog, that start the log.
@@ -72,7 +79,6 @@ public class EGS_Log : MonoBehaviour
             try
             {
                 Debug.Log(stringToLog);
-                text_log.text += stringToLog + "\n";
             }
             catch (UnityException)
             {
@@ -80,7 +86,7 @@ public class EGS_Log : MonoBehaviour
 
             try
             {
-                text_log.UpdateMeshPadding();
+                text_log.text += stringToLog + "\n";
             }
             catch (UnityException)
             {
@@ -105,7 +111,6 @@ public class EGS_Log : MonoBehaviour
             try
             {
                 Debug.LogWarning(logString);
-                text_log.text += stringToLog + "\n";
             }
             catch (UnityException)
             {
@@ -113,7 +118,7 @@ public class EGS_Log : MonoBehaviour
 
             try
             {
-                text_log.UpdateMeshPadding();
+                text_log.text += stringToLog + "\n";
             }
             catch (UnityException)
             {
@@ -138,7 +143,6 @@ public class EGS_Log : MonoBehaviour
             try
             {
                 Debug.LogError(logString);
-                text_log.text += stringToLog + "\n";
             }
             catch (UnityException)
             {
@@ -146,7 +150,7 @@ public class EGS_Log : MonoBehaviour
 
             try
             {
-                text_log.UpdateMeshPadding();
+                text_log.text += stringToLog + "\n";
             }
             catch (UnityException)
             {

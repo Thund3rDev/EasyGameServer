@@ -73,8 +73,24 @@ public class EGS_CL_SocketClient
                 new AsyncCallback(ConnectCallback), socket_client);
             connectDone.WaitOne();
 
-            // Send test data to the remote device.  
-            Send(socket_client, "This is a test<EOF>");
+            // Send test data to the remote device.
+            // Test data
+            EGS_User thisUser = new EGS_User();
+            thisUser.userID = 0;
+            thisUser.username = "MegaSalsero14";
+
+            // Convert user to JSON
+            string userJson = JsonUtility.ToJson(thisUser);
+
+            EGS_Message thisMessage = new EGS_Message();
+            thisMessage.messageType = "user";
+            thisMessage.messageContent = userJson;
+
+            // Convert message to JSON
+            string messageJson = JsonUtility.ToJson(thisMessage);
+
+            // Send
+            Send(socket_client, messageJson);
             sendDone.WaitOne();
 
             // Receive the response from the remote device.  
@@ -87,6 +103,9 @@ public class EGS_CL_SocketClient
             // Release the socket.  
             socket_client.Shutdown(SocketShutdown.Both);
             socket_client.Close();
+        }
+        catch (ThreadAbortException)
+        {
         }
         catch (Exception e)
         {

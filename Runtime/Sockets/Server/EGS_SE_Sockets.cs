@@ -8,9 +8,9 @@ using UnityEngine;
 public class EGS_SE_Sockets : MonoBehaviour
 {
     #region Variables
-    [Header("References")]
+    /*[Header("References")]
     [Tooltip("Reference to the Log")]
     [SerializeField]
-    private EGS_Log egs_Log = null;
+    private EGS_Log egs_Log = null;*/
     #endregion
 }

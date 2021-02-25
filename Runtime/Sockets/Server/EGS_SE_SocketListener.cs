@@ -141,24 +141,29 @@ public class EGS_SE_SocketListener
             state.sb.Append(Encoding.ASCII.GetString(
                 state.buffer, 0, bytesRead));
 
-            // Check for end-of-file tag. If it is not there, read
-            // more data.  
+            // Read message data.
             content = state.sb.ToString();
-            if (content.IndexOf("<EOF>") > -1)
-            {
-                // All the data has been read from the
-                // client. Display it on the console.  
-                egs_Log.Log("Read " + content.Length + " bytes from socket. \n Data : " + content);
 
-                // Echo the data back to the client.  
-                Send(handler, content);
-            }
-            else
+            // Read data from JSON.
+            EGS_Message receivedMessage = new EGS_Message();
+            EGS_User receivedUser = new EGS_User();
+
+            try
             {
-                // Not all data received. Get more.  
-                handler.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
-                new AsyncCallback(ReadCallback), state);
+                receivedMessage = JsonUtility.FromJson<EGS_Message>(content);
+                receivedUser = JsonUtility.FromJson<EGS_User>(receivedMessage.messageContent);
             }
+            catch (Exception e)
+            {
+                egs_Log.LogError(e.ToString());
+            }
+
+            // Display data on the console.  
+            egs_Log.Log("Read " + content.Length + " bytes from socket. \n<color=purple>Data:</color> UserID: " + receivedUser.userID + " - Username: " +receivedUser.username);
+            
+            // Echo the data back to the client.
+            string messageToSend = "Welcome, " + receivedUser.username;
+            Send(handler, messageToSend);
         }
     }
 
