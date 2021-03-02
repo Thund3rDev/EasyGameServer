@@ -6,27 +6,36 @@ using System.Threading;
 using UnityEngine;
 
 /// <summary>
-/// Class EGS_SE_SocketListener, that controls the server receiver socket.
+/// Class EGS_SE_SocketListener_OLD, that controls the server receiver socket.
 /// </summary>
-public class EGS_SE_SocketListener
+public class EGS_SE_SocketListener_OLD
 { 
     #region Variables
     /// Concurrency
     // Thread signal.
-    public ManualResetEvent allDone = new ManualResetEvent(false);
+    public static ManualResetEvent allDone = new ManualResetEvent(false);
+
+    /// Server data
+    // Server IP.
+    private static string serverIP;
+    // Server Port.
+    private static int serverPort;
+
+    /// Sockets
+    // Socket listener.
+    private static Socket socket_listener;
 
     /// References
     // Reference to the Log.
-    private EGS_Log egs_Log = null;
+    private static EGS_Log egs_Log = null;
     #endregion
 
     #region Constructors
     /// <summary>
     /// Empty constructor.
     /// </summary>
-    public EGS_SE_SocketListener(EGS_Log log)
+    public EGS_SE_SocketListener_OLD()
     {
-        egs_Log = log;
     }
     #endregion
 
@@ -34,27 +43,49 @@ public class EGS_SE_SocketListener
     /// <summary>
     /// Method StartListening, that opens the socket to connections.
     /// </summary>
-    /// <param name="serverPort">Port where the server is</param>
-    /// <param name="remoteEP">EndPoint where the server is</param>
-    /// <param name="socket_client">Socket to use</param>
-    public void StartListening(int serverPort, EndPoint localEP, Socket socket_listener)
+    /// <param name="serverIP_">IP where server will be set</param>
+    /// <param name="serverPort_">Port where server will be set</param>
+    /// <param name="log">Log instance</param>
+    public static void StartListening(string serverIP_, int serverPort_, EGS_Log log)
     {
+        // Assign data.
+        serverIP = serverIP_;
+        serverPort = serverPort_;
+        egs_Log = log;
+
+        // Obtain IP direction and endpoint.
+        IPHostEntry ipHostInfo = Dns.GetHostEntry(serverIP);
+        // It is IPv4, for IPv6 it would be 0.
+        IPAddress ipAddress = ipHostInfo.AddressList[1];
+        IPEndPoint localEndPoint = new IPEndPoint(ipAddress, serverPort);
+
+        // Create a TCP/IP socket.
+        socket_listener = new Socket(ipAddress.AddressFamily,
+            SocketType.Stream, ProtocolType.Tcp);
+
         // Bind the socket to the local endpoint and listen for incoming connections.  
         try
         {
-            socket_listener.Bind(localEP);
+            socket_listener.Bind(localEndPoint);
             socket_listener.Listen(100);
 
             egs_Log.Log("<color=green>Easy Game Server</color> Listening at port <color=orange>" + serverPort + "</color>.");
 
             while (true)
-            {
+            { 
+                // Set the event to nonsignaled state.  
                 allDone.Reset();
-                // Start an asynchronous socket to listen for connections.
+
+                // Start an asynchronous socket to listen for connections.  
+                egs_Log.Log("Waiting for a connection...");
                 socket_listener.BeginAccept(
                     new AsyncCallback(AcceptCallback),
                     socket_listener);
+
+                // Wait until a connection is made before continuing.  
                 allDone.WaitOne();
+
+                egs_Log.Log("<color=blue>Client</color> connected.");
             }
         }
         catch(ThreadAbortException)
@@ -72,14 +103,14 @@ public class EGS_SE_SocketListener
     /// Method AcceptCallback, called when a client connects to the server.
     /// </summary>
     /// <param name="ar">IAsyncResult</param>
-    public void AcceptCallback(IAsyncResult ar)
+    public static void AcceptCallback(IAsyncResult ar)
     {
+        // Signal the main thread to continue.  
         allDone.Set();
+
         // Get the socket that handles the client request.  
         Socket listener = (Socket)ar.AsyncState;
         Socket handler = listener.EndAccept(ar);
-
-        egs_Log.Log("<color=blue>Client</color> connected. IP: " + handler.RemoteEndPoint);
 
         // Create the state object.  
         StateObject state = new StateObject();
@@ -92,7 +123,7 @@ public class EGS_SE_SocketListener
     /// Method ReadCallback, called when a client sends a message.
     /// </summary>
     /// <param name="ar">IAsyncResult</param>
-    public void ReadCallback(IAsyncResult ar)
+    public static void ReadCallback(IAsyncResult ar)
     {
         string content = string.Empty;
 
@@ -113,8 +144,26 @@ public class EGS_SE_SocketListener
             // Read message data.
             content = state.sb.ToString();
 
-            // Handle the message
-            HandleMessage(content, handler);
+            // Read data from JSON.
+            EGS_Message receivedMessage = new EGS_Message();
+            EGS_User receivedUser = new EGS_User();
+
+            try
+            {
+                receivedMessage = JsonUtility.FromJson<EGS_Message>(content);
+                receivedUser = JsonUtility.FromJson<EGS_User>(receivedMessage.messageContent);
+            }
+            catch (Exception e)
+            {
+                egs_Log.LogError(e.ToString());
+            }
+
+            // Display data on the console.  
+            egs_Log.Log("Read " + content.Length + " bytes from socket. \n<color=purple>Data:</color> UserID: " + receivedUser.userID + " - Username: " +receivedUser.username);
+            
+            // Echo the data back to the client.
+            string messageToSend = "Welcome, " + receivedUser.username;
+            Send(handler, messageToSend);
         }
     }
 
@@ -123,7 +172,7 @@ public class EGS_SE_SocketListener
     /// </summary>
     /// <param name="handler">Socket</param>
     /// <param name="data">String that contains the data to send</param>
-    private void Send(Socket handler, String data)
+    private static void Send(Socket handler, String data)
     {
         // Convert the string data to byte data using ASCII encoding.  
         byte[] byteData = Encoding.ASCII.GetBytes(data);
@@ -137,7 +186,7 @@ public class EGS_SE_SocketListener
     /// Method SendCallback, called when a message was sent.
     /// </summary>
     /// <param name="ar">IAsyncResult</param>
-    private void SendCallback(IAsyncResult ar)
+    private static void SendCallback(IAsyncResult ar)
     {
         try
         {
@@ -158,29 +207,13 @@ public class EGS_SE_SocketListener
         }
     }
 
-    private void HandleMessage(string content, Socket handler)
+    /// <summary>
+    /// Method StopListening, to close the socket and stop listening to connections.
+    /// </summary>
+    public static void StopListening()
     {
-        // Read data from JSON.
-        EGS_Message receivedMessage = new EGS_Message();
-        receivedMessage = JsonUtility.FromJson<EGS_Message>(content);
-
-        // Depending on the messageType, do different things
-        switch (receivedMessage.messageType)
-        {
-            case "connect":
-                // Get the received user
-                EGS_User receivedUser = JsonUtility.FromJson<EGS_User>(receivedMessage.messageContent);
-
-                // Display data on the console.  
-                egs_Log.Log("Read " + content.Length + " bytes from socket. \n<color=purple>Data:</color> UserID: " + receivedUser.userID + " - Username: " + receivedUser.username);
-
-                // Echo the data back to the client.
-                string messageToSend = "Welcome, " + receivedUser.username;
-                Send(handler, messageToSend);
-                break;
-            default:
-                break;
-        }
+        socket_listener.Close();
+        egs_Log.Log("<color=green>Easy Game Server</color> stopped listening at port <color=orange>" + serverPort + "</color>.");
     }
     #endregion
 }

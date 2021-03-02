@@ -3,14 +3,13 @@ using System.Threading;
 public class EGS_Sockets
 {
     #region Variables
-    /// Threads
-    // Thread that runs the server.
-    private Thread serverThread;
+    /// Controllers
+    // Controller for client sockets.
+    private EGS_CL_Sockets clientSocketsController;
+    // Controller for server sockets.
+    private EGS_SE_Sockets serverSocketsController;
 
-    // Thread that runs the client (just for testing purposes, probably unnecesary).
-    private Thread clientThread;
-
-    ///  References
+    /// References
     // Reference to the Log.
     private EGS_Log egs_Log = null;
     #endregion
@@ -33,8 +32,8 @@ public class EGS_Sockets
     /// 
     public void StartListening(string serverIP, int serverPort)
     {
-        serverThread = new Thread(() => EGS_SE_SocketListener.StartListening(serverIP, serverPort, egs_Log));
-        serverThread.Start();
+        serverSocketsController = new EGS_SE_Sockets(egs_Log, serverIP, serverPort);
+        serverSocketsController.StartServer();
     }
 
     /// <summary>
@@ -44,8 +43,8 @@ public class EGS_Sockets
     /// <param name="serverPort">Port where server is</param>
     public void StartClient(string serverIP, int serverPort)
     {
-        clientThread = new Thread(() => EGS_CL_SocketClient.StartClient(serverIP, serverPort));
-        clientThread.Start();
+        clientSocketsController = new EGS_CL_Sockets(egs_Log);
+        clientSocketsController.ConnectToServer(serverIP, serverPort);
     }
 
     /// <summary>
@@ -53,14 +52,11 @@ public class EGS_Sockets
     /// </summary>
     public void StopListening()
     {
-        // Stop client thread and wait (provisional).
-        clientThread.Abort();
-        clientThread.Join();
+        // Disconnect client (provisional).
+        clientSocketsController.Disconnect();
 
-        // Stop server thread and wait.
-        serverThread.Abort();
-        serverThread.Join();
-        EGS_SE_SocketListener.StopListening();
+        // Stop listening on server.
+        serverSocketsController.StopListening();
     }
     #endregion
 }
