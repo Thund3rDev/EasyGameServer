@@ -43,7 +43,7 @@ public class EGS_Sockets
     /// <param name="serverPort">Port where server is</param>
     public void StartClient(string serverIP, int serverPort)
     {
-        clientSocketsController = new EGS_CL_Sockets(egs_Log);
+        clientSocketsController = new EGS_CL_Sockets();
         clientSocketsController.ConnectToServer(serverIP, serverPort);
     }
 

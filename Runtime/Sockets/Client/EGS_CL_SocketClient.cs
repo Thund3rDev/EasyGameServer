@@ -41,7 +41,7 @@ public class EGS_CL_SocketClient
     /// <param name="socket_client">Socket to use</param>
     public void StartClient(EndPoint remoteEP, Socket socket_client)
     {
-        // Reset the ManualResetEvents
+        // Reset the ManualResetEvents.
         connectDone.Reset();
         sendDone.Reset();
         receiveDone.Reset();
@@ -54,25 +54,25 @@ public class EGS_CL_SocketClient
                 new AsyncCallback(ConnectCallback), socket_client);
 
             // Send handshake to the server.
-            // Test data
+            // Test data.
             EGS_User thisUser = new EGS_User();
             thisUser.userID = 0;
             thisUser.username = "MegaSalsero14";
 
-            // Convert user to JSON
+            // Convert user to JSON.
             string userJson = JsonUtility.ToJson(thisUser);
 
             EGS_Message thisMessage = new EGS_Message();
             thisMessage.messageType = "connect";
             thisMessage.messageContent = userJson;
 
-            // Convert message to JSON
+            // Convert message to JSON.
             string messageJson = JsonUtility.ToJson(thisMessage);
 
-            // Wait until the connection is done
+            // Wait until the connection is done.
             connectDone.WaitOne();
 
-            // Send handshake to server
+            // Send handshake to server.
             Send(socket_client, messageJson);
             sendDone.WaitOne();
 

@@ -1,12 +1,13 @@
+using System;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
 using System.Threading;
-using UnityEngine;
 
 /// <summary>
 /// Class EGS_SE_Sockets, that will control server sockets in the future.
 /// </summary>
-public class EGS_SE_Sockets : MonoBehaviour
+public class EGS_SE_Sockets
 {
     #region Variables
     // Thread that runs the server.
@@ -88,5 +89,64 @@ public class EGS_SE_Sockets : MonoBehaviour
         socket_listener.Close();
         egs_Log.Log("<color=green>Easy Game Server</color> stopped listening at port <color=orange>" + serverPort + "</color>.");
     }
+
+    /*/// <summary>
+    /// Method ReadCallback, called when a client sends a message.
+    /// </summary>
+    /// <param name="ar">IAsyncResult</param>
+    public void ReadCallback(IAsyncResult ar)
+    {
+        string content = string.Empty;
+
+        // Retrieve the state object and the handler socket  
+        // from the asynchronous state object.  
+        StateObject state = (StateObject)ar.AsyncState;
+        Socket handler = state.workSocket;
+
+        // Read data from the client socket.
+        int bytesRead = handler.EndReceive(ar);
+
+        if (bytesRead > 0)
+        {
+            // There might be more data, so store the data received so far.  
+            state.sb.Append(Encoding.ASCII.GetString(
+                state.buffer, 0, bytesRead));
+
+            // Read message data.
+            content = state.sb.ToString();
+
+            // Handle the message
+            HandleMessage(content, handler);
+        }
+    }
+
+    private void HandleMessage(string content, Socket handler)
+    {
+        // Read data from JSON.
+        EGS_Message receivedMessage = new EGS_Message();
+        receivedMessage = JsonUtility.FromJson<EGS_Message>(content);
+
+        // Depending on the messageType, do different things
+        switch (receivedMessage.messageType)
+        {
+            case "connect":
+                // Get the received user
+                EGS_User receivedUser = JsonUtility.FromJson<EGS_User>(receivedMessage.messageContent);
+
+                // Display data on the console.  
+                egs_Log.Log("Read " + content.Length + " bytes from socket. \n<color=purple>Data:</color> UserID: " + receivedUser.userID + " - Username: " + receivedUser.username);
+
+                // Echo the data back to the client.
+                string messageToSend = "Welcome, " + receivedUser.username;
+                Send(handler, messageToSend);
+                break;
+            case "test_message":
+                // Display data on the console.  
+                egs_Log.Log("Read " + content.Length + " bytes from socket. \n<color=purple>Data:</color>" + receivedMessage.messageContent);
+                break;
+            default:
+                break;
+        }
+    }*/
     #endregion
 }

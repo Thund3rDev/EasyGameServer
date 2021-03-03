@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -9,10 +10,10 @@ using UnityEngine;
 /// Class EGS_SE_SocketListener, that controls the server receiver socket.
 /// </summary>
 public class EGS_SE_SocketListener
-{ 
+{
     #region Variables
-    /// Concurrency
-    // Thread signal.
+    /// ManualResetEvents
+    // ManualResetEvent allDone for connection.
     public ManualResetEvent allDone = new ManualResetEvent(false);
 
     /// References
@@ -178,7 +179,12 @@ public class EGS_SE_SocketListener
                 string messageToSend = "Welcome, " + receivedUser.username;
                 Send(handler, messageToSend);
                 break;
+            case "test_message":
+                // Display data on the console.  
+                egs_Log.Log("Read " + content.Length + " bytes from socket. \n<color=purple>Data:</color>" + receivedMessage.messageContent);
+                break;
             default:
+                egs_Log.Log("Read " + content.Length + " bytes from socket. \n<color=yellow>Undefined message type: </color>" + receivedMessage.messageType);
                 break;
         }
     }
