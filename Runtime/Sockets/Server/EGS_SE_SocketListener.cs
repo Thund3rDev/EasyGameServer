@@ -18,15 +18,20 @@ public class EGS_SE_SocketListener
     /// References
     // Reference to the Log.
     private EGS_Log egs_Log = null;
+
+    /// Delegates
+    // Delegate to the AfterClientConnected function
+    private Action<Socket> onConnectDelegate;
     #endregion
 
     #region Constructors
     /// <summary>
     /// Empty constructor.
     /// </summary>
-    public EGS_SE_SocketListener(EGS_Log log)
+    public EGS_SE_SocketListener(EGS_Log log, Action<Socket> afterClientConnected)
     {
         egs_Log = log;
+        onConnectDelegate = afterClientConnected;
     }
     #endregion
 
@@ -36,7 +41,7 @@ public class EGS_SE_SocketListener
     /// </summary>
     /// <param name="serverPort">Port where the server is</param>
     /// <param name="remoteEP">EndPoint where the server is</param>
-    /// <param name="socket_client">Socket to use</param>
+    /// <param name="socket_listener">Socket to use</param>
     public void StartListening(int serverPort, EndPoint localEP, Socket socket_listener)
     {
         // Bind the socket to the local endpoint and listen for incoming connections.  
@@ -50,7 +55,7 @@ public class EGS_SE_SocketListener
             while (true)
             {
                 allDone.Reset();
-                // Start an asynchronous socket to listen for connections.
+                // Start listening for connections asynchronously.
                 socket_listener.BeginAccept(
                     new AsyncCallback(AcceptCallback),
                     socket_listener);
@@ -64,8 +69,7 @@ public class EGS_SE_SocketListener
         catch (Exception e)
         {  
             egs_Log.LogError(e.ToString());
-        } 
-
+        }
     }
 
     /// <summary>
@@ -75,11 +79,13 @@ public class EGS_SE_SocketListener
     public void AcceptCallback(IAsyncResult ar)
     {
         allDone.Set();
+
         // Get the socket that handles the client request.  
         Socket listener = (Socket)ar.AsyncState;
         Socket handler = listener.EndAccept(ar);
 
-        egs_Log.Log("<color=blue>Client</color> connected. IP: " + handler.RemoteEndPoint);
+        // Do things on client connected.
+        onConnectDelegate(handler);
 
         // Create the state object.  
         StateObject state = new StateObject();
@@ -172,10 +178,10 @@ public class EGS_SE_SocketListener
                 EGS_User receivedUser = JsonUtility.FromJson<EGS_User>(receivedMessage.messageContent);
 
                 // Display data on the console.  
-                egs_Log.Log("Read " + content.Length + " bytes from socket. \n<color=purple>Data:</color> UserID: " + receivedUser.userID + " - Username: " + receivedUser.username);
+                egs_Log.Log("Read " + content.Length + " bytes from socket. \n<color=purple>Data:</color> UserID: " + receivedUser.getUserID() + " - Username: " + receivedUser.getUsername());
 
                 // Echo the data back to the client.
-                string messageToSend = "Welcome, " + receivedUser.username;
+                string messageToSend = "Welcome, " + receivedUser.getUsername();
                 Send(handler, messageToSend);
                 break;
             case "test_message":

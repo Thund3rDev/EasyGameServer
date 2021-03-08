@@ -17,6 +17,9 @@ public class EGS_SE_Sockets
     // Server socket.
     private Socket socket_listener;
 
+    // Bool that indicates if server is in debug mode.
+    private static readonly bool DEBUG_MODE = true;
+
     /// Server data
     // Server IP.
     private string serverIP;
@@ -43,6 +46,7 @@ public class EGS_SE_Sockets
     }
     #endregion
 
+    #region Class Methods
     /// <summary>
     /// Method StartServer, to start listening on the server.
     /// </summary>
@@ -52,10 +56,38 @@ public class EGS_SE_Sockets
         EndPoint localEP = CreateSocket(serverIP, serverPort);
 
         // Connect to server
-        EGS_SE_SocketListener serverSocketHandler = new EGS_SE_SocketListener(egs_Log);
+        EGS_SE_SocketListener serverSocketHandler = new EGS_SE_SocketListener(egs_Log, AfterClientConnected);
         serverThread = new Thread(() => serverSocketHandler.StartListening(serverPort, localEP, socket_listener));
         serverThread.Start();
     }
+
+    /// <summary>
+    /// Method AfterClientConnected, that manages a new connection
+    /// </summary>
+    /// <param name="clientSocket">Socket connected to the client</param>
+    public void AfterClientConnected(Socket clientSocket)
+    {
+        // Create an empty user for the new connection.
+        EGS_User user = new EGS_User();
+
+        // Set its socket.
+        user.setSocket(clientSocket);
+
+        // Save it for later use.
+        // usersConnected.add(clientSocket, user);
+
+        // Ask client for user data.
+        EGS_Message msg = new EGS_Message();
+        msg.messageType = "JOIN";
+
+        // Send(clientSocket, msg);
+
+        if (DEBUG_MODE)
+        {
+            egs_Log.Log("<color=blue>Client</color> connected. IP: " + clientSocket.RemoteEndPoint);
+        }
+    }
+    #endregion
 
     #region Private Methods
     /// <summary>

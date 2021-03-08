@@ -56,8 +56,8 @@ public class EGS_CL_SocketClient
             // Send handshake to the server.
             // Test data.
             EGS_User thisUser = new EGS_User();
-            thisUser.userID = 0;
-            thisUser.username = "MegaSalsero14";
+            thisUser.setUserID(0);
+            thisUser.setUsername("MegaSalsero14");
 
             // Convert user to JSON.
             string userJson = JsonUtility.ToJson(thisUser);
