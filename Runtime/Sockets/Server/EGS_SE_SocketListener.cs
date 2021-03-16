@@ -129,7 +129,7 @@ public class EGS_SE_SocketListener
     /// </summary>
     /// <param name="handler">Socket</param>
     /// <param name="data">String that contains the data to send</param>
-    private void Send(Socket handler, String data)
+    private void Send(Socket handler, string data)
     {
         // Convert the string data to byte data using ASCII encoding.  
         byte[] byteData = Encoding.ASCII.GetBytes(data);

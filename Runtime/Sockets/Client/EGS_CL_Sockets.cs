@@ -118,8 +118,8 @@ public class EGS_CL_Sockets
     {
         // Obtain IP direction and endpoint
         IPHostEntry ipHostInfo = Dns.GetHostEntry(serverIP);
-        // It is IPv4, for IPv6 it would be 0.
-        IPAddress ipAddress = ipHostInfo.AddressList[1];
+        // It is IPv4, but if wifi is using, it should be 1 and not 0.
+        IPAddress ipAddress = ipHostInfo.AddressList[0];
         IPEndPoint remoteEP = new IPEndPoint(ipAddress, serverPort);
 
         // Create a TCP/IP socket
