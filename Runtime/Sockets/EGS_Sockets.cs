@@ -1,5 +1,6 @@
-using System.Threading;
-
+/// <summary>
+/// Class EGS_Sockets, that control sockets for server and client.
+/// </summary>
 public class EGS_Sockets
 {
     #region Variables
@@ -36,16 +37,7 @@ public class EGS_Sockets
         serverSocketsController.StartServer();
     }
 
-    /// <summary>
-    /// Method StartClient, that calls a thread for the client (just for testing purposes, probably unnecesary).
-    /// </summary>
-    /// <param name="serverIP">IP where server is</param>
-    /// <param name="serverPort">Port where server is</param>
-    public void StartClient(string serverIP, int serverPort)
-    {
-        clientSocketsController = new EGS_CL_Sockets();
-        clientSocketsController.ConnectToServer(serverIP, serverPort);
-    }
+    
 
     /// <summary>
     /// Method StopListening, that stops the threads and closes the server socket.
@@ -53,7 +45,7 @@ public class EGS_Sockets
     public void StopListening()
     {
         // Disconnect client (provisional).
-        clientSocketsController.Disconnect();
+        //clientSocketsController.Disconnect();
 
         // Stop listening on server.
         serverSocketsController.StopListening();

@@ -109,7 +109,7 @@ public class EGS_CL_SocketClient
             Debug.Log("[CLIENT] Socket connected to " +
                 client.RemoteEndPoint.ToString());
 
-            EGS_CL_Sockets.connectedToServer = true;
+            EGS_Client.connectedToServer = true;
 
             // Signal that the connection has been made.  
             connectDone.Set();

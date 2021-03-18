@@ -52,15 +52,13 @@ public class EGS_SE_SocketListener
 
             egs_Log.Log("<color=green>Easy Game Server</color> Listening at port <color=orange>" + serverPort + "</color>.");
 
-            while (true)
-            {
-                allDone.Reset();
+            /*while (true)
+            {*/
                 // Start listening for connections asynchronously.
                 socket_listener.BeginAccept(
                     new AsyncCallback(AcceptCallback),
                     socket_listener);
-                allDone.WaitOne();
-            }
+            //}
         }
         catch(ThreadAbortException)
         {

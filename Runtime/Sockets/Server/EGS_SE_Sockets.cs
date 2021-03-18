@@ -2,7 +2,6 @@ using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Threading;
 using UnityEngine;
 
 /// <summary>
@@ -11,9 +10,6 @@ using UnityEngine;
 public class EGS_SE_Sockets
 {
     #region Variables
-    // Thread that runs the server.
-    private Thread serverThread;
-
     // Server socket.
     private Socket socket_listener;
 
@@ -25,6 +21,8 @@ public class EGS_SE_Sockets
     private string serverIP;
     // Server Port.
     private int serverPort;
+
+    EGS_SE_SocketListener serverSocketHandler;
 
     /// References
     // Reference to the Log.
@@ -56,9 +54,8 @@ public class EGS_SE_Sockets
         EndPoint localEP = CreateSocket(serverIP, serverPort);
 
         // Connect to server
-        EGS_SE_SocketListener serverSocketHandler = new EGS_SE_SocketListener(egs_Log, AfterClientConnected);
-        serverThread = new Thread(() => serverSocketHandler.StartListening(serverPort, localEP, socket_listener));
-        serverThread.Start();
+        serverSocketHandler = new EGS_SE_SocketListener(egs_Log, AfterClientConnected);
+        serverSocketHandler.StartListening(serverPort, localEP, socket_listener);
     }
 
     /// <summary>
@@ -160,8 +157,6 @@ public class EGS_SE_Sockets
     /// </summary>
     public void StopListening()
     {
-        serverThread.Abort();
-        serverThread.Join();
         socket_listener.Close();
         egs_Log.Log("<color=green>Easy Game Server</color> stopped listening at port <color=orange>" + serverPort + "</color>.");
     }

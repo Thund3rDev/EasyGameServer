@@ -11,14 +11,8 @@ using UnityEngine;
 public class EGS_CL_Sockets
 {
     #region Variables
-    // Thread that runs the client (just for testing purposes, probably unnecesary).
-    private Thread clientThread;
-
     // Client socket.
     private Socket socket_client;
-
-    // Boolean that indicates if client is connected to the server.
-    public static bool connectedToServer;
     #endregion
 
     #region Constructors
@@ -27,24 +21,21 @@ public class EGS_CL_Sockets
     /// </summary>
     public EGS_CL_Sockets()
     {
-        connectedToServer = false;
+
     }
     #endregion
 
     /// <summary>
     /// Method ConnectToServer, to establish a connection to the server.
     /// </summary>
-    /// <param name="serverIP">IP where server will be set</param>
-    /// <param name="serverPort">Port where server will be set</param>
-    public void ConnectToServer(string serverIP, int serverPort)
+    public void ConnectToServer()
     {
         // Create socket and get EndPoint
-        EndPoint remoteEP = CreateSocket(serverIP, serverPort);
+        EndPoint remoteEP = CreateSocket(EGS_Client.serverData.serverIP, EGS_Client.serverData.serverPort);
 
         // Connect to server
         EGS_CL_SocketClient clientSocketHandler = new EGS_CL_SocketClient();
-        clientThread = new Thread(() => clientSocketHandler.StartClient(remoteEP, socket_client));
-        clientThread.Start();
+        new Thread(() => clientSocketHandler.StartClient(remoteEP, socket_client)).Start();
     }
 
     public void SendMessage(string type, string msg)
@@ -101,10 +92,7 @@ public class EGS_CL_Sockets
     /// </summary>
     public void Disconnect()
     {
-        clientThread.Abort();
-        clientThread.Join();
         CloseSocket();
-        connectedToServer = false;
     }
 
     #region Private Methods

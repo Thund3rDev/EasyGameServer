@@ -55,9 +55,6 @@ public class EGS_ServerManager : MonoBehaviour
         egs_sockets = new EGS_Sockets(egs_Log);
         // Start listening for connections
         egs_sockets.StartListening(serverData.serverIP, serverData.serverPort);
-
-        // Start client (provisional, just for testing purposes)
-        egs_sockets.StartClient(serverData.serverIP, serverData.serverPort);
     }
 
     /// <summary>
@@ -87,7 +84,7 @@ public class EGS_ServerManager : MonoBehaviour
     private void ReadServerData()
     {
         // Read server config data.
-        string configXMLPath = "Packages/com.thund3r.easy_game_server/config.xml";
+        string configXMLPath = "./config.xml";
         XmlDocument doc = new XmlDocument();
         doc.Load(configXMLPath);
 
