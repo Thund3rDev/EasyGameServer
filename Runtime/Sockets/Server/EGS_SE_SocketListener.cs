@@ -85,7 +85,7 @@ public class EGS_SE_SocketListener
         // Do things on client connected.
         onConnectDelegate(handler);
 
-        // Create the state object.  
+        // Create the state object and begin receive.  
         StateObject state = new StateObject();
         state.workSocket = handler;
         handler.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
@@ -117,8 +117,21 @@ public class EGS_SE_SocketListener
             // Read message data.
             content = state.sb.ToString();
 
-            // Handle the message
-            HandleMessage(content, handler);
+            // Split if there is more than one message
+            string[] receivedMessages = content.Split(new string[] { "<EOM>" }, StringSplitOptions.None);
+
+            // Handle the messages (split should leave one empty message at the end so we skip it by substract - 1 to the length)
+            for (int i = 0; i < (receivedMessages.Length - 1); i++)
+                HandleMessage(receivedMessages[i], handler);
+
+            // Keep receiving for that socket.
+            state = new StateObject();
+            state.workSocket = handler;
+            handler.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
+                new AsyncCallback(ReadCallback), state);
+
+            /*if (EGS_ServerManager.DEBUG_MODE)
+                egs_Log.Log("Keep receiving messages from: " + handler.RemoteEndPoint);*/
         }
     }
 
@@ -127,7 +140,7 @@ public class EGS_SE_SocketListener
     /// </summary>
     /// <param name="handler">Socket</param>
     /// <param name="data">String that contains the data to send</param>
-    private void Send(Socket handler, string data)
+    public void Send(Socket handler, string data)
     {
         // Convert the string data to byte data using ASCII encoding.  
         byte[] byteData = Encoding.ASCII.GetBytes(data);
@@ -152,8 +165,8 @@ public class EGS_SE_SocketListener
             int bytesSent = handler.EndSend(ar);
             egs_Log.Log("Sent " + bytesSent + " bytes to client.");
 
-            handler.Shutdown(SocketShutdown.Both);
-            handler.Close();
+            /*handler.Shutdown(SocketShutdown.Both);
+            handler.Close();*/
 
         }
         catch (Exception e)
@@ -168,26 +181,35 @@ public class EGS_SE_SocketListener
         EGS_Message receivedMessage = new EGS_Message();
         receivedMessage = JsonUtility.FromJson<EGS_Message>(content);
 
+        if (EGS_ServerManager.DEBUG_MODE)
+            egs_Log.Log("Read " + content.Length + " bytes from socket - " + handler.RemoteEndPoint +
+            " - Message type: " + receivedMessage.messageType);
+
         // Depending on the messageType, do different things
         switch (receivedMessage.messageType)
         {
-            case "connect":
+            case "JOIN":
                 // Get the received user
                 EGS_User receivedUser = JsonUtility.FromJson<EGS_User>(receivedMessage.messageContent);
 
-                // Display data on the console.  
-                egs_Log.Log("Read " + content.Length + " bytes from socket. \n<color=purple>Data:</color> UserID: " + receivedUser.getUserID() + " - Username: " + receivedUser.getUsername());
+                // Display data on the console.
+                //egs_Log.Log(receivedMessage.messageContent);
+                egs_Log.Log("<color=purple>Data:</color> UserID: " + receivedUser.getUserID() + " - Username: " + receivedUser.getUsername());
 
                 // Echo the data back to the client.
-                string messageToSend = "Welcome, " + receivedUser.getUsername();
-                Send(handler, messageToSend);
+                EGS_Message msg = new EGS_Message();
+                msg.messageType = "JOIN";
+                msg.messageContent = "Welcome, " + receivedUser.getUsername();
+                string jsonMSG = msg.ConvertMessage();
+
+                Send(handler, jsonMSG);
                 break;
-            case "test_message":
+            case "TEST_MESSAGE":
                 // Display data on the console.  
-                egs_Log.Log("Read " + content.Length + " bytes from socket. \n<color=purple>Data:</color>" + receivedMessage.messageContent);
+                egs_Log.Log("<color=purple>Data:</color> " + receivedMessage.messageContent);
                 break;
             default:
-                egs_Log.Log("Read " + content.Length + " bytes from socket. \n<color=yellow>Undefined message type: </color>" + receivedMessage.messageType);
+                egs_Log.Log("<color=yellow>Undefined message type: </color>" + receivedMessage.messageType);
                 break;
         }
     }

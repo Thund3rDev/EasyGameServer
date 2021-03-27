@@ -13,6 +13,9 @@ public class EGS_CL_Sockets
     #region Variables
     // Client socket.
     private Socket socket_client;
+
+    // Instance of the handler for the client socket.
+    private EGS_CL_SocketClient clientSocketHandler;
     #endregion
 
     #region Constructors
@@ -34,8 +37,14 @@ public class EGS_CL_Sockets
         EndPoint remoteEP = CreateSocket(EGS_Client.serverData.serverIP, EGS_Client.serverData.serverPort);
 
         // Connect to server
-        EGS_CL_SocketClient clientSocketHandler = new EGS_CL_SocketClient();
-        new Thread(() => clientSocketHandler.StartClient(remoteEP, socket_client)).Start();
+        clientSocketHandler = new EGS_CL_SocketClient();
+        //new Thread(() => clientSocketHandler.StartClient(remoteEP, socket_client)).Start();
+        Thread a = new Thread(() => clientSocketHandler.StartClient(remoteEP, socket_client));
+        a.Start();
+        a.Join();
+
+        SendMessage("TEST_MESSAGE", "this is a test");
+        
     }
 
     public void SendMessage(string type, string msg)
@@ -46,45 +55,10 @@ public class EGS_CL_Sockets
         thisMessage.messageContent = msg;
 
         // Convert message to JSON .
-        string messageJson = JsonUtility.ToJson(thisMessage);
+        string messageJson = thisMessage.ConvertMessage();
 
         // Send the message.
-        Send(messageJson);
-    }
-
-    /// <summary>
-    /// Method Send, for send a message to the server.
-    /// </summary>
-    /// <param name="data">string with the data to send</param>
-    private void Send(string data)
-    {
-        // Convert the string data to byte data using ASCII encoding.  
-        byte[] byteData = Encoding.ASCII.GetBytes(data);
-
-        // Begin sending the data to the remote device.  
-        socket_client.BeginSend(byteData, 0, byteData.Length, 0,
-            new AsyncCallback(SendCallback), socket_client);
-    }
-
-    /// <summary>
-    /// Method SendCallback, called when sent data to server.
-    /// </summary>
-    /// <param name="ar">IAsyncResult</param>
-    private void SendCallback(IAsyncResult ar)
-    {
-        try
-        {
-            // Retrieve the socket from the state object.  
-            Socket client = (Socket)ar.AsyncState;
-
-            // Complete sending the data to the remote device.  
-            int bytesSent = client.EndSend(ar);
-            Debug.Log("[CLIENT] Sent " + bytesSent + " bytes to server.");
-        }
-        catch (Exception e)
-        {
-            Debug.LogError("[CLIENT] " + e.ToString());
-        }
+        clientSocketHandler.Send(socket_client, messageJson);
     }
 
     /// <summary>

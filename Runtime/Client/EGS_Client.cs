@@ -1,3 +1,4 @@
+using System.IO;
 using System.Xml;
 using UnityEngine;
 
@@ -59,6 +60,17 @@ public class EGS_Client : MonoBehaviour
         // Stop listening on the socket.
         clientSocketController.Disconnect();
     }
+
+    /// <summary>
+    /// Method SendMessage, that will send a message to the server
+    /// </summary>
+    /// <param name="type">String that contains the type of the message</param>
+    /// <param name="msg">String that contains the message itself</param>
+    public void SendMessage(string type, string msg)
+    {
+        // Send the message by the socket controller.
+        clientSocketController.SendMessage(type, msg);
+    }
     #endregion
 
     #region Private Methods
@@ -69,6 +81,9 @@ public class EGS_Client : MonoBehaviour
     {
         // Read server config data.
         string configXMLPath = "Packages/com.thund3r.easy_game_server/config.xml";
+        if (!File.Exists("Packages/com.thund3r.easy_game_server/config.xml"))
+            configXMLPath = "./config.xml";
+
         XmlDocument doc = new XmlDocument();
         doc.Load(configXMLPath);
 

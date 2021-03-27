@@ -1,3 +1,4 @@
+using System.IO;
 using System.Xml;
 using UnityEngine;
 
@@ -15,13 +16,17 @@ public class EGS_ServerManager : MonoBehaviour
     [Tooltip("Bool that indicates if the server has started or not")]
     private bool serverStarted = false;
 
+
+    [Tooltip("Bool that indicates if server is in debug mode")]
+    public static readonly bool DEBUG_MODE = true;
+
     [Header("References")]
     [Tooltip("Reference to the Log")]
     [SerializeField]
     private EGS_Log egs_Log = null;
 
-    [Tooltip("Reference to the socket manager")]
-    private EGS_Sockets egs_sockets = null;
+    [Tooltip("Reference to the server socket manager")]
+    private EGS_SE_Sockets egs_se_sockets = null;
     #endregion
 
     #region Class Methods
@@ -52,9 +57,9 @@ public class EGS_ServerManager : MonoBehaviour
         /// Read all data.
 
         // Create sockets manager
-        egs_sockets = new EGS_Sockets(egs_Log);
+        egs_se_sockets = new EGS_SE_Sockets(egs_Log, serverData.serverIP, serverData.serverPort);
         // Start listening for connections
-        egs_sockets.StartListening(serverData.serverIP, serverData.serverPort);
+        egs_se_sockets.StartListening();
     }
 
     /// <summary>
@@ -70,7 +75,7 @@ public class EGS_ServerManager : MonoBehaviour
         serverStarted = false;
 
         // Stop listening on the socket.
-        egs_sockets.StopListening();
+        egs_se_sockets.StopListening();
 
         // Save all data.
         // Disconnect players.
@@ -84,7 +89,10 @@ public class EGS_ServerManager : MonoBehaviour
     private void ReadServerData()
     {
         // Read server config data.
-        string configXMLPath = "./config.xml";
+        string configXMLPath = "Packages/com.thund3r.easy_game_server/config.xml";
+        if (!File.Exists("Packages/com.thund3r.easy_game_server/config.xml"))
+            configXMLPath = "./config.xml";
+
         XmlDocument doc = new XmlDocument();
         doc.Load(configXMLPath);
 

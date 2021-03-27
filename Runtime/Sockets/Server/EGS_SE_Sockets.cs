@@ -13,16 +13,14 @@ public class EGS_SE_Sockets
     // Server socket.
     private Socket socket_listener;
 
-    // Bool that indicates if server is in debug mode.
-    private static readonly bool DEBUG_MODE = true;
-
     /// Server data
     // Server IP.
     private string serverIP;
     // Server Port.
     private int serverPort;
 
-    EGS_SE_SocketListener serverSocketHandler;
+    // Handler for the socket listener.
+    private EGS_SE_SocketListener serverSocketHandler;
 
     /// References
     // Reference to the Log.
@@ -46,9 +44,9 @@ public class EGS_SE_Sockets
 
     #region Class Methods
     /// <summary>
-    /// Method StartServer, to start listening on the server.
+    /// Method StartListening, to start listening on the server.
     /// </summary>
-    public void StartServer()
+    public void StartListening()
     {
         // Create socket and get EndPoint
         EndPoint localEP = CreateSocket(serverIP, serverPort);
@@ -73,59 +71,17 @@ public class EGS_SE_Sockets
         // Save it for later use.
         // usersConnected.add(clientSocket, user);
 
-        // Ask client for user data.
-        EGS_Message msg = new EGS_Message();
-        msg.messageType = "JOIN";
-        string jsonMSG = JsonUtility.ToJson(msg);
-
-        Send(clientSocket, jsonMSG);
-
-        if (DEBUG_MODE)
+        if (EGS_ServerManager.DEBUG_MODE)
         {
             egs_Log.Log("<color=blue>Client</color> connected. IP: " + clientSocket.RemoteEndPoint);
         }
-    }
-    #endregion
 
-    #region Comms Methods
-    /// <summary>
-    /// Method Send, to send a message to a client.
-    /// </summary>
-    /// <param name="handler">Socket</param>
-    /// <param name="data">String that contains the data to send</param>
-    private void Send(Socket handler, string data)
-    {
-        // Convert the string data to byte data using ASCII encoding.  
-        byte[] byteData = Encoding.ASCII.GetBytes(data);
+        // Ask client for user data.
+        EGS_Message msg = new EGS_Message();
+        msg.messageType = "CONNECT";
+        string jsonMSG = msg.ConvertMessage();
 
-        // Begin sending the data to the remote device.  
-        handler.BeginSend(byteData, 0, byteData.Length, 0,
-            new AsyncCallback(SendCallback), handler);
-    }
-
-    /// <summary>
-    /// Method SendCallback, called when a message was sent.
-    /// </summary>
-    /// <param name="ar">IAsyncResult</param>
-    private void SendCallback(IAsyncResult ar)
-    {
-        try
-        {
-            // Retrieve the socket from the state object.  
-            Socket handler = (Socket)ar.AsyncState;
-
-            // Complete sending the data to the remote device.  
-            int bytesSent = handler.EndSend(ar);
-            egs_Log.Log("Sent " + bytesSent + " bytes to client.");
-
-            handler.Shutdown(SocketShutdown.Both);
-            handler.Close();
-
-        }
-        catch (Exception e)
-        {
-            egs_Log.LogError(e.ToString());
-        }
+        serverSocketHandler.Send(clientSocket, jsonMSG);
     }
     #endregion
 

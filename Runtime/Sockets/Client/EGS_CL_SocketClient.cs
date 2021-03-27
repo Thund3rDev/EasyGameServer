@@ -22,6 +22,9 @@ public class EGS_CL_SocketClient
     /// Other
     // Response from the remote device.
     private string response = string.Empty;
+
+    // Socket for the client.
+    private Socket socket_client;
     #endregion
 
     #region Constructors
@@ -39,8 +42,11 @@ public class EGS_CL_SocketClient
     /// </summary>
     /// <param name="remoteEP">EndPoint where the server is</param>
     /// <param name="socket_client">Socket to use</param>
-    public void StartClient(EndPoint remoteEP, Socket socket_client)
+    public void StartClient(EndPoint remoteEP, Socket socket_client_)
     {
+        // Assign the socket
+        socket_client = socket_client_;
+
         // Reset the ManualResetEvents.
         connectDone.Reset();
         sendDone.Reset();
@@ -53,35 +59,12 @@ public class EGS_CL_SocketClient
             socket_client.BeginConnect(remoteEP,
                 new AsyncCallback(ConnectCallback), socket_client);
 
-            // Send handshake to the server.
-            // Test data.
-            EGS_User thisUser = new EGS_User();
-            thisUser.setUserID(0);
-            thisUser.setUsername("MegaSalsero14");
-
-            // Convert user to JSON.
-            string userJson = JsonUtility.ToJson(thisUser);
-
-            EGS_Message thisMessage = new EGS_Message();
-            thisMessage.messageType = "connect";
-            thisMessage.messageContent = userJson;
-
-            // Convert message to JSON.
-            string messageJson = JsonUtility.ToJson(thisMessage);
-
             // Wait until the connection is done.
             connectDone.WaitOne();
-
-            // Send handshake to server.
-            Send(socket_client, messageJson);
-            sendDone.WaitOne();
 
             // Receive the response from the remote device.  
             Receive(socket_client);
             receiveDone.WaitOne();
-
-            // Write the response to the console.  
-            Debug.Log("[CLIENT] Response received : " + response);
         }
         catch (ThreadAbortException)
         {
@@ -96,7 +79,7 @@ public class EGS_CL_SocketClient
     /// Method ConnectCallback, called when connected to server.
     /// </summary>
     /// <param name="ar">IAsyncResult</param>
-    private void ConnectCallback(IAsyncResult ar)
+    public void ConnectCallback(IAsyncResult ar)
     {
         try
         {
@@ -124,7 +107,7 @@ public class EGS_CL_SocketClient
     /// Method Receive, to receive data from server.
     /// </summary>
     /// <param name="client">Socket</param>
-    private void Receive(Socket client)
+    public void Receive(Socket client)
     {
         try
         {
@@ -166,6 +149,13 @@ public class EGS_CL_SocketClient
                 response = state.sb.ToString();
             }
 
+            // Split if there is more than one message
+            string[] receivedMessages = response.Split(new string[] { "<EOM>" }, StringSplitOptions.None);
+
+            // Handle the messages (split should leave one empty message at the end so we skip it by substract - 1 to the length)
+            for (int i = 0; i < (receivedMessages.Length - 1); i++)
+                HandleMessage(receivedMessages[i], socket_client);
+
             receiveDone.Set();
         }
         catch (ThreadAbortException)
@@ -183,7 +173,7 @@ public class EGS_CL_SocketClient
     /// </summary>
     /// <param name="client">Socket</param>
     /// <param name="data">String with the data to send</param>
-    private void Send(Socket client, String data)
+    public void Send(Socket client, String data)
     {
         // Convert the string data to byte data using ASCII encoding.  
         byte[] byteData = Encoding.ASCII.GetBytes(data);
@@ -214,6 +204,55 @@ public class EGS_CL_SocketClient
         catch (Exception e)
         {
             Debug.LogError("[CLIENT] " + e.ToString());
+        }
+    }
+
+    private void HandleMessage(string content, Socket handler)
+    {
+        // Read data from JSON.
+        EGS_Message receivedMessage = new EGS_Message();
+        receivedMessage = JsonUtility.FromJson<EGS_Message>(content);
+
+        if (EGS_ServerManager.DEBUG_MODE)
+            Debug.Log("Read " + content.Length + " bytes from socket - " + handler.RemoteEndPoint +
+            " - Message type: " + receivedMessage.messageType);
+
+        // Depending on the messageType, do different things
+        switch (receivedMessage.messageType)
+        {
+            case "CONNECT":
+                // Test data.
+                EGS_User thisUser = new EGS_User();
+                thisUser.setUserID(0);
+                thisUser.setUsername("MegaSalsero14");
+
+                // Convert user to JSON.
+                string userJson = JsonUtility.ToJson(thisUser);
+
+                EGS_Message thisMessage = new EGS_Message();
+                thisMessage.messageType = "JOIN";
+                thisMessage.messageContent = userJson;
+
+                // Convert message to JSON.
+                string messageJson = thisMessage.ConvertMessage();
+
+                // Send data to server.
+                Send(socket_client, messageJson);
+
+                // Wait until send is done.
+                sendDone.WaitOne();
+
+                // Receive the response from the remote device.  
+                Receive(socket_client);
+
+                // TODO: Change Scene.
+                break;
+            case "JOIN":
+                // TODO: Change Scene.
+                break;
+            default:
+                Debug.Log("<color=yellow>Undefined message type: </color>" + receivedMessage.messageType);
+                break;
         }
     }
     #endregion

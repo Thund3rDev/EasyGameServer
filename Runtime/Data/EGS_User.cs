@@ -1,4 +1,5 @@
 using System.Net.Sockets;
+using UnityEngine;
 /// <summary>
 /// Class EGS_User, that contains the structure of a player in the server.
 /// </summary>
@@ -7,10 +8,13 @@ public class EGS_User
 {
     #region Variables
     // User ID.
+    [SerializeField]
     private int userID;
     // Socket connected to the server.
+    [SerializeField]
     private Socket socket;
     // User name.
+    [SerializeField]
     private string username;
     #endregion
 
