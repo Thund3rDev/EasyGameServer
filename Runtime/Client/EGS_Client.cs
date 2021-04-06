@@ -9,6 +9,9 @@ public class EGS_Client : MonoBehaviour
 {
     #region Variables
     [Header("General Variables")]
+    [Tooltip("Singleton")]
+    public static EGS_Client client_instance;
+
     [Tooltip("Struct that contains the server data")]
     public static EGS_ServerData serverData;
 
@@ -18,6 +21,18 @@ public class EGS_Client : MonoBehaviour
 
     [Tooltip("Controller for client socket")]
     private EGS_CL_Sockets clientSocketController = null;
+    #endregion
+
+    #region Unity Methods
+    private void Start()
+    {
+        if (client_instance == null)
+            client_instance = this;
+        else
+            Destroy(this);
+
+        DontDestroyOnLoad(this);
+    }
     #endregion
 
     #region Class Methods

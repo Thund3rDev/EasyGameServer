@@ -4,6 +4,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Class EGS_CL_SocketClient, that controls the client sender socket.
@@ -245,7 +246,7 @@ public class EGS_CL_SocketClient
                 // Receive the response from the remote device.  
                 Receive(socket_client);
 
-                // TODO: Change Scene.
+                //MAIN THREAD: SceneManager.LoadScene("TestGame");
                 break;
             case "JOIN":
                 // TODO: Change Scene.

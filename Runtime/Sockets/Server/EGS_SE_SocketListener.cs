@@ -197,12 +197,12 @@ public class EGS_SE_SocketListener
                 egs_Log.Log("<color=purple>Data:</color> UserID: " + receivedUser.getUserID() + " - Username: " + receivedUser.getUsername());
 
                 // Echo the data back to the client.
-                EGS_Message msg = new EGS_Message();
+                /*EGS_Message msg = new EGS_Message();
                 msg.messageType = "JOIN";
                 msg.messageContent = "Welcome, " + receivedUser.getUsername();
                 string jsonMSG = msg.ConvertMessage();
 
-                Send(handler, jsonMSG);
+                Send(handler, jsonMSG);*/
                 break;
             case "TEST_MESSAGE":
                 // Display data on the console.  
