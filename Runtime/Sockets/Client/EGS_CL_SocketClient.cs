@@ -247,6 +247,8 @@ public class EGS_CL_SocketClient
                 Receive(socket_client);
 
                 //MAIN THREAD: SceneManager.LoadScene("TestGame");
+                //UnityMainThreadDispatcher
+                //SceneManager.LoadSceneAsync("TestGame");
                 break;
             case "JOIN":
                 // TODO: Change Scene.

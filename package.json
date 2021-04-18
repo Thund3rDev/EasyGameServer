@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "displayName": "Easy Game Server",
   "description": "A package that will allow you to set up a server for your game in an easy way.",
-  "unity": "2020.2",
+  "unity": "2020.3",
   "unityRelease": "4f1",
   "dependencies": {
     "com.unity.textmeshpro": "3.0.1"

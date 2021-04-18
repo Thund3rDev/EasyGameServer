@@ -1,8 +1,6 @@
 using System;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
-using System.Threading;
 using UnityEngine;
 
 /// <summary>
@@ -39,12 +37,9 @@ public class EGS_CL_Sockets
         // Connect to server
         clientSocketHandler = new EGS_CL_SocketClient();
         //new Thread(() => clientSocketHandler.StartClient(remoteEP, socket_client)).Start();
-        Thread a = new Thread(() => clientSocketHandler.StartClient(remoteEP, socket_client));
-        a.Start();
-        a.Join();
+        clientSocketHandler.StartClient(remoteEP, socket_client);
 
-        SendMessage("TEST_MESSAGE", "this is a test");
-        
+        //SendMessage("TEST_MESSAGE", "this is a test");
     }
 
     public void SendMessage(string type, string msg)
