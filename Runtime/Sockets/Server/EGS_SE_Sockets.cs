@@ -52,10 +52,11 @@ public class EGS_SE_Sockets
         EndPoint localEP = CreateSocket(serverIP, serverPort);
 
         // Connect to server
-        serverSocketHandler = new EGS_SE_SocketListener(egs_Log, AfterClientConnected);
+        serverSocketHandler = new EGS_SE_SocketListener(egs_Log, AfterClientConnected, OnClientDisconnected);
         serverSocketHandler.StartListening(serverPort, localEP, socket_listener);
     }
 
+    #region Connect and disconnect methods
     /// <summary>
     /// Method AfterClientConnected, that manages a new connection
     /// </summary>
@@ -83,6 +84,25 @@ public class EGS_SE_Sockets
 
         serverSocketHandler.Send(clientSocket, jsonMSG);
     }
+
+    /// <summary>
+    /// Method OnClientDisconnected, that manages a disconnection
+    /// </summary>
+    /// <param name="clientSocket">Client socket disconnected from the server</param>
+    public void OnClientDisconnected(Socket clientSocket)
+    {
+        // Remove it from connected users.
+        // usersConnected.remove(clientSocket);
+
+        if (EGS_ServerManager.DEBUG_MODE)
+        {
+            egs_Log.Log("<color=blue>Client</color> disconnected. IP: " + clientSocket.RemoteEndPoint);
+        }
+
+        clientSocket.Shutdown(SocketShutdown.Both);
+        clientSocket.Close();
+    }
+    #endregion
     #endregion
 
     #region Private Methods

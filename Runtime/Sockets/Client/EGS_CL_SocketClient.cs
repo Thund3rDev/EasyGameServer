@@ -157,6 +157,7 @@ public class EGS_CL_SocketClient
             for (int i = 0; i < (receivedMessages.Length - 1); i++)
                 HandleMessage(receivedMessages[i], socket_client);
 
+            // Signal that all bytes have been received.  
             receiveDone.Set();
         }
         catch (ThreadAbortException)
@@ -242,21 +243,40 @@ public class EGS_CL_SocketClient
 
                 // Wait until send is done.
                 sendDone.WaitOne();
-
-                // Receive the response from the remote device.  
-                Receive(socket_client);
-
-                //MAIN THREAD: SceneManager.LoadScene("TestGame");
-                //UnityMainThreadDispatcher
-                //SceneManager.LoadSceneAsync("TestGame");
                 break;
             case "JOIN":
-                // TODO: Change Scene.
+                // Load new scene on main thread.
+                LoadScene("TestGame");
+                
                 break;
             default:
                 Debug.Log("<color=yellow>Undefined message type: </color>" + receivedMessage.messageType);
                 break;
         }
+
+        // Keep receiving messages from the server.
+        Receive(socket_client);
     }
+
+    private void LoadScene(string sceneName)
+    {
+        switch (sceneName)
+        {
+            case "TestGame":
+                EGS_Dispatcher.RunOnMainThread(LoadGame);
+                break;
+            default:
+                Debug.Log("<color=yellow>Undefined scene name: </color>" + sceneName);
+                break;
+        }
+        
+    }
+
+    #region SceneLoads
+    private void LoadGame()
+    {
+        SceneManager.LoadScene("TestGame");
+    }
+    #endregion
     #endregion
 }

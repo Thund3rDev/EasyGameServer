@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -22,16 +23,22 @@ public class EGS_SE_SocketListener
     /// Delegates
     // Delegate to the AfterClientConnected function
     private Action<Socket> onConnectDelegate;
+    // Delegate to the OnClientDisconnect function
+    private Action<Socket> onDisconnectDelegate;
+
+    // List of timers
+    Dictionary<Socket, Timer> socketTimers = new Dictionary<Socket, Timer>();
     #endregion
 
     #region Constructors
     /// <summary>
     /// Empty constructor.
     /// </summary>
-    public EGS_SE_SocketListener(EGS_Log log, Action<Socket> afterClientConnected)
+    public EGS_SE_SocketListener(EGS_Log log, Action<Socket> afterClientConnected, Action<Socket> onClientDisconnect)
     {
         egs_Log = log;
         onConnectDelegate = afterClientConnected;
+        onDisconnectDelegate = onClientDisconnect;
     }
     #endregion
 
@@ -85,11 +92,19 @@ public class EGS_SE_SocketListener
         // Do things on client connected.
         onConnectDelegate(handler);
 
+        // Put a heartbeat for the client socket.
+        HeartbeatClient(handler);
+
         // Create the state object and begin receive.  
         StateObject state = new StateObject();
         state.workSocket = handler;
         handler.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
             new AsyncCallback(ReadCallback), state);
+
+        // Start listening for connections asynchronously.
+        listener.BeginAccept(
+            new AsyncCallback(AcceptCallback),
+            listener);
     }
 
     /// <summary>
@@ -123,6 +138,9 @@ public class EGS_SE_SocketListener
             // Handle the messages (split should leave one empty message at the end so we skip it by substract - 1 to the length)
             for (int i = 0; i < (receivedMessages.Length - 1); i++)
                 HandleMessage(receivedMessages[i], handler);
+
+            /*if (!handler.Connected || handler.Available == 0)
+                onDisconnectDelegate(handler);*/
 
             // Keep receiving for that socket.
             state = new StateObject();
@@ -193,25 +211,74 @@ public class EGS_SE_SocketListener
                 EGS_User receivedUser = JsonUtility.FromJson<EGS_User>(receivedMessage.messageContent);
 
                 // Display data on the console.
-                //egs_Log.Log(receivedMessage.messageContent);
                 egs_Log.Log("<color=purple>Data:</color> UserID: " + receivedUser.getUserID() + " - Username: " + receivedUser.getUsername());
 
                 // Echo the data back to the client.
-                /*EGS_Message msg = new EGS_Message();
+                EGS_Message msg = new EGS_Message();
                 msg.messageType = "JOIN";
                 msg.messageContent = "Welcome, " + receivedUser.getUsername();
                 string jsonMSG = msg.ConvertMessage();
 
-                Send(handler, jsonMSG);*/
+                Send(handler, jsonMSG);
                 break;
             case "TEST_MESSAGE":
                 // Display data on the console.  
                 egs_Log.Log("<color=purple>Data:</color> " + receivedMessage.messageContent);
                 break;
+            case "input":
+                // TODO: Server must calculate movement and update position, which will be stored in a game instance on the server.
+                // Get the input data
+                /*string[] inputs = receivedMessage.messageContent.Split(',');
+
+                // Input[0] = userName - Inputs[1-4] = directions
+                // Calculate movement.
+                Vector3 movement = new Vector3();
+
+                if (inputs[1] == "true")
+                    movement.y += 1;
+
+                if (inputs[2] == "true")
+                    movement.y -= 1;
+
+                if (inputs[3] == "true")
+                    movement.x -= 1;
+
+                if (inputs[4] == "true")
+                    movement.x += 1;
+
+                // Multiply by speed.
+                movement *= 10;*/
+
+
+                break;
             default:
                 egs_Log.Log("<color=yellow>Undefined message type: </color>" + receivedMessage.messageType);
                 break;
         }
+    }
+
+    private void HeartbeatClient(Socket client_socket)
+    {
+        var startTimeSpan = TimeSpan.FromSeconds(1);
+        var periodTimeSpan = TimeSpan.FromSeconds(1);
+
+        Timer timer = new Timer((e) =>
+        {
+            CheckIfClientIsStillConnected(client_socket);
+        }, null, startTimeSpan, periodTimeSpan);
+
+        socketTimers.Add(client_socket, timer);
+    }
+
+    private void CheckIfClientIsStillConnected(Socket client_socket)
+    {
+        if (!client_socket.Connected || client_socket.Available == 0)
+        {
+            onDisconnectDelegate(client_socket);
+            socketTimers[client_socket].Dispose();
+            socketTimers.Remove(client_socket);
+        }
+            
     }
     #endregion
 }

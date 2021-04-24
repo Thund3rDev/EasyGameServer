@@ -1,4 +1,5 @@
 using System.IO;
+using System.Net.Sockets;
 using System.Xml;
 using UnityEngine;
 
@@ -24,14 +25,17 @@ public class EGS_Client : MonoBehaviour
     #endregion
 
     #region Unity Methods
-    private void Start()
+    private void Awake()
     {
         if (client_instance == null)
+        {
             client_instance = this;
+            DontDestroyOnLoad(this.gameObject);
+        }
         else
-            Destroy(this);
+            Destroy(this.gameObject);
 
-        DontDestroyOnLoad(this);
+        
     }
     #endregion
 

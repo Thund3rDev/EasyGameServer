@@ -161,6 +161,19 @@ public class EGS_Log : MonoBehaviour
     }
 
     /// <summary>
+    /// Method LogToFile, that will log the string only to the file.
+    /// </summary>
+    /// <param name="logString"></param>
+    public void LogToFile(string logString)
+    {
+        // Log the string.
+        lock (logLock)
+        {
+            streamWriter.WriteLine(logString);
+        }
+    }
+
+    /// <summary>
     /// Method CloseLog, that closes the file where the log was writing.
     /// </summary>
     public void CloseLog()
