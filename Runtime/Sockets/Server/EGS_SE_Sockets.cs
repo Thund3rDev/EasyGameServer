@@ -72,7 +72,7 @@ public class EGS_SE_Sockets
         // Save it for later use.
         // usersConnected.add(clientSocket, user);
 
-        if (EGS_ServerManager.DEBUG_MODE)
+        if (EGS_ServerManager.DEBUG_MODE > 0)
         {
             egs_Log.Log("<color=blue>Client</color> connected. IP: " + clientSocket.RemoteEndPoint);
         }
@@ -94,13 +94,13 @@ public class EGS_SE_Sockets
         // Remove it from connected users.
         // usersConnected.remove(clientSocket);
 
-        if (EGS_ServerManager.DEBUG_MODE)
+        if (EGS_ServerManager.DEBUG_MODE > 0)
         {
             egs_Log.Log("<color=blue>Client</color> disconnected. IP: " + clientSocket.RemoteEndPoint);
         }
 
-        clientSocket.Shutdown(SocketShutdown.Both);
-        clientSocket.Close();
+        //clientSocket.Shutdown(SocketShutdown.Both);
+        //clientSocket.Close();
     }
     #endregion
     #endregion

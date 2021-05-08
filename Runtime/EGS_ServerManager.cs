@@ -17,8 +17,8 @@ public class EGS_ServerManager : MonoBehaviour
     private bool serverStarted = false;
 
 
-    [Tooltip("Bool that indicates if server is in debug mode")]
-    public static readonly bool DEBUG_MODE = true;
+    [Tooltip("Int that indicates the level of debug")]
+    public static readonly int DEBUG_MODE = 1; // 0: No debug | 1: Minimal debug | 2: Complete debug
 
     [Header("References")]
     [Tooltip("Reference to the Log")]

@@ -15,6 +15,9 @@ public class EGS_CL_Sockets
 
     // Instance of the handler for the client socket.
     private EGS_CL_SocketClient clientSocketHandler;
+
+    // Player position.
+    public static Vector3 playerPosition = new Vector3();
     #endregion
 
     #region Constructors

@@ -198,7 +198,8 @@ public class EGS_CL_SocketClient
 
             // Complete sending the data to the remote device.  
             int bytesSent = client.EndSend(ar);
-            Debug.Log("[CLIENT] Sent " + bytesSent + " bytes to server.");
+            if (EGS_ServerManager.DEBUG_MODE > 1)
+                Debug.Log("[CLIENT] Sent " + bytesSent + " bytes to server.");
 
             // Signal that all bytes have been sent.  
             sendDone.Set();
@@ -215,13 +216,16 @@ public class EGS_CL_SocketClient
         EGS_Message receivedMessage = new EGS_Message();
         receivedMessage = JsonUtility.FromJson<EGS_Message>(content);
 
-        if (EGS_ServerManager.DEBUG_MODE)
+        if (EGS_ServerManager.DEBUG_MODE > 1)
             Debug.Log("Read " + content.Length + " bytes from socket - " + handler.RemoteEndPoint +
             " - Message type: " + receivedMessage.messageType);
 
         // Depending on the messageType, do different things
         switch (receivedMessage.messageType)
         {
+            case "TEST_MESSAGE":
+                Debug.Log("Received test message from server");
+                break;
             case "CONNECT":
                 // Test data.
                 EGS_User thisUser = new EGS_User();
@@ -243,11 +247,23 @@ public class EGS_CL_SocketClient
 
                 // Wait until send is done.
                 sendDone.WaitOne();
+
+                new Thread(() => KeepAlive()).Start();
                 break;
             case "JOIN":
                 // Load new scene on main thread.
                 LoadScene("TestGame");
-                
+                break;
+            case "POSITION":
+                Vector3 position = new Vector3();
+                string[] stringPos = receivedMessage.messageContent.Split('|');
+
+                float[] numericPos = new float[stringPos.Length];
+                for (int i = 0; i < numericPos.Length; i++)
+                    numericPos[i] = float.Parse(stringPos[i]);
+
+                position.Set(numericPos[0], numericPos[1], numericPos[2]);
+                EGS_CL_Sockets.playerPosition = position;
                 break;
             default:
                 Debug.Log("<color=yellow>Undefined message type: </color>" + receivedMessage.messageType);
@@ -258,6 +274,23 @@ public class EGS_CL_SocketClient
         Receive(socket_client);
     }
 
+    private void KeepAlive()
+    {
+        while (EGS_Client.connectedToServer)
+        {
+            // Tell the server client is still alive.
+            EGS_Message msg = new EGS_Message();
+            msg.messageType = "KEEP_ALIVE";
+            msg.messageContent = "";
+            string jsonMSG = msg.ConvertMessage();
+
+            Send(socket_client, jsonMSG);
+
+            Thread.Sleep(1000);
+        }
+    }
+
+    #region MainThreadFunctions
     private void LoadScene(string sceneName)
     {
         switch (sceneName)
@@ -277,6 +310,7 @@ public class EGS_CL_SocketClient
     {
         SceneManager.LoadScene("TestGame");
     }
+    #endregion
     #endregion
     #endregion
 }
