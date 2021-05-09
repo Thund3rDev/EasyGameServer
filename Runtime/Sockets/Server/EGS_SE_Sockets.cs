@@ -20,7 +20,7 @@ public class EGS_SE_Sockets
     private int serverPort;
 
     // Handler for the socket listener.
-    private EGS_SE_SocketListener serverSocketHandler;
+    private EGS_SE_SocketController serverSocketHandler;
 
     /// References
     // Reference to the Log.
@@ -52,7 +52,7 @@ public class EGS_SE_Sockets
         EndPoint localEP = CreateSocket(serverIP, serverPort);
 
         // Connect to server
-        serverSocketHandler = new EGS_SE_SocketListener(egs_Log, AfterClientConnected, OnClientDisconnected);
+        serverSocketHandler = new EGS_SE_SocketController(egs_Log, AfterClientConnected, OnClientDisconnected);
         serverSocketHandler.StartListening(serverPort, localEP, socket_listener);
     }
 

@@ -30,18 +30,18 @@ public class EGS_Game
 
     // EGS.
     private EGS_Log egs_Log;
-    private EGS_SE_SocketListener socketListener;
+    private EGS_SE_SocketController socketController;
 
     // Game.
-    Dictionary<string, EGS_Player> players = new Dictionary<string, EGS_Player>();
+    List<EGS_Player> players = new List<EGS_Player>();
 
     #endregion
 
 
-    public EGS_Game(EGS_Log e, EGS_SE_SocketListener sl, Dictionary<string, EGS_Player> players_, int room_)
+    public EGS_Game(EGS_Log e, EGS_SE_SocketController sc, List<EGS_Player> players_, int room_)
     {
         egs_Log = e;
-        socketListener = sl;
+        socketController = sc;
         players = players_;
         room = room_;
     }
@@ -55,15 +55,9 @@ public class EGS_Game
         this.gameStarted = gameStarted;
     }
 
-    public List<EGS_Player> getPlayers()
+    public List<EGS_Player> GetPlayers()
     {
-        List<EGS_Player> playersToGet = new List<EGS_Player>();
-        foreach (EGS_Player p in players.Values)
-        {
-            playersToGet.Add(p);
-        }
-
-        return playersToGet;
+        return players;
     }
 
     public void StartGameLoop()
@@ -109,12 +103,18 @@ public class EGS_Game
 
     public void Broadcast(EGS_Message message)
     {
-        foreach (EGS_Player p in players.Values)
+        foreach (EGS_Player p in players)
         {
             try
             {
                 threadLock.WaitOne();
-                socketListener.Send(p.GetUser().getSocket(), message.ConvertMessage());
+                socketController.Send(p.GetUser().getSocket(), message.ConvertMessage());
+            }
+            catch (SocketException)
+            {
+                socketController.DisconnectClient(p.GetUser().getSocket());
+                players.Remove(p);
+                egs_Log.Log("Disconnected player " + p.GetUser().getUsername() +" from game at room: " + room);
             }
             catch (Exception e)
             {
@@ -148,7 +148,7 @@ public class EGS_Game
             }*/
             //egs_log.Log(msg.ConvertMessage());
 
-            foreach (EGS_Player p in players.Values)
+            foreach (EGS_Player p in players)
             {
                 p.CalculatePosition(TICK_RATE);
                 Vector3 playerPos = p.GetPosition();

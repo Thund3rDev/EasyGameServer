@@ -6,11 +6,12 @@ using System.Threading;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Timers;
+using System.Linq;
 
 /// <summary>
-/// Class EGS_SE_SocketListener, that controls the server receiver socket.
+/// Class EGS_SE_SocketController, that controls the server receiver socket.
 /// </summary>
-public class EGS_SE_SocketListener
+public class EGS_SE_SocketController
 {
     #region Variables
     /// ManualResetEvents
@@ -33,15 +34,16 @@ public class EGS_SE_SocketListener
     // Players in game
     private Dictionary<string, EGS_Player> playersInGame = new Dictionary<string, EGS_Player>();
 
-    // TEST
-    private EGS_Game testGame;
+    // Test
+    int room = -1;
+
     #endregion
 
     #region Constructors
     /// <summary>
     /// Empty constructor.
     /// </summary>
-    public EGS_SE_SocketListener(EGS_Log log, Action<Socket> afterClientConnected, Action<Socket> onClientDisconnect)
+    public EGS_SE_SocketController(EGS_Log log, Action<Socket> afterClientConnected, Action<Socket> onClientDisconnect)
     {
         egs_Log = log;
         onConnectDelegate = afterClientConnected;
@@ -186,6 +188,7 @@ public class EGS_SE_SocketListener
                 egs_Log.Log("Sent " + bytesSent + " bytes to client.");
 
         }
+        catch (SocketException) { }
         catch (Exception e)
         {
             egs_Log.LogError(e.ToString());
@@ -236,17 +239,14 @@ public class EGS_SE_SocketListener
                 // TODO: Server must know how many players for a game and start after a certain number
                 // of players have connected for a game.
 
-                testGame = new EGS_Game(egs_Log, this, playersInGame, 0);
-                testGame.StartGameLoop();
+                room = EGS_GamesManager.gm_instance.CreateGame(this, playersInGame.Values.ToList<EGS_Player>());
+                EGS_GamesManager.gm_instance.Ready(room);
                 break;
             case "TEST_MESSAGE":
                 // Display data on the console.  
                 egs_Log.Log("<color=purple>Data:</color> " + receivedMessage.messageContent);
                 break;
             case "INPUT":
-                // TODO: This should be done in a server tick function, not everytime it gets the input.
-                // Also, it should assign the data to calculate on the next tick.
-
                 // Get the input data
                 // Inputs[0] = userName | Inputs[1-4] = directions.
                 string[] inputs = receivedMessage.messageContent.Split(',');
@@ -260,17 +260,6 @@ public class EGS_SE_SocketListener
 
                 // Assign its inputs.
                 thisPlayer.SetInputs(realInputs);
-
-                // Calculate its position.
-                //thisPlayer.CalculatePosition();
-
-                /*// Send position to player.
-                Vector3 playerPos = thisPlayer.GetPosition();
-                msg.messageType = "POSITION";
-                msg.messageContent = playerPos.x + "|" + playerPos.y + "|" + playerPos.z;
-                jsonMSG = msg.ConvertMessage();
-
-                Send(handler, jsonMSG);*/
                 break;
             default:
                 egs_Log.Log("<color=yellow>Undefined message type: </color>" + receivedMessage.messageType);
@@ -282,22 +271,21 @@ public class EGS_SE_SocketListener
     {
         socketTimeoutCounters.Add(client_socket, new System.Timers.Timer(3000));
         socketTimeoutCounters[client_socket].Start();
-        socketTimeoutCounters[client_socket].Elapsed += (sender, e) => CheckIfClientIsStillConnected(sender, e, client_socket);
+        socketTimeoutCounters[client_socket].Elapsed += (sender, e) => DisconnectClientByTimeout(sender, e, client_socket);
     }
 
-    private void CheckIfClientIsStillConnected(object sender, ElapsedEventArgs e, Socket client_socket)
+    private void DisconnectClientByTimeout(object sender, ElapsedEventArgs e, Socket client_socket)
     {
-        DisconnectClientByTimeout(client_socket);
+        DisconnectClient(client_socket);
     }
 
-    private void DisconnectClientByTimeout(Socket client_socket)
+    public void DisconnectClient(Socket client_socket)
     {
         onDisconnectDelegate(client_socket);
         socketTimeoutCounters[client_socket].Close();
         socketTimeoutCounters.Remove(client_socket);
 
-        // PROVISIONAL.
-        testGame.StopGameLoop();
+        EGS_GamesManager.gm_instance.FinishGame(room);
     }
 
     private void TestMessage(Socket client_socket)

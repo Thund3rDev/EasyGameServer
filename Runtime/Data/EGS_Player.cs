@@ -6,16 +6,11 @@ using UnityEngine;
 public class EGS_Player
 {
     #region Variables
-    // User assigned to the player.
     private EGS_User user;
 
-    // Position of the player ingame
+    private int room; // -1 means no room.
     private Vector3 position;
-
-    // Speed of the player
     private float speed;
-
-    // Inputs
     private bool[] inputs;
     #endregion
 
@@ -26,6 +21,8 @@ public class EGS_Player
     public EGS_Player(EGS_User user_)
     {
         this.user = user_;
+
+        this.room = -1;
         this.position = new Vector3();
         this.speed = 0.002f;
         this.inputs = new bool[4];
@@ -70,6 +67,18 @@ public class EGS_Player
     /// </summary>
     /// <param name="u">New User</param>
     public void SetUser(EGS_User u) { user = u; }
+
+    /// <summary>
+    /// Getter for Room.
+    /// </summary>
+    /// <returns>Room</returns>
+    public int GetRoom() { return room; }
+
+    /// <summary>
+    /// Setter for Room.
+    /// </summary>
+    /// <param name="r">New Room</param>
+    public void SetRoom(int r) { room = r; }
 
     /// <summary>
     /// Getter for Position.
