@@ -34,37 +34,37 @@ public class EGS_User
     /// Getter for User ID.
     /// </summary>
     /// <returns>User ID</returns>
-    public int getUserID() { return userID; }
+    public int GetUserID() { return userID; }
 
     /// <summary>
     /// Setter for User ID.
     /// </summary>
     /// <param name="u">New User ID</param>
-    public void setUserID(int u) { userID = u; }
+    public void SetUserID(int u) { userID = u; }
 
     /// <summary>
     /// Getter for user socket.
     /// </summary>
     /// <returns>User socket</returns>
-    public Socket getSocket() { return socket; }
+    public Socket GetSocket() { return socket; }
 
     /// <summary>
     /// Setter for user socket.
     /// </summary>
     /// <param name="u">New user socket</param>
-    public void setSocket(Socket s) { socket = s; }
+    public void SetSocket(Socket s) { socket = s; }
 
     /// <summary>
     /// Getter for the user name.
     /// </summary>
     /// <returns>User name</returns>
-    public string getUsername() { return username; }
+    public string GetUsername() { return username; }
 
     /// <summary>
     /// Setter for the user name.
     /// </summary>
     /// <param name="u">New User name</param>
-    public void setUsername(string u) { username = u; }
+    public void SetUsername(string u) { username = u; }
     #endregion
 
 }

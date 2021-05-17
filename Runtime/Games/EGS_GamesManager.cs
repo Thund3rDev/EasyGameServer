@@ -15,7 +15,7 @@ public class EGS_GamesManager : MonoBehaviour
     public readonly int MAX_GAMES = 5;
 
     [Tooltip("Number of players per game")]
-    public readonly int PLAYERS_PER_GAME = 1;
+    public readonly int PLAYERS_PER_GAME = 2;
 
     [Header("Games")]
     [Tooltip("ConcurrentDictionary that stores the games")]
@@ -72,7 +72,7 @@ public class EGS_GamesManager : MonoBehaviour
         foreach (EGS_Player p in playersToGame)
         {
             p.SetRoom(room);
-            logString += p.GetUser().getUsername() + ", ";
+            logString += p.GetUser().GetUsername() + ", ";
         }
 
         // Create a new game and add it to the dictionary of active games.
@@ -110,7 +110,7 @@ public class EGS_GamesManager : MonoBehaviour
         }
 
         // Unlock the access.
-        games[room].StartGame_Lock.Dispose();
+        games[room].StartGame_Lock.ReleaseMutex();
 
         // Return if game can start.
         return canGameStart;

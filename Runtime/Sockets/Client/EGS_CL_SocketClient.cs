@@ -26,6 +26,12 @@ public class EGS_CL_SocketClient
 
     // Socket for the client.
     private Socket socket_client;
+
+    // Thread for the KeepAlive function.
+    public Thread keepAliveThread;
+
+    // This client room. Test.
+    int room = -1;
     #endregion
 
     #region Constructors
@@ -220,6 +226,10 @@ public class EGS_CL_SocketClient
             Debug.Log("Read " + content.Length + " bytes from socket - " + handler.RemoteEndPoint +
             " - Message type: " + receivedMessage.messageType);
 
+        // Message to send.
+        EGS_Message msg;
+        string jsonMSG;
+
         // Depending on the messageType, do different things
         switch (receivedMessage.messageType)
         {
@@ -229,28 +239,52 @@ public class EGS_CL_SocketClient
             case "CONNECT":
                 // Test data.
                 EGS_User thisUser = new EGS_User();
-                thisUser.setUserID(0);
-                thisUser.setUsername("MegaSalsero14");
+                thisUser.SetUserID(0);
+                thisUser.SetUsername(EGS_Client.client_instance.username);
 
                 // Convert user to JSON.
                 string userJson = JsonUtility.ToJson(thisUser);
 
-                EGS_Message thisMessage = new EGS_Message();
-                thisMessage.messageType = "JOIN";
-                thisMessage.messageContent = userJson;
+                msg = new EGS_Message();
+                msg.messageType = "JOIN_SERVER";
+                msg.messageContent = userJson;
 
                 // Convert message to JSON.
-                string messageJson = thisMessage.ConvertMessage();
+                jsonMSG = msg.ConvertMessage();
 
                 // Send data to server.
-                Send(socket_client, messageJson);
+                Send(socket_client, jsonMSG);
 
                 // Wait until send is done.
                 sendDone.WaitOne();
 
-                new Thread(() => KeepAlive()).Start();
+                // Start a new thread with the KeepAlive function.
+                keepAliveThread = new Thread(() => KeepAlive());
+                keepAliveThread.Start();
                 break;
-            case "JOIN":
+            case "JOIN_SERVER":
+                // Load new scene on main thread.
+                LoadScene("MainMenu");
+                break;
+            case "GAME_FOUND":
+                EGS_UpdateData gameData = JsonUtility.FromJson<EGS_UpdateData>(receivedMessage.messageContent);
+
+                // List of players at the game.
+                //gameData.GetPlayersAtGame();
+
+                room = gameData.GetRoom();
+
+                msg = new EGS_Message();
+                msg.messageType = "READY";
+                msg.messageContent = "" + room;
+
+                // Convert message to JSON.
+                jsonMSG = msg.ConvertMessage();
+
+                // Send data to server.
+                Send(socket_client, jsonMSG);
+                break;
+            case "GAME_START":
                 // Load new scene on main thread.
                 LoadScene("TestGame");
                 break;
@@ -295,6 +329,9 @@ public class EGS_CL_SocketClient
     {
         switch (sceneName)
         {
+            case "MainMenu":
+                EGS_Dispatcher.RunOnMainThread(LoadMainMenu);
+                break;
             case "TestGame":
                 EGS_Dispatcher.RunOnMainThread(LoadGame);
                 break;
@@ -306,6 +343,11 @@ public class EGS_CL_SocketClient
     }
 
     #region SceneLoads
+    private void LoadMainMenu()
+    {
+        SceneManager.LoadScene("MainMenu");
+    }
+
     private void LoadGame()
     {
         SceneManager.LoadScene("TestGame");

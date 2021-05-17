@@ -22,6 +22,9 @@ public class EGS_Client : MonoBehaviour
 
     [Tooltip("Controller for client socket")]
     private EGS_CL_Sockets clientSocketController = null;
+
+    // Test:
+    public string username;
     #endregion
 
     #region Unity Methods
@@ -33,9 +36,12 @@ public class EGS_Client : MonoBehaviour
             DontDestroyOnLoad(this.gameObject);
         }
         else
-            Destroy(this.gameObject);
+        {
+            // Keep Alive
+            //client_instance.clientSocketController.clientSocketHandler.keepAliveThread.Start();
 
-        
+            Destroy(this.gameObject);
+        }
     }
     #endregion
 
@@ -90,6 +96,22 @@ public class EGS_Client : MonoBehaviour
         // Send the message by the socket controller.
         clientSocketController.SendMessage(type, msg);
     }
+
+    /// <summary>
+    /// Method JoinQueue, that will ask the server for a game.
+    /// </summary>
+    public void JoinQueue()
+    {
+        SendMessage("QUEUE_JOIN", "");
+    }
+
+    /// <summary>
+    /// Method LeaveQueue, to stop searching a game.
+    /// </summary>
+    public void LeaveQueue()
+    {
+        SendMessage("QUEUE_LEAVE", "");
+    }
     #endregion
 
     #region Private Methods
@@ -119,6 +141,11 @@ public class EGS_Client : MonoBehaviour
         // Get server port.
         node = doc.DocumentElement.SelectSingleNode("//port");
         serverData.serverPort = int.Parse(node.InnerText);
+
+        // Test.
+        // Get player username.
+        node = doc.DocumentElement.SelectSingleNode("//username");
+        username = node.InnerText;
     }
     #endregion
 }

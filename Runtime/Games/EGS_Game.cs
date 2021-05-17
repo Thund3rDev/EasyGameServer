@@ -108,13 +108,13 @@ public class EGS_Game
             try
             {
                 threadLock.WaitOne();
-                socketController.Send(p.GetUser().getSocket(), message.ConvertMessage());
+                socketController.Send(p.GetUser().GetSocket(), message.ConvertMessage());
             }
             catch (SocketException)
             {
-                socketController.DisconnectClient(p.GetUser().getSocket());
+                socketController.DisconnectClient(p.GetUser().GetSocket());
                 players.Remove(p);
-                egs_Log.Log("Disconnected player " + p.GetUser().getUsername() +" from game at room: " + room);
+                egs_Log.Log("Disconnected player " + p.GetUser().GetUsername() +" from game at room: " + room);
             }
             catch (Exception e)
             {
