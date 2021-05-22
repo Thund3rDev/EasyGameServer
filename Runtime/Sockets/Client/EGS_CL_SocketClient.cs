@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -269,8 +270,14 @@ public class EGS_CL_SocketClient
             case "GAME_FOUND":
                 EGS_UpdateData gameData = JsonUtility.FromJson<EGS_UpdateData>(receivedMessage.messageContent);
 
-                // List of players at the game.
-                //gameData.GetPlayersAtGame();
+                // Clear the dictionaries and add the new players.
+                EGS_CL_Sockets.playerPositions.Clear();
+                EGS_CL_Sockets.playerUsernames.Clear();
+                foreach (EGS_PlayerData playerData in gameData.GetPlayersAtGame())
+                {
+                    EGS_CL_Sockets.playerPositions.Add(playerData.GetIngameID(), playerData.GetPosition());
+                    EGS_CL_Sockets.playerUsernames.Add(playerData.GetIngameID(), playerData.GetUsername());
+                }
 
                 room = gameData.GetRoom();
 
@@ -288,16 +295,13 @@ public class EGS_CL_SocketClient
                 // Load new scene on main thread.
                 LoadScene("TestGame");
                 break;
-            case "POSITION":
-                Vector3 position = new Vector3();
-                string[] stringPos = receivedMessage.messageContent.Split('|');
+            case "UPDATE":
+                EGS_UpdateData updateData = JsonUtility.FromJson<EGS_UpdateData>(receivedMessage.messageContent);
 
-                float[] numericPos = new float[stringPos.Length];
-                for (int i = 0; i < numericPos.Length; i++)
-                    numericPos[i] = float.Parse(stringPos[i]);
-
-                position.Set(numericPos[0], numericPos[1], numericPos[2]);
-                EGS_CL_Sockets.playerPosition = position;
+                foreach (EGS_PlayerData playerData in updateData.GetPlayersAtGame())
+                {
+                    EGS_CL_Sockets.playerPositions[playerData.GetIngameID()] = playerData.GetPosition();
+                }
                 break;
             default:
                 Debug.Log("<color=yellow>Undefined message type: </color>" + receivedMessage.messageType);
@@ -327,32 +331,8 @@ public class EGS_CL_SocketClient
     #region MainThreadFunctions
     private void LoadScene(string sceneName)
     {
-        switch (sceneName)
-        {
-            case "MainMenu":
-                EGS_Dispatcher.RunOnMainThread(LoadMainMenu);
-                break;
-            case "TestGame":
-                EGS_Dispatcher.RunOnMainThread(LoadGame);
-                break;
-            default:
-                Debug.Log("<color=yellow>Undefined scene name: </color>" + sceneName);
-                break;
-        }
-        
+        EGS_Dispatcher.RunOnMainThread(() => { SceneManager.LoadScene(sceneName); });
     }
-
-    #region SceneLoads
-    private void LoadMainMenu()
-    {
-        SceneManager.LoadScene("MainMenu");
-    }
-
-    private void LoadGame()
-    {
-        SceneManager.LoadScene("TestGame");
-    }
-    #endregion
     #endregion
     #endregion
 }

@@ -25,6 +25,15 @@ public class EGS_UpdateData
         playersAtGame = new List<EGS_PlayerData>();
         room = -1;
     }
+
+    /// <summary>
+    /// Base Constructor
+    /// </summary>
+    public EGS_UpdateData(int room_)
+    {
+        playersAtGame = new List<EGS_PlayerData>();
+        room = room_;
+    }
     #endregion
 
     #region Getters and Setters

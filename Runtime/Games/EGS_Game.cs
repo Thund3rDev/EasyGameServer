@@ -103,7 +103,8 @@ public class EGS_Game
 
     public void Broadcast(EGS_Message message)
     {
-        foreach (EGS_Player p in players)
+        List<EGS_Player> playersCopy = new List<EGS_Player>(players);
+        foreach (EGS_Player p in playersCopy)
         {
             try
             {
@@ -135,26 +136,18 @@ public class EGS_Game
         try
         {
             EGS_Message msg = new EGS_Message();
-            /*msg.messageType = "UPDATE";
-            msg.messageContent = "";
+            msg.messageType = "UPDATE";
 
-            foreach (EGS_Player p in players.Values)
+            EGS_UpdateData updateData = new EGS_UpdateData(room);
+
+            for (int i = 0; i < players.Count; i++)
             {
-                p.CalculatePosition();
-
-                Vector3 playerPos = p.GetPosition();
-                msg.messageContent += p.GetUser().getUsername() + "-" + playerPos.x + "|" + playerPos.y + "|" + playerPos.z;
-                msg.messageContent += ";";
-            }*/
-            //egs_log.Log(msg.ConvertMessage());
-
-            foreach (EGS_Player p in players)
-            {
-                p.CalculatePosition(TICK_RATE);
-                Vector3 playerPos = p.GetPosition();
-                msg.messageType = "POSITION";
-                msg.messageContent += playerPos.x + "|" + playerPos.y + "|" + playerPos.z;
+                players[i].CalculatePosition(TICK_RATE);
+                EGS_PlayerData playerData = new EGS_PlayerData(i, players[i].GetUser().GetUsername(), players[i].GetPosition());
+                updateData.GetPlayersAtGame().Add(playerData);
             }
+
+            msg.messageContent = JsonUtility.ToJson(updateData);
 
             Broadcast(msg);
         }

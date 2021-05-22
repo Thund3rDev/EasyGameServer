@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Text.RegularExpressions;
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
@@ -10,28 +11,47 @@ using TMPro;
 public class EGS_Log : MonoBehaviour
 {
     #region Variables
+    [Tooltip("DateTime to print log times")]
+    private DateTime localTime;
+
+    [Header("UI")]
     [Tooltip("Text where the log writes")]
     [SerializeField]
     private TextMeshProUGUI text_log;
 
-    [Tooltip("DateTime to print log times")]
-    private DateTime localTime;
+    [Tooltip("Scrollbar from the log")]
+    [SerializeField]
+    private Scrollbar scrolbar;
+
+    [Tooltip("Bool that indicates if scrollbar must be updated")]
+    private bool scrollbarMustUpdate;
+
+    [Tooltip("Counter to update the scrollbar")]
+    private int scrollbarUpdateCounter = 0;
 
     [Header("IO")]
     [Tooltip("StreamWriter to write log")]
     private StreamWriter streamWriter;
 
-    #region Concurrency
     [Header("Concurrency")]
     [Tooltip("Lock object")]
     private object logLock = new object();
-    #endregion
     #endregion
 
     #region Unity Methods
     private void Update()
     {
-        text_log.UpdateMeshPadding();
+        if (scrollbarMustUpdate)
+        {
+            if (scrollbarUpdateCounter > 2)
+            {
+                scrolbar.value = 0;
+                scrollbarMustUpdate = false;
+                scrollbarUpdateCounter = 0;
+            }
+            else
+                scrollbarUpdateCounter++;
+        }
     }
     #endregion
 
@@ -76,24 +96,15 @@ public class EGS_Log : MonoBehaviour
         // Log the string.
         lock (logLock)
         {
-            try
-            {
+            EGS_Dispatcher.RunOnMainThread(() => { 
                 Debug.Log(stringToLog);
-            }
-            catch (UnityException)
-            {
-            }
-
-            try
-            {
                 text_log.text += stringToLog + "\n";
-            }
-            catch (UnityException)
-            {
-            }
-            
+            });
             streamWriter.WriteLine(nonRichStringToLog);
         }
+
+        // Update the scrollbar.
+        scrollbarMustUpdate = true;
     }
 
     /// <summary>
@@ -108,24 +119,16 @@ public class EGS_Log : MonoBehaviour
         // Log the string.
         lock (logLock)
         {
-            try
+            EGS_Dispatcher.RunOnMainThread(() =>
             {
                 Debug.LogWarning(logString);
-            }
-            catch (UnityException)
-            {
-            }
-
-            try
-            {
                 text_log.text += stringToLog + "\n";
-            }
-            catch (UnityException)
-            {
-            }
-
+            });
             streamWriter.WriteLine(logString);
         }
+
+        // Update the scrollbar.
+        scrollbarMustUpdate = true;
     }
 
     /// <summary>
@@ -140,24 +143,16 @@ public class EGS_Log : MonoBehaviour
         // Log the string.
         lock (logLock)
         {
-            try
+            EGS_Dispatcher.RunOnMainThread(() =>
             {
                 Debug.LogError(logString);
-            }
-            catch (UnityException)
-            {
-            }
-
-            try
-            {
                 text_log.text += stringToLog + "\n";
-            }
-            catch (UnityException)
-            {
-            }
-
+            });
             streamWriter.WriteLine(logString);
         }
+
+        // Update the scrollbar.
+        scrollbarMustUpdate = true;
     }
 
     /// <summary>

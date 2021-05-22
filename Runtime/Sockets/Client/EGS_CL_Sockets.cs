@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -16,8 +17,9 @@ public class EGS_CL_Sockets
     // Instance of the handler for the client socket.
     public EGS_CL_SocketClient clientSocketHandler;
 
-    // Player position.
-    public static Vector3 playerPosition = new Vector3();
+    // Player positions and usernames.
+    public static Dictionary<int, Vector3> playerPositions = new Dictionary<int, Vector3>();
+    public static Dictionary<int, string> playerUsernames = new Dictionary<int, string>();
     #endregion
 
     #region Constructors

@@ -351,10 +351,9 @@ public class EGS_SE_SocketController
             EGS_UpdateData updateData = new EGS_UpdateData();
             updateData.SetRoom(room);
 
-            foreach (EGS_Player p in playersForThisGame)
+            for (int i = 0; i < playersForThisGame.Count; i++)
             {
-                EGS_PlayerData playerData = new EGS_PlayerData();
-                playerData.SetUsername(p.GetUser().GetUsername());
+                EGS_PlayerData playerData = new EGS_PlayerData(i, playersForThisGame[i].GetUser().GetUsername());
 
                 updateData.GetPlayersAtGame().Add(playerData);
             }

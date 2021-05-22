@@ -55,9 +55,9 @@ public class EGS_ServerManager : MonoBehaviour
 
         /// Read all data.
 
-        // Create sockets manager
+        // Create sockets manager.
         egs_se_sockets = new EGS_SE_Sockets(egs_Log, serverData.serverIP, serverData.serverPort);
-        // Start listening for connections
+        // Start listening for connections.
         egs_se_sockets.StartListening();
     }
 

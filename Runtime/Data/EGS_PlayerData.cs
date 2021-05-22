@@ -8,6 +8,9 @@ public class EGS_PlayerData
 {
     #region Variables
     [SerializeField]
+    private int ingameID;
+
+    [SerializeField]
     private string username;
 
     [SerializeField]
@@ -20,12 +23,55 @@ public class EGS_PlayerData
     /// </summary>
     public EGS_PlayerData()
     {
+        this.ingameID = -1;
         this.username = "";
         this.position = new Vector3();
+    }
+
+    /// <summary>
+    /// Username Constructor
+    /// </summary>
+    public EGS_PlayerData(string username_)
+    {
+        this.ingameID = -1;
+        this.username = username_;
+        this.position = new Vector3();
+    }
+
+    /// <summary>
+    /// Base Constructor
+    /// </summary>
+    public EGS_PlayerData(int ingameID_, string username_)
+    {
+        this.ingameID = ingameID_;
+        this.username = username_;
+        this.position = new Vector3();
+    }
+
+    /// <summary>
+    /// Full Constructor
+    /// </summary>
+    public EGS_PlayerData(int ingameID_, string username_, Vector3 position_)
+    {
+        this.ingameID = ingameID_;
+        this.username = username_;
+        this.position = position_;
     }
     #endregion
 
     #region Getters and Setters
+    /// <summary>
+    /// Getter for the ingame ID.
+    /// </summary>
+    /// <returns>Ingame ID</returns>
+    public int GetIngameID() { return ingameID; }
+
+    /// <summary>
+    /// Setter for the ingame ID.
+    /// </summary>
+    /// <param name="i">New ingame ID</param>
+    public void SetIngameID(int i) { ingameID = i; }
+
     /// <summary>
     /// Getter for the user name.
     /// </summary>
