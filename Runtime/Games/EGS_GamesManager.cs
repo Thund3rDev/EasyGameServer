@@ -151,5 +151,23 @@ public class EGS_GamesManager : MonoBehaviour
 
         egs_Log.Log("Stopped and closed game with room " + room);
     }
+
+    public void QuitPlayerFromGame(EGS_Player leftPlayer)
+    {
+        int room = leftPlayer.GetRoom();
+
+        lock (games[room].Game.GetPlayers())
+        {
+            games[room].Game.GetPlayers().Remove(leftPlayer);
+
+            egs_Log.Log("Player " + leftPlayer.GetUser().GetUsername() + " left the game on room " + room + ".");
+
+            if (games[room].Game.GetPlayers().Count == 0)
+                FinishGame(room);
+        }
+
+        leftPlayer.SetRoom(-1);
+        leftPlayer.SetIngameID(-1);
+    }
     #endregion
 }

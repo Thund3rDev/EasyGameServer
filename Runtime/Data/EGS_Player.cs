@@ -9,6 +9,7 @@ public class EGS_Player
     private EGS_User user;
 
     private int room; // -1 means no room.
+    private int ingameID; // -1 means not ingame.
     private Vector3 position;
     private float speed;
     private bool[] inputs;
@@ -23,6 +24,7 @@ public class EGS_Player
         this.user = user_;
 
         this.room = -1;
+        this.ingameID = -1;
         this.position = new Vector3();
         this.speed = 0.002f;
         this.inputs = new bool[4];
@@ -79,6 +81,18 @@ public class EGS_Player
     /// </summary>
     /// <param name="r">New Room</param>
     public void SetRoom(int r) { room = r; }
+
+    /// <summary>
+    /// Getter for the ingame ID.
+    /// </summary>
+    /// <returns>Ingame ID</returns>
+    public int GetIngameID() { return ingameID; }
+
+    /// <summary>
+    /// Setter for the ingame ID.
+    /// </summary>
+    /// <param name="i">New ingame ID</param>
+    public void SetIngameID(int i) { ingameID = i; }
 
     /// <summary>
     /// Getter for Position.

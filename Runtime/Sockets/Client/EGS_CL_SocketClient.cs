@@ -145,6 +145,7 @@ public class EGS_CL_SocketClient
             // from the asynchronous state object.  
             StateObject state = (StateObject)ar.AsyncState;
             Socket client = state.workSocket;
+
             // Read data from the remote device.  
             int bytesRead = client.EndReceive(ar);
 
@@ -153,19 +154,36 @@ public class EGS_CL_SocketClient
                 // There might be more data, so store the data received so far.  
                 state.sb.Append(Encoding.ASCII.GetString(state.buffer, 0, bytesRead));
 
-                // Read message data.
-                response = state.sb.ToString();
+                Debug.Log("Response: " + state.sb.ToString() + ", BytesRead: " + bytesRead);
+
+                if (state.sb.ToString().EndsWith("<EOM>"))
+                {
+                    // All the data has arrived; put it in response.  
+                    if (state.sb.Length > 1)
+                    {
+                        response = state.sb.ToString();
+                    }
+
+                    // Signal that all bytes have been received.  
+                    receiveDone.Set();
+
+                    // Keep receiving messages from the server.
+                    Receive(socket_client);
+
+                    // Split if there is more than one message
+                    string[] receivedMessages = response.Split(new string[] { "<EOM>" }, StringSplitOptions.None);
+
+                    // Handle the messages (split should leave one empty message at the end so we skip it by substract - 1 to the length)
+                    for (int i = 0; i < (receivedMessages.Length - 1); i++)
+                        HandleMessage(receivedMessages[i], socket_client);
+                }
+                else
+                {
+                    // Get the rest of the data.  
+                    client.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
+                        new AsyncCallback(ReceiveCallback), state);
+                }
             }
-
-            // Split if there is more than one message
-            string[] receivedMessages = response.Split(new string[] { "<EOM>" }, StringSplitOptions.None);
-
-            // Handle the messages (split should leave one empty message at the end so we skip it by substract - 1 to the length)
-            for (int i = 0; i < (receivedMessages.Length - 1); i++)
-                HandleMessage(receivedMessages[i], socket_client);
-
-            // Signal that all bytes have been received.  
-            receiveDone.Set();
         }
         catch (ThreadAbortException)
         {
@@ -221,7 +239,16 @@ public class EGS_CL_SocketClient
     {
         // Read data from JSON.
         EGS_Message receivedMessage = new EGS_Message();
-        receivedMessage = JsonUtility.FromJson<EGS_Message>(content);
+        try
+        {
+            receivedMessage = JsonUtility.FromJson<EGS_Message>(content);
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning("ERORR, CONTENT: " + content);
+            throw e;
+        }
+        
 
         if (EGS_ServerManager.DEBUG_MODE > 1)
             Debug.Log("Read " + content.Length + " bytes from socket - " + handler.RemoteEndPoint +
@@ -265,7 +292,7 @@ public class EGS_CL_SocketClient
                 break;
             case "JOIN_SERVER":
                 // Load new scene on main thread.
-                LoadScene("MainMenu");
+                LoadScene("GameMenu");
                 break;
             case "GAME_FOUND":
                 EGS_UpdateData gameData = JsonUtility.FromJson<EGS_UpdateData>(receivedMessage.messageContent);
@@ -307,9 +334,6 @@ public class EGS_CL_SocketClient
                 Debug.Log("<color=yellow>Undefined message type: </color>" + receivedMessage.messageType);
                 break;
         }
-
-        // Keep receiving messages from the server.
-        Receive(socket_client);
     }
 
     private void KeepAlive()
@@ -323,6 +347,8 @@ public class EGS_CL_SocketClient
             string jsonMSG = msg.ConvertMessage();
 
             Send(socket_client, jsonMSG);
+
+            EGS_Dispatcher.RunOnMainThread(() => { Debug.Log("KEEP ALIVE"); });
 
             Thread.Sleep(1000);
         }

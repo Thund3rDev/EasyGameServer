@@ -21,7 +21,7 @@ public class EGS_Client : MonoBehaviour
     public static bool connectedToServer = false;
 
     [Tooltip("Controller for client socket")]
-    private EGS_CL_Sockets clientSocketController = null;
+    public EGS_CL_Sockets clientSocketController = null;
 
     // Test:
     public string username;

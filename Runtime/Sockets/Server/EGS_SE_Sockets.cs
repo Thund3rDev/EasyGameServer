@@ -99,8 +99,8 @@ public class EGS_SE_Sockets
             egs_Log.Log("<color=blue>Client</color> disconnected. IP: " + clientSocket.RemoteEndPoint);
         }
 
-        //clientSocket.Shutdown(SocketShutdown.Both);
-        //clientSocket.Close();
+        clientSocket.Shutdown(SocketShutdown.Both);
+        clientSocket.Close();
     }
     #endregion
     #endregion

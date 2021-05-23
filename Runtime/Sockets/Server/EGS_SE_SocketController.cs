@@ -219,6 +219,7 @@ public class EGS_SE_SocketController
                 egs_Log.Log("<color=purple>Data:</color> " + receivedMessage.messageContent);
                 break;
             case "KEEP_ALIVE":
+                egs_Log.Log("<color=purple>Keep alive:</color> " + connectedUsers[handler].GetUsername());
                 socketTimeoutCounters[handler].Stop();
                 socketTimeoutCounters[handler].Start();
                 break;
@@ -310,6 +311,13 @@ public class EGS_SE_SocketController
                 // Assign its inputs.
                 thisPlayer.SetInputs(realInputs);
                 break;
+            case "LEAVE_GAME":
+                // Get the player.
+                EGS_Player leftPlayer = playersInGame[receivedMessage.messageContent];
+                playersInGame.Remove(receivedMessage.messageContent);
+
+                EGS_GamesManager.gm_instance.QuitPlayerFromGame(leftPlayer);
+                break;
             default:
                 egs_Log.Log("<color=yellow>Undefined message type: </color>" + receivedMessage.messageType);
                 break;
@@ -354,6 +362,7 @@ public class EGS_SE_SocketController
             for (int i = 0; i < playersForThisGame.Count; i++)
             {
                 EGS_PlayerData playerData = new EGS_PlayerData(i, playersForThisGame[i].GetUser().GetUsername());
+                playersForThisGame[i].SetIngameID(i);
 
                 updateData.GetPlayersAtGame().Add(playerData);
             }
@@ -390,8 +399,6 @@ public class EGS_SE_SocketController
         onDisconnectDelegate(client_socket);
         socketTimeoutCounters[client_socket].Close();
         socketTimeoutCounters.Remove(client_socket);
-
-        //EGS_GamesManager.gm_instance.FinishGame(room);
     }
 
     private void TestMessage(Socket client_socket)

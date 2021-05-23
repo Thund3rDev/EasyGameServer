@@ -33,7 +33,8 @@ public class EGS_Game
     private EGS_SE_SocketController socketController;
 
     // Game.
-    List<EGS_Player> players = new List<EGS_Player>();
+    private List<EGS_Player> players = new List<EGS_Player>();
+    private List<EGS_Player> playersCopy = new List<EGS_Player>();
 
     #endregion
 
@@ -64,7 +65,6 @@ public class EGS_Game
     {
         try
         {
-            egs_Log.Log("StartGameLoop");
             timerLoop = new System.Threading.Timer((e) =>
             {
                 Tick();
@@ -79,7 +79,6 @@ public class EGS_Game
 
     public void StopGameLoop()
     {
-        egs_Log.Log("StopGameLoop");
         gameStarted = false;
 
         if (timerLoop != null)
@@ -103,7 +102,11 @@ public class EGS_Game
 
     public void Broadcast(EGS_Message message)
     {
-        List<EGS_Player> playersCopy = new List<EGS_Player>(players);
+        lock (players)
+        {
+            playersCopy = new List<EGS_Player>(players);
+        }
+
         foreach (EGS_Player p in playersCopy)
         {
             try
@@ -115,7 +118,7 @@ public class EGS_Game
             {
                 socketController.DisconnectClient(p.GetUser().GetSocket());
                 players.Remove(p);
-                egs_Log.Log("Disconnected player " + p.GetUser().GetUsername() +" from game at room: " + room);
+                egs_Log.Log("Disconnected player " + p.GetUser().GetUsername() + " from game at room: " + room);
             }
             catch (Exception e)
             {
@@ -140,10 +143,10 @@ public class EGS_Game
 
             EGS_UpdateData updateData = new EGS_UpdateData(room);
 
-            for (int i = 0; i < players.Count; i++)
+            foreach (EGS_Player player in players)
             {
-                players[i].CalculatePosition(TICK_RATE);
-                EGS_PlayerData playerData = new EGS_PlayerData(i, players[i].GetUser().GetUsername(), players[i].GetPosition());
+                player.CalculatePosition(TICK_RATE);
+                EGS_PlayerData playerData = new EGS_PlayerData(player.GetIngameID(), player.GetUser().GetUsername(), player.GetPosition());
                 updateData.GetPlayersAtGame().Add(playerData);
             }
 
