@@ -65,6 +65,7 @@ public class EGS_CL_Sockets
     /// </summary>
     public void Disconnect()
     {
+        // Close the socket.
         CloseSocket();
     }
 

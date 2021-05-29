@@ -154,12 +154,12 @@ public class EGS_CL_SocketClient
                 // There might be more data, so store the data received so far.  
                 state.sb.Append(Encoding.ASCII.GetString(state.buffer, 0, bytesRead));
 
-                Debug.Log("Response: " + state.sb.ToString() + ", BytesRead: " + bytesRead);
+                //Debug.Log("Response: " + state.sb.ToString() + ", BytesRead: " + bytesRead);
 
                 if (state.sb.ToString().EndsWith("<EOM>"))
                 {
                     // All the data has arrived; put it in response.  
-                    if (state.sb.Length > 1)
+                    if (state.sb.Length > 0)
                     {
                         response = state.sb.ToString();
                     }

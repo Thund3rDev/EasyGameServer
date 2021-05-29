@@ -63,19 +63,8 @@ public class EGS_SE_Sockets
     /// <param name="clientSocket">Socket connected to the client</param>
     public void AfterClientConnected(Socket clientSocket)
     {
-        /*// Create an empty user for the new connection.
-        EGS_User user = new EGS_User();
-
-        // Set its socket.
-        user.SetSocket(clientSocket);
-
-        // Save it for later use.
-        // usersConnected.add(clientSocket, user);*/ // This will probably be made on the message receive.
-
         if (EGS_ServerManager.DEBUG_MODE > 0)
-        {
             egs_Log.Log("<color=blue>Client</color> connected. IP: " + clientSocket.RemoteEndPoint);
-        }
 
         // Ask client for user data.
         EGS_Message msg = new EGS_Message();
@@ -91,13 +80,8 @@ public class EGS_SE_Sockets
     /// <param name="clientSocket">Client socket disconnected from the server</param>
     public void OnClientDisconnected(Socket clientSocket)
     {
-        // Remove it from connected users.
-        // usersConnected.remove(clientSocket);
-
         if (EGS_ServerManager.DEBUG_MODE > 0)
-        {
             egs_Log.Log("<color=blue>Client</color> disconnected. IP: " + clientSocket.RemoteEndPoint);
-        }
 
         clientSocket.Shutdown(SocketShutdown.Both);
         clientSocket.Close();
