@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Xml;
 using UnityEngine;
@@ -11,13 +14,13 @@ public class EGS_ServerManager : MonoBehaviour
     [Header("General Variables")]
     [Tooltip("Struct that contains the server data")]
     [HideInInspector]
-    private EGS_ServerData serverData;
+    public static EGS_ServerData serverData;
 
     [Tooltip("Bool that indicates if the server has started or not")]
     private bool serverStarted = false;
 
     [Tooltip("Int that indicates the level of debug")]
-    public static readonly int DEBUG_MODE = 0; // 0: No debug | 1: Minimal debug | 2: Some useful debugs | 3: Complete debug
+    public static readonly int DEBUG_MODE = 2; // 0: No debug | 1: Minimal debug | 2: Some useful debugs | 3: Complete debug
 
     [Header("References")]
     [Tooltip("Reference to the Log")]
@@ -59,6 +62,21 @@ public class EGS_ServerManager : MonoBehaviour
         egs_se_sockets = new EGS_SE_Sockets(egs_Log, serverData.serverIP, serverData.serverPort);
         // Start listening for connections.
         egs_se_sockets.StartListening();
+
+        /// TEST
+        /*EGS_User user1 = new EGS_User();
+        user1.SetUserID(0);
+        user1.SetUsername("user1");
+
+        EGS_User user2 = new EGS_User();
+        user2.SetUserID(1);
+        user2.SetUsername("user2");
+
+        EGS_GameServerStartData startData = new EGS_GameServerStartData(0);
+        startData.GetUsersToGame().Add(user1);
+        startData.GetUsersToGame().Add(user2);
+
+        LaunchGameServer(0, startData);*/
     }
 
     /// <summary>
@@ -79,6 +97,26 @@ public class EGS_ServerManager : MonoBehaviour
         // Save all data.
         // Disconnect players.
         egs_Log.CloseLog();
+    }
+
+    /// TEST
+    public void LaunchGameServer(int gameServerID, EGS_GameServerStartData startData)
+    {
+        string arguments = serverData.version + "#" + serverData.serverIP + "#" + serverData.serverPort + "#" + gameServerID;
+        string jsonString = JsonUtility.ToJson(startData);
+        arguments += "#" + jsonString;
+
+        try
+        {
+            Process myProcess = new Process();
+            myProcess.StartInfo.FileName = "C:\\Users\\Samue\\Desktop\\URJC\\TFG\\Builds\\Game Server\\Easy Game Server.exe";
+            myProcess.StartInfo.Arguments = arguments;
+            myProcess.Start();
+        }
+        catch (Exception e)
+        {
+            egs_Log.LogError(e.ToString());
+        }
     }
 
     #region Private Methods

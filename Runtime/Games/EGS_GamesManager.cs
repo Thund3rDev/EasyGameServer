@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Threading;
 using System.Collections.Concurrent;
+using System.Diagnostics;
+using System;
 
 public class EGS_GamesManager : MonoBehaviour
 {
@@ -23,6 +25,9 @@ public class EGS_GamesManager : MonoBehaviour
 
     [Tooltip("ConcurrentQueue that stores players that are searching a game")]
     public ConcurrentQueue<EGS_Player> searchingGame_players = new ConcurrentQueue<EGS_Player>();
+
+    [Tooltip("Array with the Game Servers")]
+    public EGS_GameServerData[] gameServers = new EGS_GameServerData[10];
 
     [Header("Control")]
     [Tooltip("Integer that assigns the room number for the next room")]
@@ -80,6 +85,8 @@ public class EGS_GamesManager : MonoBehaviour
 
         EGS_GameControlData newGameCD = new EGS_GameControlData(newGame);
         games.TryAdd(room, newGameCD);
+
+        LaunchGameServer(room, playersToGame);
 
         egs_Log.Log(logString);
 
@@ -169,5 +176,61 @@ public class EGS_GamesManager : MonoBehaviour
         leftPlayer.SetRoom(-1);
         leftPlayer.SetIngameID(-1);
     }
+
+    #region Private Methods
+    private void LaunchGameServer(int room, List<EGS_Player> playersToGame)
+    {
+        int gameServerID = -1;
+        bool serverAvailable = false;
+        int index = 0;
+
+        while (!serverAvailable && index < gameServers.Length)
+        {
+            if (gameServers[index] == null)
+            {
+                serverAvailable = true;
+                gameServerID = index;
+            }
+            else
+            {
+                index++;
+            }
+        }
+
+        // There is a server available.
+        if (gameServerID > -1)
+        {
+            
+            EGS_GameServerStartData startData = new EGS_GameServerStartData();
+            startData.SetRoom(room);
+
+            foreach (EGS_Player player in playersToGame)
+                startData.GetUsersToGame().Add(player.GetUser());
+
+            string arguments = EGS_ServerManager.serverData.version + "#" + EGS_ServerManager.serverData.serverIP + "#" + EGS_ServerManager.serverData.serverPort + "#" + gameServerID;
+            string jsonString = JsonUtility.ToJson(startData);
+            arguments += "#" + jsonString;
+
+            gameServers[gameServerID] = new EGS_GameServerData(gameServerID);
+            
+            try
+            {
+                gameServers[gameServerID].Process = new Process();
+                gameServers[gameServerID].Process.StartInfo.FileName = "C:\\Users\\Samue\\Desktop\\URJC\\TFG\\Builds\\Game Server\\Easy Game Server.exe";
+                gameServers[gameServerID].Process.StartInfo.Arguments = arguments;
+                gameServers[gameServerID].Process.Start();
+            }
+            catch (Exception e)
+            {
+                egs_Log.LogError(e.ToString());
+            }
+        }
+        // There is NO server available.
+        else
+        {
+
+        }
+    }
+    #endregion
     #endregion
 }

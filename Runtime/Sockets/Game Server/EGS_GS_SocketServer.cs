@@ -10,9 +10,9 @@ using System.Timers;
 using System.Linq;
 
 /// <summary>
-/// Class EGS_SE_SocketController, that controls the server receiver socket.
+/// Class EGS_GS_SocketServer, that controls the server receiver socket.
 /// </summary>
-public class EGS_SE_SocketController
+public class EGS_GS_SocketServer
 {
     #region Variables
     /// ManualResetEvents
@@ -47,17 +47,14 @@ public class EGS_SE_SocketController
     private Mutex IDMutex = new Mutex();
     private int nextID = 0;
 
-    /// Game servers.
-    private Dictionary<Socket, int> gameServersAssignment = new Dictionary<Socket, int>();
     #endregion
 
     #region Constructors
     /// <summary>
     /// Empty constructor.
     /// </summary>
-    public EGS_SE_SocketController(EGS_Log log, Action<Socket> afterClientConnected, Action<Socket> onClientDisconnect)
+    public EGS_GS_SocketServer(Action<Socket> afterClientConnected, Action<Socket> onClientDisconnect)
     {
-        egs_Log = log;
         onConnectDelegate = afterClientConnected;
         onDisconnectDelegate = onClientDisconnect;
     }
@@ -85,12 +82,12 @@ public class EGS_SE_SocketController
                 new AsyncCallback(AcceptCallback),
                 socket_listener);
         }
-        catch(ThreadAbortException)
+        catch (ThreadAbortException)
         {
             //egs_Log.LogWarning("Aborted server thread");
         }
         catch (Exception e)
-        {  
+        {
             egs_Log.LogError(e.ToString());
         }
     }
@@ -166,7 +163,7 @@ public class EGS_SE_SocketController
                 for (int i = 0; i < (receivedMessages.Length - 1); i++)
                     HandleMessage(receivedMessages[i], handler);
 
-                if (EGS_ServerManager.DEBUG_MODE > 2)
+                if (EGS_ServerManager.DEBUG_MODE > 1)
                     egs_Log.Log("Keep receiving messages from: " + handler.RemoteEndPoint);
             }
             else
@@ -206,7 +203,7 @@ public class EGS_SE_SocketController
 
             // Complete sending the data to the remote device.  
             int bytesSent = handler.EndSend(ar);
-            if (EGS_ServerManager.DEBUG_MODE > 2)
+            if (EGS_ServerManager.DEBUG_MODE > 1)
                 egs_Log.Log("Sent " + bytesSent + " bytes to client.");
 
         }
@@ -223,7 +220,7 @@ public class EGS_SE_SocketController
         EGS_Message receivedMessage = new EGS_Message();
         receivedMessage = JsonUtility.FromJson<EGS_Message>(content);
 
-        if (EGS_ServerManager.DEBUG_MODE > 2)
+        if (EGS_ServerManager.DEBUG_MODE > 1)
             egs_Log.Log("Read " + content.Length + " bytes from socket - " + handler.RemoteEndPoint +
             " - Message type: " + receivedMessage.messageType);
 
@@ -232,7 +229,6 @@ public class EGS_SE_SocketController
 
         string jsonMSG;
         EGS_User receivedUser;
-        int gameServerID;
 
         // Depending on the messageType, do different things
         switch (receivedMessage.messageType)
@@ -285,7 +281,6 @@ public class EGS_SE_SocketController
                 if (EGS_ServerManager.DEBUG_MODE > 0)
                     egs_Log.Log("Searching game: " + thisUser.GetUsername());
 
-                CheckQueueToStartGame();
                 break;
             case "QUEUE_LEAVE":
                 bool isPlayerInQueue = false;
@@ -350,58 +345,6 @@ public class EGS_SE_SocketController
                 playersInGame.Remove(receivedMessage.messageContent);
 
                 EGS_GamesManager.gm_instance.QuitPlayerFromGame(leftPlayer);
-                break;
-            case "CREATED_GAME_SERVER":
-                // Get the gameServerID.
-                gameServerID = int.Parse(receivedMessage.messageContent);
-                lock (gameServersAssignment)
-                {
-                    gameServersAssignment.Add(handler, gameServerID);
-                }
-
-                if (EGS_ServerManager.DEBUG_MODE > 1)
-                    egs_Log.Log("<color=purple>Game Server created:</color> " + gameServerID + ".");
-
-                EGS_GamesManager.gm_instance.gameServers[gameServerID].Status = EGS_GameServerData.State.CREATED;
-                break;
-            case "KEEP_ALIVE_GAME_SERVER":
-                // Get game server status.
-                string status = receivedMessage.messageContent;
-                gameServerID = 0;
-                // Get the gameServerID.
-                try
-                {
-                    gameServerID = gameServersAssignment[handler];
-                }
-                catch (System.Collections.Generic.KeyNotFoundException)
-                {
-                    // Do nothing.
-                }
-
-                // Reset its timer.
-                if (EGS_ServerManager.DEBUG_MODE > 2)
-                    egs_Log.Log("<color=purple>Keep alive Game Server:</color> " + gameServerID + ". Status: " + status);
-                socketTimeoutCounters[handler].Stop();
-                socketTimeoutCounters[handler].Start();
-
-                // Set game server status.
-                EGS_GamesManager.gm_instance.gameServers[gameServerID].Status = (EGS_GameServerData.State)Enum.Parse(typeof(EGS_GameServerData.State), status);
-
-                // Depending on its status, execute code.
-                switch (status)
-                {
-                    case "CREATED":
-                        // TODO: Tell the GAME SERVER that the master server is going to tell the players to connect to it.
-                        // Then, the GAME SERVER changes its status to waiting.
-                        break;
-                    case "WAITING_PLAYERS":
-                        break;
-                    case "STARTED":
-                        break;
-                    case "FINISHED":
-                        break;
-                }
-
                 break;
             default:
                 egs_Log.Log("<color=yellow>Undefined message type: </color>" + receivedMessage.messageType);
@@ -501,64 +444,6 @@ public class EGS_SE_SocketController
         egs_Log.Log("<color=purple>Deleted User:</color> UserID: " + userToDelete.GetUserID() + " - Username: " + userToDelete.GetUsername());
     }
 
-    private void CheckQueueToStartGame()
-    {
-        bool areEnoughForAGame = false;
-        List<EGS_Player> playersForThisGame = new List<EGS_Player>();
-
-        // Lock to evit problems with the queue.
-        lock (EGS_GamesManager.gm_instance.searchingGame_players)
-        {
-            // If there are enough players to start a game.
-            if (EGS_GamesManager.gm_instance.searchingGame_players.Count >= EGS_GamesManager.gm_instance.PLAYERS_PER_GAME)
-            {
-                areEnoughForAGame = true;
-                for (int i = 0; i < EGS_GamesManager.gm_instance.PLAYERS_PER_GAME; i++)
-                {
-                    // Get the player from the queue.
-                    EGS_Player playerToGame;
-                    EGS_GamesManager.gm_instance.searchingGame_players.TryDequeue(out playerToGame);
-
-                    // Add the player to the dictionary and the list of this game.
-                    playersInGame.Add(playerToGame.GetUser().GetUsername(), playerToGame);
-                    playersForThisGame.Add(playerToGame);
-                }
-            }
-        }
-
-        // If there are enough players for a game:
-        if (areEnoughForAGame)
-        {
-            // Create the game and get the room number.
-            int room = EGS_GamesManager.gm_instance.CreateGame(this, playersForThisGame);
-
-            // Construct the message to send.
-            EGS_UpdateData updateData = new EGS_UpdateData();
-            updateData.SetRoom(room);
-
-            for (int i = 0; i < playersForThisGame.Count; i++)
-            {
-                EGS_PlayerData playerData = new EGS_PlayerData(i, playersForThisGame[i].GetUser().GetUsername());
-                playersForThisGame[i].SetIngameID(i);
-
-                updateData.GetPlayersAtGame().Add(playerData);
-            }
-
-            // Message for the players.
-            EGS_Message msg = new EGS_Message();
-            msg.messageType = "GAME_FOUND";
-            msg.messageContent = JsonUtility.ToJson(updateData);
-
-            string jsonMSG = msg.ConvertMessage();
-
-            // Message the players so they know that found a game.
-            foreach (EGS_Player p in playersForThisGame)
-            {
-                Send(p.GetUser().GetSocket(), jsonMSG);
-            }
-        }
-    }
-
     public void DisconnectClient(Socket client_socket)
     {
         onDisconnectDelegate(client_socket);
@@ -571,7 +456,7 @@ public class EGS_SE_SocketController
     }
     private void HeartbeatClient(Socket client_socket)
     {
-        socketTimeoutCounters.Add(client_socket, new System.Timers.Timer(15000));
+        socketTimeoutCounters.Add(client_socket, new System.Timers.Timer(3000));
         socketTimeoutCounters[client_socket].Start();
         socketTimeoutCounters[client_socket].Elapsed += (sender, e) => DisconnectClientByTimeout(sender, e, client_socket);
     }

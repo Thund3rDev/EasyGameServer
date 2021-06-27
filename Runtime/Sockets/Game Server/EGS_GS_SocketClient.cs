@@ -8,9 +8,9 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 /// <summary>
-/// Class EGS_CL_SocketClient, that controls the client sender socket.
+/// Class EGS_GS_SocketClient, that controls the client socket for the game server.
 /// </summary>
-public class EGS_CL_SocketClient
+public class EGS_GS_SocketClient
 {
     #region Variables
     /// ManualResetEvents
@@ -30,16 +30,13 @@ public class EGS_CL_SocketClient
 
     // Thread for the KeepAlive function.
     public Thread keepAliveThread;
-
-    // This client room. Test.
-    int room = -1;
     #endregion
 
     #region Constructors
     /// <summary>
     /// Empty constructor.
     /// </summary>
-    public EGS_CL_SocketClient()
+    public EGS_GS_SocketClient()
     {
     }
     #endregion
@@ -99,8 +96,6 @@ public class EGS_CL_SocketClient
 
             Debug.Log("[CLIENT] Socket connected to " +
                 client.RemoteEndPoint.ToString());
-
-            EGS_Client.connectedToServer = true;
 
             // Signal that the connection has been made.  
             connectDone.Set();
@@ -221,7 +216,7 @@ public class EGS_CL_SocketClient
 
             // Complete sending the data to the remote device.  
             int bytesSent = client.EndSend(ar);
-            if (EGS_ServerManager.DEBUG_MODE > 2)
+            if (EGS_ServerManager.DEBUG_MODE > 1)
                 Debug.Log("[CLIENT] Sent " + bytesSent + " bytes to server.");
 
             // Signal that all bytes have been sent.  
@@ -246,9 +241,8 @@ public class EGS_CL_SocketClient
             Debug.LogWarning("ERORR, CONTENT: " + content);
             throw e;
         }
-        
 
-        if (EGS_ServerManager.DEBUG_MODE > 2)
+        if (EGS_ServerManager.DEBUG_MODE > 1)
             Debug.Log("Read " + content.Length + " bytes from socket - " + handler.RemoteEndPoint +
             " - Message type: " + receivedMessage.messageType);
 
@@ -263,70 +257,27 @@ public class EGS_CL_SocketClient
                 Debug.Log("Received test message from server");
                 break;
             case "CONNECT":
-                // Test data.
-                EGS_User thisUser = new EGS_User();
-                thisUser.SetUserID(0);
-                thisUser.SetUsername(EGS_Client.client_instance.username);
-
-                // Convert user to JSON.
-                string userJson = JsonUtility.ToJson(thisUser);
-
-                msg = new EGS_Message();
-                msg.messageType = "JOIN_SERVER";
-                msg.messageContent = userJson;
-
-                // Convert message to JSON.
-                jsonMSG = msg.ConvertMessage();
-
-                // Send data to server.
-                Send(socket_client, jsonMSG);
-
-                // Wait until send is done.
-                sendDone.WaitOne();
+                EGS_GameServer.gameServer_instance.connectedToServer = true;
+                EGS_GameServer.gameServer_instance.gameServerState = EGS_GameServerData.State.CREATED;
+                EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServer.gameServer_instance.test_text.text = "Status: " + Enum.GetName(typeof(EGS_GameServerData.State), EGS_GameServer.gameServer_instance.gameServerState); });
 
                 // Start a new thread with the KeepAlive function.
                 keepAliveThread = new Thread(() => KeepAlive());
                 keepAliveThread.Start();
-                break;
-            case "JOIN_SERVER":
-                // Load new scene on main thread.
-                LoadScene("GameMenu");
-                break;
-            case "GAME_FOUND":
-                EGS_UpdateData gameData = JsonUtility.FromJson<EGS_UpdateData>(receivedMessage.messageContent);
 
-                // Clear the dictionaries and add the new players.
-                EGS_CL_Sockets.playerPositions.Clear();
-                EGS_CL_Sockets.playerUsernames.Clear();
-                foreach (EGS_PlayerData playerData in gameData.GetPlayersAtGame())
-                {
-                    EGS_CL_Sockets.playerPositions.Add(playerData.GetIngameID(), playerData.GetPosition());
-                    EGS_CL_Sockets.playerUsernames.Add(playerData.GetIngameID(), playerData.GetUsername());
-                }
-
-                room = gameData.GetRoom();
-
+                // Send a message to the master server.
                 msg = new EGS_Message();
-                msg.messageType = "READY";
-                msg.messageContent = "" + room;
-
+                msg.messageType = "CREATED_GAME_SERVER";
+                msg.messageContent = "" + EGS_GameServer.gameServer_instance.gameServerID;
+                
                 // Convert message to JSON.
                 jsonMSG = msg.ConvertMessage();
 
                 // Send data to server.
                 Send(socket_client, jsonMSG);
                 break;
-            case "GAME_START":
-                // Load new scene on main thread.
-                LoadScene("TestGame");
-                break;
-            case "UPDATE":
-                EGS_UpdateData updateData = JsonUtility.FromJson<EGS_UpdateData>(receivedMessage.messageContent);
-
-                foreach (EGS_PlayerData playerData in updateData.GetPlayersAtGame())
-                {
-                    EGS_CL_Sockets.playerPositions[playerData.GetIngameID()] = playerData.GetPosition();
-                }
+            case "CLOSE_GAME_SERVER":
+                EGS_GameServer.gameServer_instance.connectedToServer = false;
                 break;
             default:
                 Debug.Log("<color=yellow>Undefined message type: </color>" + receivedMessage.messageType);
@@ -336,12 +287,12 @@ public class EGS_CL_SocketClient
 
     private void KeepAlive()
     {
-        while (EGS_Client.connectedToServer)
+        while (EGS_GameServer.gameServer_instance.connectedToServer)
         {
-            // Tell the server client is still alive.
+            // Tell the server that this game server is still alive.
             EGS_Message msg = new EGS_Message();
-            msg.messageType = "KEEP_ALIVE";
-            msg.messageContent = "";
+            msg.messageType = "KEEP_ALIVE_GAME_SERVER";
+            msg.messageContent = Enum.GetName(typeof(EGS_GameServerData.State), EGS_GameServer.gameServer_instance.gameServerState);
             string jsonMSG = msg.ConvertMessage();
 
             Send(socket_client, jsonMSG);

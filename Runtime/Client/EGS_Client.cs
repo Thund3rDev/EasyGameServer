@@ -37,9 +37,6 @@ public class EGS_Client : MonoBehaviour
         }
         else
         {
-            // Keep Alive
-            //client_instance.clientSocketController.clientSocketHandler.keepAliveThread.Start();
-
             Destroy(this.gameObject);
         }
     }

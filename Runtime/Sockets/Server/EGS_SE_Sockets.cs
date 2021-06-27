@@ -64,7 +64,7 @@ public class EGS_SE_Sockets
     public void AfterClientConnected(Socket clientSocket)
     {
         if (EGS_ServerManager.DEBUG_MODE > 0)
-            egs_Log.Log("<color=blue>Client</color> connected. IP: " + clientSocket.RemoteEndPoint);
+            egs_Log.Log("<color=blue>Client/Game Server</color> connected. IP: " + clientSocket.RemoteEndPoint);
 
         // Ask client for user data.
         EGS_Message msg = new EGS_Message();
@@ -81,7 +81,7 @@ public class EGS_SE_Sockets
     public void OnClientDisconnected(Socket clientSocket)
     {
         if (EGS_ServerManager.DEBUG_MODE > 0)
-            egs_Log.Log("<color=blue>Client</color> disconnected. IP: " + clientSocket.RemoteEndPoint);
+            egs_Log.Log("<color=blue>Client / Game Server</color> disconnected. IP: " + clientSocket.RemoteEndPoint);
 
         clientSocket.Shutdown(SocketShutdown.Both);
         clientSocket.Close();
