@@ -30,14 +30,18 @@ public class EGS_GS_SocketClient
 
     // Thread for the KeepAlive function.
     public Thread keepAliveThread;
+
+    // Sockets controller.
+    EGS_GS_Sockets socketsController;
     #endregion
 
     #region Constructors
     /// <summary>
     /// Empty constructor.
     /// </summary>
-    public EGS_GS_SocketClient()
+    public EGS_GS_SocketClient(EGS_GS_Sockets socketsController_)
     {
+        socketsController = socketsController_;
     }
     #endregion
 
@@ -256,7 +260,7 @@ public class EGS_GS_SocketClient
             case "TEST_MESSAGE":
                 Debug.Log("Received test message from server");
                 break;
-            case "CONNECT":
+            case "CONNECT_TO_MASTER_SERVER":
                 EGS_GameServer.gameServer_instance.connectedToServer = true;
                 EGS_GameServer.gameServer_instance.gameServerState = EGS_GameServerData.State.CREATED;
                 EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServer.gameServer_instance.test_text.text = "Status: " + Enum.GetName(typeof(EGS_GameServerData.State), EGS_GameServer.gameServer_instance.gameServerState); });
@@ -265,10 +269,14 @@ public class EGS_GS_SocketClient
                 keepAliveThread = new Thread(() => KeepAlive());
                 keepAliveThread.Start();
 
+                // Start listening for player connections and wait until it is started.
+                socketsController.StartListening();
+                socketsController.startDone.WaitOne();
+
                 // Send a message to the master server.
                 msg = new EGS_Message();
                 msg.messageType = "CREATED_GAME_SERVER";
-                msg.messageContent = "" + EGS_GameServer.gameServer_instance.gameServerID;
+                msg.messageContent = EGS_GameServer.gameServer_instance.gameServerID + "#" + socketsController.localEP.ToString();
                 
                 // Convert message to JSON.
                 jsonMSG = msg.ConvertMessage();

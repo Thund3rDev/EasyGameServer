@@ -48,43 +48,41 @@ public class EGS_SE_Sockets
     /// </summary>
     public void StartListening()
     {
-        // Create socket and get EndPoint
-        EndPoint localEP = CreateSocket(serverIP, serverPort);
+        // Create socket and get EndPoint.
+        //EndPoint localEP = CreateSocket(serverIP, serverPort);
+        EndPoint localEP = CreateSocket();
 
-        // Connect to server
-        serverSocketHandler = new EGS_SE_SocketController(egs_Log, AfterClientConnected, OnClientDisconnected);
+        // Connect to server.
+        serverSocketHandler = new EGS_SE_SocketController(egs_Log, OnNewConnection, OnClientDisconnected);
         serverSocketHandler.StartListening(serverPort, localEP, socket_listener);
     }
 
     #region Connect and disconnect methods
     /// <summary>
-    /// Method AfterClientConnected, that manages a new connection
+    /// Method OnNewConnection, that manages a new connection.
     /// </summary>
     /// <param name="clientSocket">Socket connected to the client</param>
-    public void AfterClientConnected(Socket clientSocket)
+    public void OnNewConnection(Socket clientSocket)
     {
-        if (EGS_ServerManager.DEBUG_MODE > 0)
-            egs_Log.Log("<color=blue>Client/Game Server</color> connected. IP: " + clientSocket.RemoteEndPoint);
+        if (EGS_ServerManager.DEBUG_MODE > 2)
+            egs_Log.Log("<color=blue>New connection</color>. IP: " + clientSocket.RemoteEndPoint + ".");
 
         // Ask client for user data.
         EGS_Message msg = new EGS_Message();
-        msg.messageType = "CONNECT";
+        msg.messageType = "CONNECT_TO_MASTER_SERVER";
         string jsonMSG = msg.ConvertMessage();
 
         serverSocketHandler.Send(clientSocket, jsonMSG);
     }
 
     /// <summary>
-    /// Method OnClientDisconnected, that manages a disconnection
+    /// Method OnClientDisconnected, that manages a disconnection.
     /// </summary>
     /// <param name="clientSocket">Client socket disconnected from the server</param>
     public void OnClientDisconnected(Socket clientSocket)
     {
-        if (EGS_ServerManager.DEBUG_MODE > 0)
-            egs_Log.Log("<color=blue>Client / Game Server</color> disconnected. IP: " + clientSocket.RemoteEndPoint);
-
-        clientSocket.Shutdown(SocketShutdown.Both);
-        clientSocket.Close();
+        if (EGS_ServerManager.DEBUG_MODE > 2)
+            egs_Log.Log("<color=blue>Closed connection</color>. IP: " + clientSocket.RemoteEndPoint + ".");
     }
     #endregion
     #endregion
@@ -96,12 +94,20 @@ public class EGS_SE_Sockets
     /// <param name="serverIP">IP where server will be set</param>
     /// <param name="serverPort">Port where server will be set</param>
     /// <returns>EndPoint where the server it is</returns>
-    private EndPoint CreateSocket(string serverIP, int serverPort)
+    private EndPoint CreateSocket()
     {
+        IPAddress[] ips = Dns.GetHostAddresses(Dns.GetHostName());
+        IPAddress ipAddress = ips[1];
+
+        int serverPort = EGS_ServerManager.serverData.serverPort;
+
+        // Update server IP
+        EGS_ServerManager.serverData.serverIP = ips[1].ToString();
+
         // Obtain IP direction and endpoint.
-        IPHostEntry ipHostInfo = Dns.GetHostEntry(serverIP);
+        //IPHostEntry ipHostInfo = Dns.GetHostEntry(serverIP);
         // It is IPv4, but if wifi is using, it should be 1 and not 0.
-        IPAddress ipAddress = ipHostInfo.AddressList[0];
+        //IPAddress ipAddress = ipHostInfo.AddressList[0];
         IPEndPoint localEndPoint = new IPEndPoint(ipAddress, serverPort);
 
         // Create a TCP/IP socket.

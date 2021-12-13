@@ -17,8 +17,10 @@ public class EGS_Client : MonoBehaviour
     public static EGS_ServerData serverData;
 
     [Header("Networking")]
-    [Tooltip("Bool that indicates if client is connnected to the server")]
-    public static bool connectedToServer = false;
+    [Tooltip("Bool that indicates if client is connnected to the master server")]
+    public static bool connectedToMasterServer = false;
+    [Tooltip("Bool that indicates if client is connnected to the game server")]
+    public static bool connectedToGameServer = false;
 
     [Tooltip("Controller for client socket")]
     public EGS_CL_Sockets clientSocketController = null;
@@ -49,14 +51,14 @@ public class EGS_Client : MonoBehaviour
     public void ConnectToServer()
     {
         // Check if server already started.
-        if (connectedToServer)
+        if (connectedToMasterServer)
         {
             Debug.LogWarning("Client already connected.");
             return;
         }
 
         // Establish the connection to the server.
-        connectedToServer = true;
+        connectedToMasterServer = true;
 
         // Read server config data.
         ReadServerData();
@@ -73,14 +75,12 @@ public class EGS_Client : MonoBehaviour
     public void DisconnectFromServer()
     {
         // If not connected to server, return.
-        if (!connectedToServer)
+        if (!connectedToMasterServer)
             return;
 
         // Disconnect from server.
-        connectedToServer = false;
-
-        // Stop listening on the socket.
-        clientSocketController.Disconnect();
+        connectedToMasterServer = false;
+        clientSocketController.DisconnectFromServer();
     }
 
     /// <summary>

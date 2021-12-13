@@ -25,9 +25,13 @@ public class EGS_GameServer : MonoBehaviour
     public EGS_GameServerData.State gameServerState;
 
     public int gameServerID = -1;
-    private EGS_GameServerStartData startData;
+    public EGS_GameServerStartData startData;
 
     public TMPro.TextMeshProUGUI test_text;
+
+    public EGS_Game thisGame;
+
+    public readonly int PLAYERS_PER_GAME = 2;
     #endregion
 
     #region Unity Methods
@@ -47,27 +51,27 @@ public class EGS_GameServer : MonoBehaviour
     private void Start()
     {
         ReadArguments();
-        ConnectToServer();
+        ConnectToMasterServer();
     }
     #endregion
 
     #region Class Methods
     /// <summary>
-    /// Method ConnectToServer, that tries to connect to the server.
+    /// Method ConnectToMasterServer, that tries to connect to the server.
     /// </summary>
-    private void ConnectToServer()
+    private void ConnectToMasterServer()
     {
-        // Create client socket manager
+        // Create sockets manager.
         gameServerSocketsController = new EGS_GS_Sockets();
 
-        // Connect to the server
-        gameServerSocketsController.ConnectToServer();
+        // Connect to the server.
+        gameServerSocketsController.ConnectToMasterServer();
     }
 
     /// <summary>
-    /// Method DisconnectFromServer, that will stop sending messages and listening.
+    /// Method DisconnectFromMasterServer, that will stop sending messages and listening.
     /// </summary>
-    private void DisconnectFromServer()
+    private void DisconnectFromMasterServer()
     {
         // Stop listening on the sockets.
         gameServerSocketsController.Disconnect();

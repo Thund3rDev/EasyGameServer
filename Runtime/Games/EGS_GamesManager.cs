@@ -20,9 +20,7 @@ public class EGS_GamesManager : MonoBehaviour
     public readonly int PLAYERS_PER_GAME = 2;
 
     [Header("Games")]
-    [Tooltip("ConcurrentDictionary that stores the games")]
-    public ConcurrentDictionary<int, EGS_GameControlData> games = new ConcurrentDictionary<int, EGS_GameControlData>();
-
+    public Dictionary<int, List<EGS_Player>> playersInRooms = new Dictionary<int, List<EGS_Player>>();
     [Tooltip("ConcurrentQueue that stores players that are searching a game")]
     public ConcurrentQueue<EGS_Player> searchingGame_players = new ConcurrentQueue<EGS_Player>();
 
@@ -80,12 +78,10 @@ public class EGS_GamesManager : MonoBehaviour
             logString += p.GetUser().GetUsername() + ", ";
         }
 
-        // Create a new game and add it to the dictionary of active games.
-        EGS_Game newGame = new EGS_Game(egs_Log, socketController, playersToGame, room);
+        // Add the players to the dictionary of rooms.
+        playersInRooms.Add(room, playersToGame);
 
-        EGS_GameControlData newGameCD = new EGS_GameControlData(newGame);
-        games.TryAdd(room, newGameCD);
-
+        // Launch the GameServer.
         LaunchGameServer(room, playersToGame);
 
         egs_Log.Log(logString);
@@ -94,67 +90,11 @@ public class EGS_GamesManager : MonoBehaviour
         return room;
     }
 
-    /// <summary>
-    /// Method Ready, that checks in a player for the game and returns if all players are to start.
-    /// </summary>
-    /// <param name="room">Room number</param>
-    /// <returns>Bool that indicates if game can start</returns>
-    public bool Ready (int room)
+    public void FinishedGame(int room)
     {
-        // Define a bool to control if game can start.
-        bool canGameStart = false;
-
-        // Lock the access.
-        games[room].StartGame_Lock.WaitOne();
-
-        // Check if all players are ready to start the game.
-        int playersReady = ++games[room].StartGame_Counter;
-
-        if (playersReady == PLAYERS_PER_GAME)
-        {
-            StartGame(room);
-            canGameStart = true;
-        }
-
-        // Unlock the access.
-        games[room].StartGame_Lock.ReleaseMutex();
-
-        // Return if game can start.
-        return canGameStart;
-    }
-
-    private void StartGame(int room)
-    {
-        // Lock the access.
-        gamesLock.WaitOne();
-
-        // Start the game loop for that game.
-        games[room].Game.StartGameLoop();
-
-        // Unlock the access.
-        gamesLock.ReleaseMutex();
-
-        egs_Log.Log("Started game with room " + room);
-    }
-
-    public void FinishGame(int room)
-    {
-        // Lock the access.
-        gamesLock.WaitOne();
-
-        // Stop the game loop for that game.
-        games[room].Game.StopGameLoop();
-
-        // Remove and save locally the game data.
-        EGS_GameControlData gameCD;
-        games.TryRemove(room, out gameCD);
-
-        // Unlock the access.
-        gamesLock.ReleaseMutex();
-
         // Remove the room number for players.
-        foreach (EGS_Player p in gameCD.Game.GetPlayers())
-            p.SetRoom(-1);
+        /*foreach (EGS_Player p in gameCD.Game.GetPlayers())
+            p.SetRoom(-1);*/
 
         egs_Log.Log("Stopped and closed game with room " + room);
     }
@@ -163,15 +103,7 @@ public class EGS_GamesManager : MonoBehaviour
     {
         int room = leftPlayer.GetRoom();
 
-        lock (games[room].Game.GetPlayers())
-        {
-            games[room].Game.GetPlayers().Remove(leftPlayer);
-
-            egs_Log.Log("Player " + leftPlayer.GetUser().GetUsername() + " left the game on room " + room + ".");
-
-            if (games[room].Game.GetPlayers().Count == 0)
-                FinishGame(room);
-        }
+        egs_Log.Log("Player " + leftPlayer.GetUser().GetUsername() + " left the game on room " + room + ".");
 
         leftPlayer.SetRoom(-1);
         leftPlayer.SetIngameID(-1);
@@ -200,32 +132,35 @@ public class EGS_GamesManager : MonoBehaviour
         // There is a server available.
         if (gameServerID > -1)
         {
-            
-            EGS_GameServerStartData startData = new EGS_GameServerStartData();
-            startData.SetRoom(room);
+            EGS_GameServerStartData startData = new EGS_GameServerStartData(room);
 
             foreach (EGS_Player player in playersToGame)
-                startData.GetUsersToGame().Add(player.GetUser());
+            {
+                EGS_UserToGame userToGame = new EGS_UserToGame(player.GetUser(), player.GetIngameID());
+                startData.GetUsersToGame().Add(userToGame);
+            }
 
             string arguments = EGS_ServerManager.serverData.version + "#" + EGS_ServerManager.serverData.serverIP + "#" + EGS_ServerManager.serverData.serverPort + "#" + gameServerID;
             string jsonString = JsonUtility.ToJson(startData);
             arguments += "#" + jsonString;
 
-            gameServers[gameServerID] = new EGS_GameServerData(gameServerID);
-            
+            gameServers[gameServerID] = new EGS_GameServerData(gameServerID, room);
+
             try
             {
                 gameServers[gameServerID].Process = new Process();
                 gameServers[gameServerID].Process.StartInfo.FileName = "C:\\Users\\Samue\\Desktop\\URJC\\TFG\\Builds\\Game Server\\Easy Game Server.exe";
                 gameServers[gameServerID].Process.StartInfo.Arguments = arguments;
                 gameServers[gameServerID].Process.Start();
+
+                egs_Log.Log("Launched Game Server with parameters: " + arguments);
             }
             catch (Exception e)
             {
                 egs_Log.LogError(e.ToString());
             }
         }
-        // There is NO server available.
+        //TODO: There is NO server available.
         else
         {
 

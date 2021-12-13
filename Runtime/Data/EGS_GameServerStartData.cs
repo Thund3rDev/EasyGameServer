@@ -9,7 +9,7 @@ public class EGS_GameServerStartData
 {
     #region Variables
     [SerializeField]
-    private List<EGS_User> usersToGame;
+    private List<EGS_UserToGame> usersToGame;
 
     [SerializeField]
     private int room;
@@ -21,7 +21,7 @@ public class EGS_GameServerStartData
     /// </summary>
     public EGS_GameServerStartData()
     {
-        usersToGame = new List<EGS_User>();
+        usersToGame = new List<EGS_UserToGame>();
         room = -1;
     }
 
@@ -30,7 +30,7 @@ public class EGS_GameServerStartData
     /// </summary>
     public EGS_GameServerStartData(int room_)
     {
-        usersToGame = new List<EGS_User>();
+        usersToGame = new List<EGS_UserToGame>();
         room = room_;
     }
     #endregion
@@ -40,13 +40,13 @@ public class EGS_GameServerStartData
     /// Getter for the list of users to game.
     /// </summary>
     /// <returns>List of users to game</returns>
-    public List<EGS_User> GetUsersToGame() { return usersToGame; }
+    public List<EGS_UserToGame> GetUsersToGame() { return usersToGame; }
 
     /// <summary>
     /// Setter for the list of users to game.
     /// </summary>
     /// <param name="pag">New list of users to game</param>
-    public void SetUsersToGame(List<EGS_User> pag) { usersToGame = pag; }
+    public void SetUsersToGame(List<EGS_UserToGame> pag) { usersToGame = pag; }
 
     /// <summary>
     /// Getter for the game room.

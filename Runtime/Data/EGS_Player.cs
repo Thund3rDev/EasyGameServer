@@ -17,7 +17,7 @@ public class EGS_Player
 
     #region Constructors
     /// <summary>
-    /// Empty Constructor
+    /// Base User Constructor
     /// </summary>
     public EGS_Player(EGS_User user_)
     {
@@ -25,6 +25,20 @@ public class EGS_Player
 
         this.room = -1;
         this.ingameID = -1;
+        this.position = new Vector3();
+        this.speed = 0.002f;
+        this.inputs = new bool[4];
+    }
+
+    /// <summary>
+    /// User and ingameID Constructor
+    /// </summary>
+    public EGS_Player(EGS_User user_, int ingameID_)
+    {
+        this.user = user_;
+
+        this.room = -1;
+        this.ingameID = ingameID_;
         this.position = new Vector3();
         this.speed = 0.002f;
         this.inputs = new bool[4];

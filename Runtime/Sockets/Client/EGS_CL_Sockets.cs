@@ -17,9 +17,14 @@ public class EGS_CL_Sockets
     // Instance of the handler for the client socket.
     public EGS_CL_SocketClient clientSocketHandler;
 
+    // TODO: This CAN'T BE HERE.
     // Player positions and usernames.
     public static Dictionary<int, Vector3> playerPositions = new Dictionary<int, Vector3>();
     public static Dictionary<int, string> playerUsernames = new Dictionary<int, string>();
+
+    // TODO: This CAN'T BE HERE.
+    // Test:
+    public EGS_User thisUser;
     #endregion
 
     #region Constructors
@@ -37,13 +42,42 @@ public class EGS_CL_Sockets
     /// </summary>
     public void ConnectToServer()
     {
-        // Create socket and get EndPoint
-        EndPoint remoteEP = CreateSocket(EGS_Client.serverData.serverIP, EGS_Client.serverData.serverPort);
+        // Obtain IP Address.
+        IPAddress serverIpAddress = ObtainIPAddress(EGS_Client.serverData.serverIP);
+        // Create the Client Socket.
+        CreateClientSocket(serverIpAddress);
+        // Get EndPoint.
+        EndPoint remoteEP = CreateEndpoint(serverIpAddress, EGS_Client.serverData.serverPort);
 
-        // Connect to server
-        clientSocketHandler = new EGS_CL_SocketClient();
-        new Thread(() => clientSocketHandler.StartClient(remoteEP, socket_client)).Start();
-        //clientSocketHandler.StartClient(remoteEP, socket_client);
+        // Connect to server.
+        clientSocketHandler = new EGS_CL_SocketClient(this);
+        clientSocketHandler.StartClient(remoteEP, socket_client);
+
+        // TODO: Value if Thread is necessary or not.
+        //new Thread(() => clientSocketHandler.StartClient(remoteEP, socket_client)).Start();
+    }
+
+    /// <summary>
+    /// Method ConnectToGameServer, to establish a connection to the game server.
+    /// </summary>
+    public void ConnectToGameServer(string serverIP, int serverPort)
+    {
+        // Obtain IP Address.
+        IPAddress gameServerIpAddress = ObtainIPAddress(serverIP);
+
+        // Create the Client Socket. TODO: PROBLEMA AQUI
+        CreateClientSocket(gameServerIpAddress);
+
+        // Get EndPoint.
+        EndPoint remoteEP = CreateEndpoint(gameServerIpAddress, serverPort);
+
+        EGS_Client.connectedToGameServer = true;
+
+        // Connect to game server.
+        clientSocketHandler.StartClient(remoteEP, socket_client);
+
+        // TODO: Value if Thread is necessary or not.
+        //new Thread(() => clientSocketHandler.StartClient(remoteEP, socket_client)).Start();
     }
 
     public void SendMessage(string type, string msg)
@@ -61,46 +95,66 @@ public class EGS_CL_Sockets
     }
 
     /// <summary>
-    /// Method Disconnect, to stop the client thread and disconnect from server.
+    /// Method DisconnectFromServer, to stop the client thread and disconnect from server.
     /// </summary>
-    public void Disconnect()
+    public void DisconnectFromServer()
     {
-        // Close the socket.
-        CloseSocket();
-    }
-
-    #region Private Methods
-    /// <summary>
-    /// Method CreateSocket, that creates the client socket and returns the server endpoint
-    /// </summary>
-    /// <param name="serverIP">IP where server will be set</param>
-    /// <param name="serverPort">Port where server will be set</param>
-    /// <returns>EndPoint where the server it is</returns>
-    private EndPoint CreateSocket(string serverIP, int serverPort)
-    {
-        // Obtain IP direction and endpoint
-        IPHostEntry ipHostInfo = Dns.GetHostEntry(serverIP);
-        // It is IPv4, but if wifi is using, it should be 1 and not 0.
-        IPAddress ipAddress = ipHostInfo.AddressList[0];
-        IPEndPoint remoteEP = new IPEndPoint(ipAddress, serverPort);
-
-        // Create a TCP/IP socket
-        socket_client = new Socket(ipAddress.AddressFamily,
-            SocketType.Stream, ProtocolType.Tcp);
-
-        // Return the EndPoint
-        return remoteEP;
+        SendMessage("DISCONNECT_USER", "");
     }
 
     /// <summary>
     /// Method CloseSocket, to close the client socket.
     /// </summary>
-    private void CloseSocket()
+    public void CloseSocket()
     {
         socket_client.Shutdown(SocketShutdown.Both);
         socket_client.Close();
 
         Debug.Log("[CLIENT] Closed socket.");
     }
+
+    #region Private Methods
+    #region Network data
+    /// <summary>
+    /// Method CreateClientSocket, that creates the client socket.
+    /// </summary>
+    /// <param name="ipAddress">IPAddress to which the socket will connect</param>
+    private void CreateClientSocket(IPAddress ipAddress)
+    {
+        // Create a TCP/IP socket.
+        socket_client = new Socket(ipAddress.AddressFamily,
+            SocketType.Stream, ProtocolType.Tcp);
+    }
+
+    /// <summary>
+    /// Method CreateEndpoint, that creates and returns the endpoint to the server.
+    /// </summary>
+    /// <param name="ipAddress">IPAddress for that Endpoint</param>
+    /// <param name="serverPort">Port where the server is</param>
+    /// <returns></returns>
+    private EndPoint CreateEndpoint(IPAddress ipAddress, int serverPort)
+    {
+        // Create the remote EndPoint.
+        IPEndPoint remoteEP = new IPEndPoint(ipAddress, serverPort);
+
+        // Return the EndPoint.
+        return remoteEP;
+    }
+
+    /// <summary>
+    /// Method ObtainIPAddress, that returns the IPAddress of the given IP string.
+    /// </summary>
+    /// <param name="serverIP">String containing the server IP</param>
+    /// <returns></returns>
+    private IPAddress ObtainIPAddress(string serverIP)
+    {
+        // Obtain IP address.
+        IPAddress ipAddress;
+        IPAddress.TryParse(serverIP, out ipAddress);
+
+        // Return thee IPAddress.
+        return ipAddress;
+    }
+    #endregion
     #endregion
 }

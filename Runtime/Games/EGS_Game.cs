@@ -14,10 +14,10 @@ public class EGS_Game
     public readonly static bool DEBUG_MODE = true;
 
     // Positions.
-    public static float playerAPosX = -0.05f;
+    /*public static float playerAPosX = -0.05f;
     public static float playerAPosY = -0.05f;
     public static float playerBPosX = 0.05f;
-    public static float playerBPosY = 0.05f;
+    public static float playerBPosY = 0.05f;*/
 
     // Operation variables.
     private EGS_Message messageToSend = new EGS_Message();
@@ -27,10 +27,11 @@ public class EGS_Game
     // Control variables.
     private bool gameStarted;
     private int room;
+    private Mutex startGame_Lock;
+    private int startGame_Counter;
 
     // EGS.
-    private EGS_Log egs_Log;
-    private EGS_SE_SocketController socketController;
+    private EGS_GS_SocketServer socketController;
 
     // Game.
     private List<EGS_Player> players = new List<EGS_Player>();
@@ -38,13 +39,11 @@ public class EGS_Game
 
     #endregion
 
-
-    public EGS_Game(EGS_Log e, EGS_SE_SocketController sc, List<EGS_Player> players_, int room_)
+    public EGS_Game(EGS_GS_SocketServer sc, int room_)
     {
-        egs_Log = e;
         socketController = sc;
-        players = players_;
         room = room_;
+        startGame_Lock = new Mutex();
     }
 
     public bool IsGameStarted()
@@ -56,9 +55,75 @@ public class EGS_Game
         this.gameStarted = gameStarted;
     }
 
+    public int GetRoom()
+    {
+        return room;
+    }
+
+    public void SetRoom(int room_)
+    {
+        room = room_;
+    }
+
     public List<EGS_Player> GetPlayers()
     {
         return players;
+    }
+
+    public void AddPlayer(EGS_Player playerToAdd)
+    {
+        players.Add(playerToAdd);
+    }
+
+    /// <summary>
+    /// Method Ready, that checks in a player for the game and returns if all players are to start.
+    /// </summary>
+    /// <returns>Bool that indicates if game can start</returns>
+    public bool Ready()
+    {
+        // Define a bool to control if game can start.
+        bool canGameStart = false;
+
+        // Lock the access.
+        startGame_Lock.WaitOne();
+
+        // Check if all players are ready to start the game.
+        int playersReady = ++startGame_Counter;
+
+        if (playersReady == EGS_GameServer.gameServer_instance.PLAYERS_PER_GAME)
+        {
+            StartGameLoop();
+            canGameStart = true;
+        }
+
+        // Unlock the access.
+        startGame_Lock.ReleaseMutex();
+
+        // Return if game can start.
+        return canGameStart;
+    }
+
+    public void FinishGame()
+    {
+        // Stop the game loop for that game.
+        StopGameLoop();
+
+        // TODO: Tell the master server that the game finished and what were the results.
+    }
+
+    public void QuitPlayerFromGame(EGS_Player leftPlayer)
+    {
+        int room = leftPlayer.GetRoom();
+
+        lock (players)
+        {
+            players.Remove(leftPlayer);
+
+            // TODO: Tell the master server that the player left the game.
+
+            if (players.Count == 0)
+                FinishGame();
+        }
     }
 
     public void StartGameLoop()
@@ -69,11 +134,12 @@ public class EGS_Game
             {
                 Tick();
             }, null, TICK_RATE, TICK_RATE);
+
             gameStarted = true;
         }
         catch (Exception e)
         {
-            egs_Log.LogError("Error: " + e);
+            Debug.LogError("Error: " + e);
         }
     }
 
@@ -90,13 +156,13 @@ public class EGS_Game
             }
             catch (Exception e)
             {
-                egs_Log.LogError("Error: " + e);
+                Debug.LogError("Error: " + e);
             }
             finally
             {
                 threadLock.ReleaseMutex();
             }
-            egs_Log.Log("Closed thread for the game on room " + room);
+            Debug.Log("Closed thread for the game on room " + room);
         }
     }
 
@@ -118,11 +184,11 @@ public class EGS_Game
             {
                 socketController.DisconnectClient(p.GetUser().GetSocket());
                 players.Remove(p);
-                egs_Log.Log("Disconnected player " + p.GetUser().GetUsername() + " from game at room: " + room);
+                Debug.Log("Disconnected player " + p.GetUser().GetUsername() + " from game at room: " + room);
             }
             catch (Exception e)
             {
-                egs_Log.LogError("Error: " + e);
+                Debug.LogError("Error: " + e);
             }
             finally
             {
@@ -156,7 +222,7 @@ public class EGS_Game
         }
         catch (Exception e)
         {
-            egs_Log.LogError("Error: " + e);
+            Debug.LogError("Error: " + e);
         }
     }
 }
