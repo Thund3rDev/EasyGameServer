@@ -2,17 +2,17 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// Class EGS_GameServerStartData, that contains the information that the game server needs.
+/// Class EGS_GameServerStartData, that contains the information about the players and the room number.
 /// </summary>
 [System.Serializable]
 public class EGS_GameServerStartData
 {
     #region Variables
-    [SerializeField]
-    private List<EGS_UserToGame> usersToGame;
+    [Tooltip("Player's in game ID")]
+    [SerializeField] private List<EGS_PlayerToGame> playersToGame;
 
-    [SerializeField]
-    private int room;
+    [Tooltip("Game room")]
+    [SerializeField] private int room;
     #endregion
 
     #region Constructors
@@ -21,7 +21,7 @@ public class EGS_GameServerStartData
     /// </summary>
     public EGS_GameServerStartData()
     {
-        usersToGame = new List<EGS_UserToGame>();
+        playersToGame = new List<EGS_PlayerToGame>();
         room = -1;
     }
 
@@ -30,23 +30,23 @@ public class EGS_GameServerStartData
     /// </summary>
     public EGS_GameServerStartData(int room_)
     {
-        usersToGame = new List<EGS_UserToGame>();
+        playersToGame = new List<EGS_PlayerToGame>();
         room = room_;
     }
     #endregion
 
     #region Getters and Setters
     /// <summary>
-    /// Getter for the list of users to game.
+    /// Getter for the list of players to game.
     /// </summary>
-    /// <returns>List of users to game</returns>
-    public List<EGS_UserToGame> GetUsersToGame() { return usersToGame; }
+    /// <returns>List of players to game</returns>
+    public List<EGS_PlayerToGame> GetPlayersToGame() { return playersToGame; }
 
     /// <summary>
-    /// Setter for the list of users to game.
+    /// Setter for the list of players to game.
     /// </summary>
-    /// <param name="pag">New list of users to game</param>
-    public void SetUsersToGame(List<EGS_UserToGame> pag) { usersToGame = pag; }
+    /// <param name="pag">New list of players to game</param>
+    public void SetPlayersToGame(List<EGS_PlayerToGame> pag) { playersToGame = pag; }
 
     /// <summary>
     /// Getter for the game room.

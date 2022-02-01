@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Xml;
 using UnityEngine;
@@ -20,12 +17,11 @@ public class EGS_ServerManager : MonoBehaviour
     private bool serverStarted = false;
 
     [Tooltip("Int that indicates the level of debug")]
-    public static readonly int DEBUG_MODE = 2; // -1: No debug | 0: Release debug | 1: Minimal debug | 2: Some useful debugs | 3: Complete debug
+    public static readonly int DEBUG_MODE = 2; /// -1: No debug | 0: Release debug | 1: Minimal debug | 2: Some useful debugs | 3: Complete debug
 
     [Header("References")]
     [Tooltip("Reference to the Log")]
-    [SerializeField]
-    private EGS_Log egs_Log = null;
+    [SerializeField] private EGS_Log egs_Log = null;
 
     [Tooltip("Reference to the server socket manager")]
     private EGS_SE_Sockets egs_se_sockets = null;
@@ -55,6 +51,8 @@ public class EGS_ServerManager : MonoBehaviour
         // Read Server config data.
         ReadServerData();
 
+        // TODO: ReadUsersData.
+
         // Log that server started.
         if (DEBUG_MODE > -1)
             egs_Log.Log("Started <color=green>EasyGameServer</color> with version <color=orange>" + serverData.version + "</color>.");
@@ -82,6 +80,7 @@ public class EGS_ServerManager : MonoBehaviour
 
         // TODO:  Save all data.
         // TODO:  Disconnect players.
+        // TODO:  On Server Shutdown.
         egs_Log.CloseLog();
     }
 

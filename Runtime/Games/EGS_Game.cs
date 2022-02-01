@@ -1,75 +1,79 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Threading;
 using System.Net.Sockets;
 using System;
 
+/// <summary>
+/// Class EGS_Game, that controls the game loop and save the game data.
+/// </summary>
 public class EGS_Game
 {
     #region Variables
-    // Generic variables.
+    [Header("Fixed Variables")]
+    [Tooltip("Frames per second, number of server calculations in a second")]
     private readonly static int FPS = 60;
+    [Tooltip("Tick Rate, time between server calculations")]
     private readonly static long TICK_RATE = 1000 / FPS;
-    public readonly static bool DEBUG_MODE = true;
 
-    // Positions.
-    /*public static float playerAPosX = -0.05f;
-    public static float playerAPosY = -0.05f;
-    public static float playerBPosX = 0.05f;
-    public static float playerBPosY = 0.05f;*/
 
-    // Operation variables.
-    private EGS_Message messageToSend = new EGS_Message();
-    private Timer timerLoop;
-    private Mutex threadLock = new Mutex();
+    [Header("Control Variables")]
+    [Tooltip("Bool that indicates if the game is running")]
+    private bool gameRunning;
 
-    // Control variables.
-    private bool gameStarted;
+    [Tooltip("Room number")]
     private int room;
+
+
+    [Header("Game Start Control")]
+    [Tooltip("Lock for protect concurrent user confirmations to start the game")]
     private Mutex startGame_Lock;
+
+    [Tooltip("Integer that counts the number of players confirmed to start the game")]
     private int startGame_Counter;
 
-    // EGS.
+
+    [Header("Game Loop")]
+    [Tooltip("Timer that controls the game loop")]
+    private Timer gameLoopTimer;
+
+    [Tooltip("Lock to control the game loop thread")]
+    private Mutex gameLoopLock = new Mutex();
+
+
+    [Header("References")]
+    [Tooltip("Reference to the server socket controller")]
     private EGS_GS_SocketServer socketController;
 
-    // Game.
-    private List<EGS_Player> players = new List<EGS_Player>();
-    private List<EGS_Player> playersCopy = new List<EGS_Player>();
 
+    [Header("Game data")]
+    [Tooltip("List of players")]
+    private List<EGS_Player> players = new List<EGS_Player>();
+
+    [Tooltip("Copy of the list of players to don't touch the original")]
+    private List<EGS_Player> playersCopy = new List<EGS_Player>();
     #endregion
 
+    #region Constructors
+    /// <summary>
+    /// Base Constructor
+    /// </summary>
+    /// <param name="sc">Reference of the server socket controller</param>
+    /// <param name="room_">Room number</param>
     public EGS_Game(EGS_GS_SocketServer sc, int room_)
     {
         socketController = sc;
         room = room_;
         startGame_Lock = new Mutex();
     }
+    #endregion
 
-    public bool IsGameStarted()
-    {
-        return gameStarted;
-    }
-    public void SetGameStarted(bool gameStarted)
-    {
-        this.gameStarted = gameStarted;
-    }
-
-    public int GetRoom()
-    {
-        return room;
-    }
-
-    public void SetRoom(int room_)
-    {
-        room = room_;
-    }
-
-    public List<EGS_Player> GetPlayers()
-    {
-        return players;
-    }
-
+    #region Class Methods
+    #region Public Methods
+    /// <summary>
+    /// Method AddPlayer, that adds a player to the game.
+    /// </summary>
+    /// <param name="playerToAdd">Player to add to the game</param>
     public void AddPlayer(EGS_Player playerToAdd)
     {
         players.Add(playerToAdd);
@@ -92,6 +96,7 @@ public class EGS_Game
 
         if (playersReady == EGS_GameServer.gameServer_instance.PLAYERS_PER_GAME)
         {
+            // Start the game loop and tell that game can start.
             StartGameLoop();
             canGameStart = true;
         }
@@ -103,18 +108,25 @@ public class EGS_Game
         return canGameStart;
     }
 
+    /// <summary>
+    /// Method FinishGame, that ends the game loop and sends the game results to the server.
+    /// </summary>
     public void FinishGame()
     {
         // Stop the game loop for that game.
         StopGameLoop();
 
+        // TODO: Think on what has to be sent to the clients and to the master server.
+
         // TODO: Tell the master server that the game finished and what were the results.
     }
 
+    /// <summary>
+    /// Method QuitPlayerFromGame, that disconnects a player from the game server and tells it to connect to the master server.
+    /// </summary>
+    /// <param name="leftPlayer">Player who disconnected from the game</param>
     public void QuitPlayerFromGame(EGS_Player leftPlayer)
     {
-        int room = leftPlayer.GetRoom();
-
         lock (players)
         {
             players.Remove(leftPlayer);
@@ -126,16 +138,20 @@ public class EGS_Game
         }
     }
 
+    /// <summary>
+    /// Method StartGameLoop, that starts the game loop on a thread.
+    /// </summary>
     public void StartGameLoop()
     {
         try
         {
-            timerLoop = new System.Threading.Timer((e) =>
+            gameLoopTimer = new Timer((e) =>
             {
                 Tick();
             }, null, TICK_RATE, TICK_RATE);
 
-            gameStarted = true;
+            // Save that the game is currently running.
+            gameRunning = true;
         }
         catch (Exception e)
         {
@@ -143,16 +159,21 @@ public class EGS_Game
         }
     }
 
+    /// <summary>
+    /// Method StopGameLoop, that stops the game loop.
+    /// </summary>
     public void StopGameLoop()
     {
-        gameStarted = false;
+        // Save that the game is no longer running.
+        gameRunning = false;
 
-        if (timerLoop != null)
+        if (gameLoopTimer != null)
         {
             try
             {
-                threadLock.WaitOne();
-                timerLoop.Dispose();
+                // Try to stop the timer.
+                gameLoopLock.WaitOne();
+                gameLoopTimer.Dispose();
             }
             catch (Exception e)
             {
@@ -160,14 +181,19 @@ public class EGS_Game
             }
             finally
             {
-                threadLock.ReleaseMutex();
+                gameLoopLock.ReleaseMutex();
             }
             Debug.Log("Closed thread for the game on room " + room);
         }
     }
 
+    /// <summary>
+    /// Method Broadcast, that sends a message to all the players in the game.
+    /// </summary>
+    /// <param name="message">Message to be sent</param>
     public void Broadcast(EGS_Message message)
     {
+        // Make a copy of the player to avoid errors on sends.
         lock (players)
         {
             playersCopy = new List<EGS_Player>(players);
@@ -177,11 +203,13 @@ public class EGS_Game
         {
             try
             {
-                threadLock.WaitOne();
+                // Try to send the message to the player.
+                gameLoopLock.WaitOne();
                 socketController.Send(p.GetUser().GetSocket(), message.ConvertMessage());
             }
             catch (SocketException)
             {
+                // If fails with a SocketException, player closed the socket on his side, disconnect and remove it.
                 socketController.DisconnectClient(p.GetUser().GetSocket());
                 players.Remove(p);
                 Debug.Log("Disconnected player " + p.GetUser().GetUsername() + " from game at room: " + room);
@@ -192,30 +220,39 @@ public class EGS_Game
             }
             finally
             {
-                threadLock.ReleaseMutex();
+                gameLoopLock.ReleaseMutex();
             }
         }
     }
+    #endregion
 
+    #region Private Methods
+    /// <summary>
+    /// Method Tick, executed on the game loop FPS times per second. 
+    /// </summary>
     private void Tick()
     {
-        if (!gameStarted)
+        if (!gameRunning)
             return;
 
         try
         {
+            // Create the message to be sent to the players.
             EGS_Message msg = new EGS_Message();
             msg.messageType = "UPDATE";
 
             EGS_UpdateData updateData = new EGS_UpdateData(room);
 
+            // TODO: PERMIT MORE CALCULATIONS, OnTick()
+            // For each player, calculate its position and save its data to the Update Data.
             foreach (EGS_Player player in players)
             {
                 player.CalculatePosition(TICK_RATE);
-                EGS_PlayerData playerData = new EGS_PlayerData(player.GetIngameID(), player.GetUser().GetUsername(), player.GetPosition());
+                EGS_PlayerData playerData = new EGS_PlayerData(player.GetIngameID(), player.GetUser().GetUsername(), player.transform.position);
                 updateData.GetPlayersAtGame().Add(playerData);
             }
 
+            // Save the message content and send it to the players.
             msg.messageContent = JsonUtility.ToJson(updateData);
 
             Broadcast(msg);
@@ -225,4 +262,38 @@ public class EGS_Game
             Debug.LogError("Error: " + e);
         }
     }
+    #endregion
+    #endregion
+
+    #region Getter and Setters
+    /// <summary>
+    /// Getter for the GameRunning bool.
+    /// </summary>
+    /// <returns>Game Running value</returns>
+    public bool IsGameRunning() { return gameRunning; }
+
+    /// <summary>
+    /// Setter for the GameRunning bool.
+    /// </summary>
+    /// <param name="gameRunning">New Game Running value</param>
+    public void SetGameRunning(bool gameRunning_) { this.gameRunning = gameRunning_; }
+
+    /// <summary>
+    /// Getter for the room number.
+    /// </summary>
+    /// <returns>Room number</returns>
+    public int GetRoom() { return room; }
+
+    /// <summary>
+    /// Setter for the room number.
+    /// </summary>
+    /// <param name="room_">New room number</param>
+    public void SetRoom(int room_) { room = room_; }
+
+    /// <summary>
+    /// Getter for the list of players.
+    /// </summary>
+    /// <returns>List of players in the game</returns>
+    public List<EGS_Player> GetPlayers() { return players; }
+    #endregion
 }

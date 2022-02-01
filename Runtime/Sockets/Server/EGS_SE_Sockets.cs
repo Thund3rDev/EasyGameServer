@@ -1,29 +1,31 @@
-using System;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using UnityEngine;
 
 /// <summary>
-/// Class EGS_SE_Sockets, that will control server sockets in the future.
+/// Class EGS_SE_Sockets, that control the server sockets.
 /// </summary>
 public class EGS_SE_Sockets
 {
     #region Variables
-    // Server socket.
-    private Socket socket_listener;
+    [Header("Server data")]
+    [Tooltip("Server IP")]
+    private string serverIP; // TODO: Check if neccesary.
 
-    /// Server data
-    // Server IP.
-    private string serverIP;
-    // Server Port.
+    [Tooltip("Server Port")]
     private int serverPort;
 
-    // Handler for the socket listener.
-    private EGS_SE_SocketController serverSocketHandler;
 
-    /// References
-    // Reference to the Log.
+    [Header("Networking")]
+    [Tooltip("Server socket")]
+    private Socket socket_listener;
+
+    [Tooltip("Handler for the server socket")]
+    private EGS_SE_SocketServer serverSocketHandler;
+
+
+    [Header("References")]
+    [Tooltip("Reference to the Log")]
     private EGS_Log egs_Log = null;
     #endregion
 
@@ -53,7 +55,7 @@ public class EGS_SE_Sockets
         EndPoint localEP = CreateSocket();
 
         // Connect to server.
-        serverSocketHandler = new EGS_SE_SocketController(egs_Log, OnNewConnection, OnClientDisconnected);
+        serverSocketHandler = new EGS_SE_SocketServer(egs_Log, OnNewConnection, OnClientDisconnected);
         serverSocketHandler.StartListening(serverPort, localEP, socket_listener);
     }
 
@@ -96,6 +98,7 @@ public class EGS_SE_Sockets
     /// <returns>EndPoint where the server it is</returns>
     private EndPoint CreateSocket()
     {
+        // TODO: Valorate what option is better. Connect IPv4 and IPv6.
         IPAddress[] ips = Dns.GetHostAddresses(Dns.GetHostName());
         IPAddress ipAddress = ips[1];
 

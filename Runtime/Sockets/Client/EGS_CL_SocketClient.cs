@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -13,27 +12,28 @@ using UnityEngine.SceneManagement;
 public class EGS_CL_SocketClient
 {
     #region Variables
-    /// ManualResetEvents
-    // ManualResetEvent for when connection is done.
-    private ManualResetEvent connectDone = new ManualResetEvent(false);
-    // ManualResetEvent for when send is done.
-    private ManualResetEvent sendDone = new ManualResetEvent(false);
-    // ManualResetEvent for when receive is done.
-    private ManualResetEvent receiveDone = new ManualResetEvent(false);
+    [Header("ManualResetEvents")]
+    [Tooltip("ManualResetEvent for when connection is done")]
+    private ManualResetEvent connectDone = new ManualResetEvent(false); // TODO: Valorate if needed.
+    [Tooltip("ManualResetEvent for when send is done.")]
+    private ManualResetEvent sendDone = new ManualResetEvent(false); // TODO: Valorate if needed.
+    [Tooltip("ManualResetEvent for when receive is done")]
+    private ManualResetEvent receiveDone = new ManualResetEvent(false); // TODO: Valorate if needed.
 
     /// Other
     // Response from the remote device.
-    private string response = string.Empty;
+    private string response = string.Empty; // TODO: Check if this should be here: overwrited data and too large data.
 
-    // Socket for the client.
-    private Socket socket_client;
+    [Header("Networking")]
+    [Tooltip("Socket for the client")]
+    private Socket socket_client; // TODO: Pass it to EGS_CL_Sockets.
+    [Tooltip("Sockets Controller")]
+    private EGS_CL_Sockets socketsController; // TODO: Valorate if needed.
 
-    // Thread for the KeepAlive function.
+    [Tooltip("Thread for the KeepAlive function")]
     public Thread keepAliveThread;
 
-    // SocketsController
-    private EGS_CL_Sockets socketsController;
-
+    // TODO: This shouldn't be here.
     // Test.
     int room = -1;
     string serverIP = "";
@@ -42,7 +42,7 @@ public class EGS_CL_SocketClient
 
     #region Constructors
     /// <summary>
-    /// Empty constructor.
+    /// Base constructor.
     /// </summary>
     public EGS_CL_SocketClient(EGS_CL_Sockets socketsController_)
     {
@@ -51,11 +51,12 @@ public class EGS_CL_SocketClient
     #endregion
 
     #region Class Methods
+    #region Public Methods
     /// <summary>
     /// Method StartClient, that tries to connect to the server.
     /// </summary>
     /// <param name="remoteEP">EndPoint where the server is</param>
-    /// <param name="socket_client">Socket to use</param>
+    /// <param name="socket_client">Client socket to use</param>
     public void StartClient(EndPoint remoteEP, Socket socket_client_)
     {
         // Assign the socket
@@ -83,6 +84,7 @@ public class EGS_CL_SocketClient
         }
         catch (ThreadAbortException)
         {
+            // TODO: Control this exception.
         }
         catch (Exception e)
         {
@@ -112,14 +114,14 @@ public class EGS_CL_SocketClient
         }
         catch (Exception e)
         {
-            Console.WriteLine(e.ToString());
+            Debug.LogError("[CLIENT] " + e.ToString());
         }
     }
 
     /// <summary>
     /// Method Receive, to receive data from server.
     /// </summary>
-    /// <param name="client">Socket</param>
+    /// <param name="client">Client Socket</param>
     public void Receive(Socket client)
     {
         try
@@ -137,20 +139,20 @@ public class EGS_CL_SocketClient
             Debug.LogError("[CLIENT] " + e.ToString());
         }
     }
-
+    
     /// <summary>
     /// Method ReceiveCallback, called when received data from server.
     /// </summary>
     /// <param name="ar">IAsyncResult</param>
-    private void ReceiveCallback(IAsyncResult ar)
+    public void ReceiveCallback(IAsyncResult ar)
     {
         try
         {
-            // Retrieve the state object and the client socket
-            // from the asynchronous state object.  
+            // Retrieve the state object and the client socket from the asynchronous state object.  
             StateObject state = (StateObject)ar.AsyncState;
             Socket client = state.workSocket;
 
+            // Read data from the remote device.  
             int bytesRead = 0;
 
             if (EGS_Client.connectedToMasterServer || EGS_Client.connectedToGameServer)
@@ -159,7 +161,10 @@ public class EGS_CL_SocketClient
                 {
                     bytesRead = client.EndReceive(ar);
                 }
-                catch (ObjectDisposedException) {}
+                catch (ObjectDisposedException)
+                {
+                    // TODO: Control this exception.
+                }
             }
             
 
@@ -197,7 +202,10 @@ public class EGS_CL_SocketClient
                 }
             }
         }
-        catch (ThreadAbortException) {}
+        catch (ThreadAbortException)
+        {
+            // TODO: Control this exception.
+        }
         catch (Exception e)
         {
             Debug.LogError("[CLIENT] " + e.ToString());
@@ -207,9 +215,9 @@ public class EGS_CL_SocketClient
     /// <summary>
     /// Method Send, for send a message to the server.
     /// </summary>
-    /// <param name="client">Socket</param>
+    /// <param name="client">Client Socket</param>
     /// <param name="data">String with the data to send</param>
-    public void Send(Socket client, String data)
+    public void Send(Socket client, string data)
     {
         // Convert the string data to byte data using ASCII encoding.  
         byte[] byteData = Encoding.ASCII.GetBytes(data);
@@ -218,7 +226,9 @@ public class EGS_CL_SocketClient
         client.BeginSend(byteData, 0, byteData.Length, 0,
             new AsyncCallback(SendCallback), client);
     }
+    #endregion
 
+    #region Private Methods
     /// <summary>
     /// Method SendCallback, called when sent data to server.
     /// </summary>
@@ -244,6 +254,11 @@ public class EGS_CL_SocketClient
         }
     }
 
+    /// <summary>
+    /// Method HandleMessage, that receives a message from the server or game server and do things based on it.
+    /// </summary>
+    /// <param name="content">Message content</param>
+    /// <param name="handler">Socket that handles that connection</param>
     private void HandleMessage(string content, Socket handler)
     {
         // Read data from JSON.
@@ -257,37 +272,38 @@ public class EGS_CL_SocketClient
             Debug.LogWarning("ERORR, CONTENT: " + content);
             throw e;
         }
-        
 
         if (EGS_ServerManager.DEBUG_MODE > 2)
             Debug.Log("Read " + content.Length + " bytes from socket - " + handler.RemoteEndPoint +
             " - Message type: " + receivedMessage.messageType);
 
-        // Message to send.
-        EGS_Message msg;
+        // Message to send back.
+        EGS_Message messageToSend = new EGS_Message();
+
+        // Local variables that are used in the cases below.
         string jsonMSG;
         string userJson;
 
-        // Depending on the messageType, do different things
+        // TODO: Maybe messageType as an enum?
+        // Depending on the messageType, do different things.
         switch (receivedMessage.messageType)
         {
             case "TEST_MESSAGE":
-                Debug.Log("Received test message from master server: " + receivedMessage.messageContent);
+                Debug.Log("Received test message from server: " + receivedMessage.messageContent);
                 break;
             case "CONNECT_TO_MASTER_SERVER":
-                // Test data.
+                // Create the user instance. // TODO: Assign it to the client data object.
                 EGS_User thisUser = new EGS_User();
                 thisUser.SetUsername(EGS_Client.client_instance.username);
 
                 // Convert user to JSON.
                 userJson = JsonUtility.ToJson(thisUser);
 
-                msg = new EGS_Message();
-                msg.messageType = "USER_JOIN_SERVER";
-                msg.messageContent = userJson;
+                messageToSend.messageType = "USER_JOIN_SERVER";
+                messageToSend.messageContent = userJson;
 
                 // Convert message to JSON.
-                jsonMSG = msg.ConvertMessage();
+                jsonMSG = messageToSend.ConvertMessage();
 
                 // Send data to server.
                 Send(socket_client, jsonMSG);
@@ -295,6 +311,7 @@ public class EGS_CL_SocketClient
                 // Wait until send is done.
                 sendDone.WaitOne();
 
+                // TODO: Check if this is needed or not. I think not because done in EGS_CL_Sockets.
                 //EGS_Client.connectedToMasterServer = true;
 
                 // Start a new thread with the KeepAlive function.
@@ -307,23 +324,30 @@ public class EGS_CL_SocketClient
 
                 // Change scene to the MainMenu.
                 LoadScene("MainMenu");
+
+                // TODO: This should be done in a delegate, so programmer decides.
                 break;
             case "JOIN_SERVER":
-                // Get User Data
+                // Get User Data.
                 socketsController.thisUser = JsonUtility.FromJson<EGS_User>(receivedMessage.messageContent);
 
                 // Load new scene on main thread.
                 LoadScene("GameMenu");
+
+                // TODO: This should be done in a delegate, so programmer decides.
                 break;
             case "GAME_FOUND":
                 // Change scene to the GameLobby.
                 LoadScene("GameLobby");
+                // TODO: This should be done in a delegate, so programmer decides.
 
                 EGS_UpdateData gameData = JsonUtility.FromJson<EGS_UpdateData>(receivedMessage.messageContent);
+                Debug.Log("GAME_FOUND MSG: " + receivedMessage.messageContent);
 
                 // Clear the dictionaries and add the new players.
                 EGS_CL_Sockets.playerPositions.Clear();
                 EGS_CL_Sockets.playerUsernames.Clear();
+
                 foreach (EGS_PlayerData playerData in gameData.GetPlayersAtGame())
                 {
                     EGS_CL_Sockets.playerPositions.Add(playerData.GetIngameID(), playerData.GetPosition());
@@ -341,11 +365,10 @@ public class EGS_CL_SocketClient
                 EGS_Dispatcher.RunOnMainThread(() => { Debug.Log("Game Server IP: " + receivedMessage.messageContent); });
 
                 // Tell the server that the client received the information so can connect to the game server.
-                msg = new EGS_Message();
-                msg.messageType = "DISCONNECT_TO_GAME";
+                messageToSend.messageType = "DISCONNECT_TO_GAME";
 
                 // Convert message to JSON.
-                jsonMSG = msg.ConvertMessage();
+                jsonMSG = messageToSend.ConvertMessage();
 
                 // Send data to server.
                 Send(socket_client, jsonMSG);
@@ -360,15 +383,19 @@ public class EGS_CL_SocketClient
                 socketsController.ConnectToGameServer(serverIP, serverPort);
                 break;
             case "CONNECT_GAME_SERVER":
+                Debug.Log("CONNECT_GAME_SERVER MSG: " + receivedMessage.messageContent);
+                socketsController.thisUser.SetRoom(int.Parse(receivedMessage.messageContent));
+
                 // Convert user to JSON.
                 userJson = JsonUtility.ToJson(socketsController.thisUser);
 
-                msg = new EGS_Message();
-                msg.messageType = "JOIN_GAME_SERVER";
-                msg.messageContent = userJson;
+                messageToSend.messageType = "JOIN_GAME_SERVER";
+                messageToSend.messageContent = userJson;
 
                 // Convert message to JSON.
-                jsonMSG = msg.ConvertMessage();
+                jsonMSG = messageToSend.ConvertMessage();
+
+                Debug.Log("JSON MSG: " + jsonMSG);
 
                 // Send data to server.
                 Send(socket_client, jsonMSG);
@@ -387,15 +414,18 @@ public class EGS_CL_SocketClient
             case "GAME_START":
                 // Load new scene on main thread.
                 LoadScene("TestGame");
+                // TODO: This should be done in a delegate, so programmer decides.
                 break;
             case "UPDATE":
-                Debug.Log("Update MSG: " + receivedMessage.messageContent);
+                //Debug.Log("Update MSG: " + receivedMessage.messageContent);
                 EGS_UpdateData updateData = JsonUtility.FromJson<EGS_UpdateData>(receivedMessage.messageContent);
 
                 foreach (EGS_PlayerData playerData in updateData.GetPlayersAtGame())
                 {
                     EGS_CL_Sockets.playerPositions[playerData.GetIngameID()] = playerData.GetPosition();
                 }
+
+                // TODO: Delegate to to things on server update message.
                 break;
             default:
                 Debug.Log("<color=yellow>Undefined message type: </color>" + receivedMessage.messageType);
@@ -403,6 +433,9 @@ public class EGS_CL_SocketClient
         }
     }
 
+    /// <summary>
+    /// Method KeepAlive, that sends the server a message so the server knows that it is still alive.
+    /// </summary>
     private void KeepAlive()
     {
         while (EGS_Client.connectedToMasterServer || EGS_Client.connectedToGameServer)
@@ -417,15 +450,21 @@ public class EGS_CL_SocketClient
 
             //EGS_Dispatcher.RunOnMainThread(() => { Debug.Log("KEEP ALIVE"); });
 
+            // TODO: Change 1000 to TIME_BETWEEN_KEEP_ALIVE.
             Thread.Sleep(1000);
         }
     }
 
     #region MainThreadFunctions
+    /// <summary>
+    /// Method LoadScene, that loads a scene in the main thread.
+    /// </summary>
+    /// <param name="sceneName">Scene name</param>
     private void LoadScene(string sceneName)
     {
         EGS_Dispatcher.RunOnMainThread(() => { SceneManager.LoadScene(sceneName); });
     }
+    #endregion
     #endregion
     #endregion
 }

@@ -1,7 +1,4 @@
 using System;
-using System.IO;
-using System.Net.Sockets;
-using System.Xml;
 using UnityEngine;
 
 /// <summary>
@@ -17,24 +14,40 @@ public class EGS_GameServer : MonoBehaviour
     [Tooltip("Struct that contains the server data")]
     public EGS_ServerData serverData;
 
+
+    [Header("Networking")]
     [Tooltip("Controller for game server sockets")]
     public EGS_GS_Sockets gameServerSocketsController = null;
 
-    public bool connectedToServer;
+    [Tooltip("Bool that indicates if game server is conected to the master server")]
+    public bool connectedToMasterServer;
 
-    public EGS_GameServerData.State gameServerState;
 
+    [Header("Game Server Data")]
+    [Tooltip("Game Server State")]
+    public EGS_GameServerData.EGS_GameServerState gameServerState;
+
+    [Tooltip("Game Server ID")]
     public int gameServerID = -1;
-    public EGS_GameServerStartData startData;
 
-    public TMPro.TextMeshProUGUI test_text;
-
+    [Tooltip("Instance of the game")]
     public EGS_Game thisGame;
 
+    [Tooltip("Game Server Start Data, that is received on parameters")]
+    public EGS_GameServerStartData startData; // TODO: Think if need to store.
+
+    // Test.
+    // TODO: Make a Game Server Console with Log and UI.
+    public TMPro.TextMeshProUGUI test_text;
+
+    // TODO: Read this from XML.
     public readonly int PLAYERS_PER_GAME = 2;
     #endregion
 
     #region Unity Methods
+    /// <summary>
+    /// Method Awake, executed on script load.
+    /// </summary>
     private void Awake()
     {
         if (gameServer_instance == null)
@@ -48,6 +61,9 @@ public class EGS_GameServer : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Method Start, executed before the first frame.
+    /// </summary>
     private void Start()
     {
         ReadArguments();
@@ -56,6 +72,7 @@ public class EGS_GameServer : MonoBehaviour
     #endregion
 
     #region Class Methods
+    #region Public Methods
     /// <summary>
     /// Method ConnectToMasterServer, that tries to connect to the server.
     /// </summary>
@@ -92,5 +109,6 @@ public class EGS_GameServer : MonoBehaviour
         gameServerID = int.Parse(realArguments[3]);
         startData = JsonUtility.FromJson<EGS_GameServerStartData>(realArguments[4]);
     }
+    #endregion
     #endregion
 }

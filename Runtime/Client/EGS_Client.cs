@@ -25,11 +25,16 @@ public class EGS_Client : MonoBehaviour
     [Tooltip("Controller for client socket")]
     public EGS_CL_Sockets clientSocketController = null;
 
-    // Test:
+    // User Data.
+    // TODO: Put this in an object and save an EGS_USER instance and other variables.
     public string username;
+    public int ingameID;
     #endregion
 
     #region Unity Methods
+    /// <summary>
+    /// Method Awake, executed on script load.
+    /// </summary>
     private void Awake()
     {
         if (client_instance == null)
@@ -139,6 +144,7 @@ public class EGS_Client : MonoBehaviour
         node = doc.DocumentElement.SelectSingleNode("//port");
         serverData.serverPort = int.Parse(node.InnerText);
 
+        // TODO: Make possible different ways to get the username.
         // Test.
         // Get player username.
         node = doc.DocumentElement.SelectSingleNode("//username");

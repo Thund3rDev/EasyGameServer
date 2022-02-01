@@ -1,20 +1,20 @@
 using UnityEngine;
 
 /// <summary>
-/// Class EGS_PlayerData, that contains the information of a player to send.
+/// Class EGS_PlayerData, that contains the information of a player to send in game.
 /// </summary>
 [System.Serializable]
 public class EGS_PlayerData
 {
     #region Variables
-    [SerializeField]
-    private int ingameID;
+    [Tooltip("Player's ingame ID")]
+    [SerializeField] private int ingameID;
 
-    [SerializeField]
-    private string username;
+    [Tooltip("Player's username")]
+    [SerializeField] private string username;
 
-    [SerializeField]
-    private Vector3 position;
+    [Tooltip("Player's position")]
+    [SerializeField] private Vector3 position;
     #endregion
 
     #region Constructors

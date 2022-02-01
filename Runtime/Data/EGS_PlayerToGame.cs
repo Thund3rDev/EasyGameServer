@@ -1,27 +1,27 @@
 using UnityEngine;
+
 /// <summary>
-/// Class EGS_UserToGame, that contains the structure of a player to be sent to the Game Server.
+/// Class EGS_PlayerToGame, that contains the information of a player for a game.
 /// </summary>
 [System.Serializable]
-public class EGS_UserToGame
+public class EGS_PlayerToGame
 {
     #region Variables
-    // User.
-    [SerializeField]
-    private EGS_User user;
-    // Ingame ID.
-    [SerializeField]
-    private int ingameID;
+    [Tooltip("User data of the player")]
+    [SerializeField] private EGS_User user;
+
+    [Tooltip("Player's in game ID")]
+    [SerializeField] private int ingameID;
     #endregion
 
     #region Constructors
     /// <summary>
-    /// Empty Constructor
+    /// Base Constructor.
     /// </summary>
-    public EGS_UserToGame(EGS_User user_, int ingameID_)
+    public EGS_PlayerToGame(EGS_User user_)
     {
         this.user = user_;
-        this.ingameID = ingameID_;
+        this.ingameID = -1;
     }
     #endregion
 
@@ -29,7 +29,7 @@ public class EGS_UserToGame
     /// <summary>
     /// Getter for User.
     /// </summary>
-    /// <returns>Use</returns>
+    /// <returns>User</returns>
     public EGS_User GetUser() { return user; }
 
     /// <summary>
@@ -39,16 +39,15 @@ public class EGS_UserToGame
     public void SetUser(EGS_User u) { user = u; }
 
     /// <summary>
-    /// Getter for Ingame ID.
+    /// Getter for the ingame ID.
     /// </summary>
     /// <returns>Ingame ID</returns>
     public int GetIngameID() { return ingameID; }
 
     /// <summary>
-    /// Setter for Ingame ID.
+    /// Setter for the ingame ID.
     /// </summary>
-    /// <param name="i">New Ingame ID</param>
+    /// <param name="i">New ingame ID</param>
     public void SetIngameID(int i) { ingameID = i; }
     #endregion
-
 }

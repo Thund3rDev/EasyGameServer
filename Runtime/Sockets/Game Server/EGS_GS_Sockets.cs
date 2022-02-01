@@ -1,38 +1,37 @@
-using System;
-using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using UnityEngine;
 
 /// <summary>
-/// Class EGS_GS_Sockets, that controls game server sockets.
+/// Class EGS_GS_Sockets, that controls both sockets of the game server (SERVER and CLIENT).
 /// </summary>
 public class EGS_GS_Sockets
 {
     #region Variables
-    // Client socket.
+    [Header("Networking")]
+    [Tooltip("Client Socket")]
     private Socket socket_client;
 
-    // Server socket.
-    private Socket socket_server;
-
-    // Instance of the handler for the client socket.
+    [Tooltip("Instance of the handler for the client socket")]
     public EGS_GS_SocketClient clientSocketHandler;
 
-    // Handler for the server socket.
+    [Tooltip("Server Socket")]
+    private Socket socket_server;
+
+    [Tooltip("Handler for the server socket")]
     private EGS_GS_SocketServer serverSocketHandler;
 
-    // EndPoint to the game server.
+    [Tooltip("EndPoint to the game server")]
     public EndPoint localEP;
 
-    // ManualResetEvent for when game server can handle player connections.
+    [Tooltip("ManualResetEvent for when game server can handle player connections")]
     public ManualResetEvent startDone = new ManualResetEvent(false);
     #endregion
 
     #region Constructors
     /// <summary>
-    /// Main constructor.
+    /// Empty constructor.
     /// </summary>
     public EGS_GS_Sockets()
     {
@@ -40,6 +39,8 @@ public class EGS_GS_Sockets
     }
     #endregion
 
+    #region Class Methods
+    #region Public Methods
     /// <summary>
     /// Method ConnectToMasterServer, to establish a connection to the master server.
     /// </summary>
@@ -61,7 +62,7 @@ public class EGS_GS_Sockets
         // Create socket and get EndPoint.
         localEP = CreateGameServerSocket();
 
-        /// Connect to server.
+        // Connect to server.
         serverSocketHandler = new EGS_GS_SocketServer(this, AfterPlayerConnected, OnPlayerDisconnected);
         new Thread(() => serverSocketHandler.StartListening(localEP, socket_server)).Start();
 
@@ -93,6 +94,7 @@ public class EGS_GS_Sockets
         // Ask client for user data.
         EGS_Message msg = new EGS_Message();
         msg.messageType = "CONNECT_GAME_SERVER";
+        msg.messageContent = EGS_GameServer.gameServer_instance.thisGame.GetRoom().ToString();
         string jsonMSG = msg.ConvertMessage();
 
         EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServer.gameServer_instance.test_text.text += "\nPLAYER CONNECTED: " + clientSocket.RemoteEndPoint; });
@@ -105,7 +107,7 @@ public class EGS_GS_Sockets
     /// <param name="clientSocket">Client socket disconnected from the server</param>
     public void OnPlayerDisconnected(Socket clientSocket)
     {
-        
+        // TODO: Make this work.
     }
     #endregion
 
@@ -117,6 +119,7 @@ public class EGS_GS_Sockets
         // Close the socket.
         CloseSocket();
     }
+    #endregion
 
     #region Private Methods
     private void CreateGame()
@@ -192,5 +195,6 @@ public class EGS_GS_Sockets
 
         Debug.Log("[CLIENT] Closed socket.");
     }
+    #endregion
     #endregion
 }

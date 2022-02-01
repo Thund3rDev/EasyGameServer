@@ -1,21 +1,23 @@
 using System.Net.Sockets;
 using UnityEngine;
 /// <summary>
-/// Class EGS_User, that contains the structure of a player in the server.
+/// Class EGS_User, that contains the structure of an user in the server.
 /// </summary>
 [System.Serializable]
 public class EGS_User
 {
     #region Variables
-    // User ID.
-    [SerializeField]
-    private int userID;
-    // Socket connected to the server.
-    [SerializeField]
-    private Socket socket;
-    // User name.
-    [SerializeField]
-    private string username;
+    [Tooltip("User ID")]
+    [SerializeField] private int userID;
+
+    [Tooltip("Socket connected to the server")]
+    [SerializeField] private Socket socket;
+
+    [Tooltip("User name")]
+    [SerializeField] private string username;
+
+    [Tooltip("Game room")]
+    [SerializeField] private int room;
     #endregion
 
     #region Constructors
@@ -24,8 +26,9 @@ public class EGS_User
     /// </summary>
     public EGS_User()
     {
-        this.userID = 0;
+        this.userID = -1;
         this.username = "";
+        this.room = -1;
     }
     #endregion
 
@@ -65,6 +68,18 @@ public class EGS_User
     /// </summary>
     /// <param name="u">New User name</param>
     public void SetUsername(string u) { username = u; }
+
+    /// <summary>
+    /// Getter for the room.
+    /// </summary>
+    /// <returns>Room</returns>
+    public int GetRoom() { return userID; }
+
+    /// <summary>
+    /// Setter for the room.
+    /// </summary>
+    /// <param name="u">New room</param>
+    public void SetRoom(int r) { room = r; }
     #endregion
 
 }

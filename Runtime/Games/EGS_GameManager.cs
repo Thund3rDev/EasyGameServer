@@ -1,39 +1,102 @@
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
+/// <summary>
+/// Class EGS_GameManager, that manages the game and links the data between Unity and the Game.
+/// </summary>
 public class EGS_GameManager : MonoBehaviour
 {
-    private List<EGS_PlayerInGame> playersInGame = new List<EGS_PlayerInGame>();
+    #region Variables
+    [Header("General")]
+    [Tooltip("Singleton instance")]
+    public static EGS_GameManager instance = null;
 
-    // Start is called before the first frame update
-    void Start()
-    {
-        playersInGame = FindObjectsOfType<EGS_PlayerInGame>().ToList();
-        LinkPlayers();
-    }
 
-    // Update is called once per frame
-    void FixedUpdate()
+    [Header("Players")]
+    [Tooltip("List of player instances in the game")]
+    [SerializeField] private List<EGS_Player> playersInGame = new List<EGS_Player>();
+
+    [Tooltip("List of players by their ID")]
+    private Dictionary<int, EGS_Player> playersByID = new Dictionary<int, EGS_Player>();
+
+
+    [Header("References")]
+    [Tooltip("Client Game Manager Script to destroy")]
+    [SerializeField] private MonoBehaviour gameManager = null;
+    #endregion
+
+    #region Unity Methods
+    /// <summary>
+    /// Method Awake, executed on script load.
+    /// </summary>
+    private void Awake()
     {
-        foreach (EGS_PlayerInGame playerInGame in playersInGame)
+        if (instance == null)
         {
-            playerInGame.UpdatePosition(playerInGame.GetPlayer().GetPosition());
+            instance = this;
+        }
+        else
+        {
+            Destroy(this.gameObject);
         }
     }
 
-    private void LinkPlayers()
+    /// <summary>
+    /// Method Start, executed before the first frame.
+    /// </summary>
+    private void Start()
     {
-        foreach (EGS_Player player in EGS_GameServer.gameServer_instance.thisGame.GetPlayers())
+        // If not executing on the game server, delete this script.
+        if (!EGS_Control.instance.egs_type.Equals(EGS_Control.EGS_Type.GameServer))
         {
-            foreach (EGS_PlayerInGame playerInGame in playersInGame)
+            Destroy(this.gameObject);
+        }
+        else
+        {
+            // Destroy the client game manager GameObject.
+            Destroy(gameManager.gameObject);
+            foreach (EGS_Player player in playersInGame)
             {
-                if (player.GetIngameID() == playerInGame.GetIngameID())
+                // Assign User info.
+                foreach (EGS_PlayerToGame playerToGame in EGS_GameServer.gameServer_instance.startData.GetPlayersToGame())
                 {
-                    playerInGame.SetPlayer(player);
-                    break;
+                    if (player.GetIngameID() == playerToGame.GetIngameID())
+                    {
+                        player.SetUser(playerToGame.GetUser());
+                    }
                 }
+
+                // Add player to lists.
+                EGS_GameServer.gameServer_instance.thisGame.AddPlayer(player);
+                playersByID.Add(player.GetIngameID(), player);
             }
         }
     }
+    #endregion
+
+    #region Getters and Setters
+    /// <summary>
+    /// Getter for PlayersInGame.
+    /// </summary>
+    /// <returns>List of players in Game.</returns>
+    public List<EGS_Player> GetPlayersInGame() { return playersInGame; }
+
+    /// <summary>
+    /// Setter for PlayersInGame.
+    /// </summary>
+    /// <param name="p">New List of players in Game.</param>
+    public void SetPlayersInGame(List<EGS_Player> p) { playersInGame = p; }
+
+    /// <summary>
+    /// Getter for PlayersByID.
+    /// </summary>
+    /// <returns>List of players by ID.</returns>
+    public Dictionary<int, EGS_Player> GetPlayersByID() { return playersByID; }
+
+    /// <summary>
+    /// Setter for PlayersByID.
+    /// </summary>
+    /// <param name="p">New List of players by ID.</param>
+    public void SetPlayersByID(Dictionary<int, EGS_Player> p) { playersByID = p; }
+    #endregion
 }

@@ -1,8 +1,6 @@
-using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
-using System.Threading;
 using UnityEngine;
 
 /// <summary>
@@ -11,25 +9,29 @@ using UnityEngine;
 public class EGS_CL_Sockets
 {
     #region Variables
-    // Client socket.
+    [Header("Networking")]
+    [Tooltip("Client socket")]
     private Socket socket_client;
 
-    // Instance of the handler for the client socket.
+    [Tooltip("Handler for the client socket")]
     public EGS_CL_SocketClient clientSocketHandler;
 
     // TODO: This CAN'T BE HERE.
-    // Player positions and usernames.
+    [Header("Game Data")]
+    [Tooltip("Dictionary of player positions by their ingameID")]
     public static Dictionary<int, Vector3> playerPositions = new Dictionary<int, Vector3>();
+    [Tooltip("Dictionary of player usernames by their ingameID")]
     public static Dictionary<int, string> playerUsernames = new Dictionary<int, string>();
 
-    // TODO: This CAN'T BE HERE.
+    // TODO: This CAN'T BE HERE. Should be in the client data object.
     // Test:
+    [Tooltip("Instance of the client user")]
     public EGS_User thisUser;
     #endregion
 
     #region Constructors
     /// <summary>
-    /// Main constructor.
+    /// Empty constructor.
     /// </summary>
     public EGS_CL_Sockets()
     {
@@ -37,6 +39,7 @@ public class EGS_CL_Sockets
     }
     #endregion
 
+    #region Public Methods
     /// <summary>
     /// Method ConnectToServer, to establish a connection to the server.
     /// </summary>
@@ -80,6 +83,11 @@ public class EGS_CL_Sockets
         //new Thread(() => clientSocketHandler.StartClient(remoteEP, socket_client)).Start();
     }
 
+    /// <summary>
+    /// Method SendMessage, to send a message to the server.
+    /// </summary>
+    /// <param name="type">Message type</param>
+    /// <param name="msg">Message content</param>
     public void SendMessage(string type, string msg)
     {
         // Create new message.
@@ -112,6 +120,7 @@ public class EGS_CL_Sockets
 
         Debug.Log("[CLIENT] Closed socket.");
     }
+    #endregion
 
     #region Private Methods
     #region Network data
