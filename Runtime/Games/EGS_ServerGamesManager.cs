@@ -163,8 +163,10 @@ public class EGS_ServerGamesManager : MonoBehaviour
                 startData.GetPlayersToGame().Add(playerToGame);
             }
 
+            // TODO: Put this on a class to serialize as json -> EGS_GameServerStartData.
             // Construct the arguments.
-            string arguments = EGS_ServerManager.serverData.version + "#" + EGS_ServerManager.serverData.serverIP + "#" + EGS_ServerManager.serverData.serverPort + "#" + gameServerID;
+            int gameServerPort = EGS_ServerManager.serverData.serverPort + gameServerID + 1;
+            string arguments = EGS_ServerManager.serverData.version + "#" + EGS_ServerManager.serverData.serverIP + "#" + EGS_ServerManager.serverData.serverPort + "#" + gameServerID + "#" + gameServerPort;
             string jsonString = JsonUtility.ToJson(startData);
             arguments += "#" + jsonString;
 

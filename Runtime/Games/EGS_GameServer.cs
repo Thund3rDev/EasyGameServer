@@ -16,6 +16,9 @@ public class EGS_GameServer : MonoBehaviour
 
 
     [Header("Networking")]
+    [Tooltip("Port where the Game Server will be hosted")]
+    public int gameServerPort;
+
     [Tooltip("Controller for game server sockets")]
     public EGS_GS_Sockets gameServerSocketsController = null;
 
@@ -107,7 +110,8 @@ public class EGS_GameServer : MonoBehaviour
         serverData.serverIP = realArguments[1];
         serverData.serverPort = int.Parse(realArguments[2]);
         gameServerID = int.Parse(realArguments[3]);
-        startData = JsonUtility.FromJson<EGS_GameServerStartData>(realArguments[4]);
+        gameServerPort = int.Parse(realArguments[4]);
+        startData = JsonUtility.FromJson<EGS_GameServerStartData>(realArguments[5]);
     }
     #endregion
     #endregion

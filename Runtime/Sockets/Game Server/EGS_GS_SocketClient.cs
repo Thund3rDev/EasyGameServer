@@ -300,8 +300,11 @@ public class EGS_GS_SocketClient
 
                 // Send a message to the master server.
                 messageToSend.messageType = "CREATED_GAME_SERVER";
-                messageToSend.messageContent = EGS_GameServer.gameServer_instance.gameServerID + "#" + socketsController.localEP.ToString();
-                
+
+                string gameServerIP = EGS_GameServer.gameServer_instance.serverData.serverIP + ":" + EGS_GameServer.gameServer_instance.gameServerPort;
+                messageToSend.messageContent = EGS_GameServer.gameServer_instance.gameServerID + "#" + gameServerIP;
+                EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServer.gameServer_instance.test_text.text += "\nIPADRESS " + EGS_GameServer.gameServer_instance.serverData.serverIP; });
+
                 // Convert message to JSON.
                 jsonMSG = messageToSend.ConvertMessage();
 

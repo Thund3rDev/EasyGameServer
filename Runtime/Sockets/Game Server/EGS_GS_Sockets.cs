@@ -60,7 +60,7 @@ public class EGS_GS_Sockets
     public void StartListening()
     {
         // Create socket and get EndPoint.
-        localEP = CreateGameServerSocket();
+        localEP = CreateGameServerSocket(EGS_GameServer.gameServer_instance.gameServerPort);
 
         // Connect to server.
         serverSocketHandler = new EGS_GS_SocketServer(this, AfterPlayerConnected, OnPlayerDisconnected);
@@ -154,15 +154,14 @@ public class EGS_GS_Sockets
     /// <summary>
     /// Method CreateGameServerSocket, that creates the server socket and returns the endpoint.
     /// </summary>
+    /// /// <param name="gameServerPort">Port where the game server will be set</param>
     /// <returns>EndPoint where the server it is</returns>
-    private EndPoint CreateGameServerSocket()
+    private EndPoint CreateGameServerSocket(int gameServerPort)
     {
         IPAddress[] ips = Dns.GetHostAddresses(Dns.GetHostName());
-        IPAddress ipAddress = ips[1];
+        IPAddress ipAddress = ips[1]; // IPv4
 
-        int serverPort = GetFreeTcpPort();
-
-        IPEndPoint localEndPoint = new IPEndPoint(ipAddress, serverPort);
+        IPEndPoint localEndPoint = new IPEndPoint(ipAddress, gameServerPort);
 
         // Create a TCP/IP socket
         socket_server = new Socket(ipAddress.AddressFamily,
@@ -170,19 +169,6 @@ public class EGS_GS_Sockets
 
         // Return the EndPoint
         return localEndPoint;
-    }
-
-    /// <summary>
-    /// Method GetFreeTcpPort, that returns a free Tcp port to bind the game server.
-    /// </summary>
-    /// <returns>Integer with the free tcp port</returns>
-    private int GetFreeTcpPort()
-    {
-        TcpListener listener = new TcpListener(IPAddress.Loopback, 0);
-        listener.Start();
-        int port = ((IPEndPoint)listener.LocalEndpoint).Port;
-        listener.Stop();
-        return port;
     }
 
     /// <summary>

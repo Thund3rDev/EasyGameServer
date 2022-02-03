@@ -407,15 +407,15 @@ public class EGS_SE_SocketServer
                 // Put a heartbeat for the client socket.
                 HeartbeatClient(handler);
 
-                if (EGS_ServerManager.DEBUG_MODE > -1)
-                    egs_Log.Log("<color=purple>Game Server created and connected</color>: " + gameServerID + ". IP: " + handler.RemoteEndPoint + ".");
-
-                // Assign the created status.
-                EGS_ServerGamesManager.gm_instance.gameServers[gameServerID].SetStatus(EGS_GameServerData.EGS_GameServerState.CREATED);
-
                 // Get the game server IP from the message.
                 // TODO: Maybe get it from the handler.
                 string gameServerIP = messageInfo[1];
+
+                if (EGS_ServerManager.DEBUG_MODE > -1)
+                    egs_Log.Log("<color=purple>Game Server created and connected</color>: " + gameServerID + ". IP: " + gameServerIP + ".");
+
+                // Assign the created status.
+                EGS_ServerGamesManager.gm_instance.gameServers[gameServerID].SetStatus(EGS_GameServerData.EGS_GameServerState.CREATED);
 
                 // Send the game server IP to the players.
                 messageToSend.messageType = "CHANGE_TO_GAME_SERVER";

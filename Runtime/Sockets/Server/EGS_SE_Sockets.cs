@@ -98,19 +98,10 @@ public class EGS_SE_Sockets
     /// <returns>EndPoint where the server it is</returns>
     private EndPoint CreateSocket()
     {
-        // TODO: Valorate what option is better. Connect IPv4 and IPv6.
         IPAddress[] ips = Dns.GetHostAddresses(Dns.GetHostName());
-        IPAddress ipAddress = ips[1];
-
-        int serverPort = EGS_ServerManager.serverData.serverPort;
-
-        // Update server IP
-        EGS_ServerManager.serverData.serverIP = ips[1].ToString();
+        IPAddress ipAddress = ips[1]; // IPv4
 
         // Obtain IP direction and endpoint.
-        //IPHostEntry ipHostInfo = Dns.GetHostEntry(serverIP);
-        // It is IPv4, but if wifi is using, it should be 1 and not 0.
-        //IPAddress ipAddress = ipHostInfo.AddressList[0];
         IPEndPoint localEndPoint = new IPEndPoint(ipAddress, serverPort);
 
         // Create a TCP/IP socket.
@@ -127,7 +118,7 @@ public class EGS_SE_Sockets
     public void StopListening()
     {
         socket_listener.Close();
-        egs_Log.Log("<color=green>Easy Game Server</color> stopped listening at port <color=orange>" + serverPort + "</color>.");
+        egs_Log.Log("<color=green>Easy Game Server</color> stopped listening connections.");
     }
     #endregion
 }
