@@ -12,7 +12,7 @@ public class EGS_GameServer : MonoBehaviour
     public static EGS_GameServer gameServer_instance;
 
     [Tooltip("Struct that contains the server data")]
-    public EGS_ServerData serverData;
+    public EGS_Config serverData;
 
 
     [Header("Networking")]
@@ -106,12 +106,11 @@ public class EGS_GameServer : MonoBehaviour
     {
         string[] arguments = Environment.GetCommandLineArgs();
         string[] realArguments = arguments[1].Split('#');
-        serverData.version = realArguments[0];
-        serverData.serverIP = realArguments[1];
-        serverData.serverPort = int.Parse(realArguments[2]);
-        gameServerID = int.Parse(realArguments[3]);
-        gameServerPort = int.Parse(realArguments[4]);
-        startData = JsonUtility.FromJson<EGS_GameServerStartData>(realArguments[5]);
+        EGS_Config.serverIP = realArguments[0];
+        EGS_Config.serverPort = int.Parse(realArguments[1]);
+        gameServerID = int.Parse(realArguments[2]);
+        gameServerPort = int.Parse(realArguments[3]);
+        startData = JsonUtility.FromJson<EGS_GameServerStartData>(realArguments[4]);
     }
     #endregion
     #endregion

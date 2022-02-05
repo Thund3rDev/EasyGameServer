@@ -46,11 +46,11 @@ public class EGS_CL_Sockets
     public void ConnectToServer()
     {
         // Obtain IP Address.
-        IPAddress serverIpAddress = ObtainIPAddress(EGS_Client.serverData.serverIP);
+        IPAddress serverIpAddress = ObtainIPAddress(EGS_Config.serverIP);
         // Create the Client Socket.
         CreateClientSocket(serverIpAddress);
         // Get EndPoint.
-        EndPoint remoteEP = CreateEndpoint(serverIpAddress, EGS_Client.serverData.serverPort);
+        EndPoint remoteEP = CreateEndpoint(serverIpAddress, EGS_Config.serverPort);
 
         // Connect to server.
         clientSocketHandler = new EGS_CL_SocketClient(this);

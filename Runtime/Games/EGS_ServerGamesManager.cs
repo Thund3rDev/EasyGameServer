@@ -15,13 +15,6 @@ public class EGS_ServerGamesManager : MonoBehaviour
     [Tooltip("Singleton")]
     public static EGS_ServerGamesManager gm_instance;
 
-    [Header("Fixed Variables")]
-    [Tooltip("Máximum number of games")]
-    public readonly int MAX_GAMES = 5;
-
-    [Tooltip("Number of players per game")]
-    public readonly int PLAYERS_PER_GAME = 2;
-
     [Header("Games")]
     [Tooltip("Dictionary that stores users by their room")]
     public Dictionary<int, List<EGS_User>> usersInRooms = new Dictionary<int, List<EGS_User>>();
@@ -55,8 +48,6 @@ public class EGS_ServerGamesManager : MonoBehaviour
         {
             gm_instance = this;
             DontDestroyOnLoad(this.gameObject);
-
-            gameServers = new EGS_GameServerData[MAX_GAMES];
         }
         else
             Destroy(this.gameObject);
@@ -66,6 +57,15 @@ public class EGS_ServerGamesManager : MonoBehaviour
 
     #region Class Methods
     #region Public Methods
+
+    /// <summary>
+    /// Method InitializeServerGamesManager, to initialize some data and variables for the server games manager.
+    /// </summary>
+    public void InitializeServerGamesManager()
+    {
+        gameServers = new EGS_GameServerData[EGS_Config.MAX_GAMES];
+    }
+
     /// <summary>
     /// Method CreateGame, that will create a new instance of a game and assign all data.
     /// </summary>
@@ -165,8 +165,8 @@ public class EGS_ServerGamesManager : MonoBehaviour
 
             // TODO: Put this on a class to serialize as json -> EGS_GameServerStartData.
             // Construct the arguments.
-            int gameServerPort = EGS_ServerManager.serverData.serverPort + gameServerID + 1;
-            string arguments = EGS_ServerManager.serverData.version + "#" + EGS_ServerManager.serverData.serverIP + "#" + EGS_ServerManager.serverData.serverPort + "#" + gameServerID + "#" + gameServerPort;
+            int gameServerPort = EGS_Config.serverPort + gameServerID + 1;
+            string arguments = EGS_Config.serverIP + "#" + EGS_Config.serverPort + "#" + gameServerID + "#" + gameServerPort;
             string jsonString = JsonUtility.ToJson(startData);
             arguments += "#" + jsonString;
 
@@ -177,7 +177,7 @@ public class EGS_ServerGamesManager : MonoBehaviour
             try
             {
                 gameServers[gameServerID].SetProcess(new Process());
-                gameServers[gameServerID].GetProcess().StartInfo.FileName = "C:\\Users\\Samue\\Desktop\\URJC\\TFG\\Builds\\Game Server\\Easy Game Server.exe";
+                gameServers[gameServerID].GetProcess().StartInfo.FileName = EGS_Config.GAMESERVER_PATH;
                 gameServers[gameServerID].GetProcess().StartInfo.Arguments = arguments;
                 gameServers[gameServerID].GetProcess().Start();
 

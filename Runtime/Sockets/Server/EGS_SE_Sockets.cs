@@ -8,14 +8,6 @@ using UnityEngine;
 public class EGS_SE_Sockets
 {
     #region Variables
-    [Header("Server data")]
-    [Tooltip("Server IP")]
-    private string serverIP; // TODO: Check if neccesary.
-
-    [Tooltip("Server Port")]
-    private int serverPort;
-
-
     [Header("Networking")]
     [Tooltip("Server socket")]
     private Socket socket_listener;
@@ -34,13 +26,9 @@ public class EGS_SE_Sockets
     /// Main constructor that assigns the log.
     /// </summary>
     /// <param name="log_">Log instance</param>
-    /// <param name="serverIP_">IP where server will be set</param>
-    /// <param name="serverPort_">Port where server will be set</param>
-    public EGS_SE_Sockets(EGS_Log log_, string serverIP_, int serverPort_)
+    public EGS_SE_Sockets(EGS_Log log_)
     {
         egs_Log = log_;
-        serverIP = serverIP_;
-        serverPort = serverPort_;
     }
     #endregion
 
@@ -56,7 +44,7 @@ public class EGS_SE_Sockets
 
         // Connect to server.
         serverSocketHandler = new EGS_SE_SocketServer(egs_Log, OnNewConnection, OnClientDisconnected);
-        serverSocketHandler.StartListening(serverPort, localEP, socket_listener);
+        serverSocketHandler.StartListening(EGS_Config.serverPort, localEP, socket_listener);
     }
 
     #region Connect and disconnect methods
@@ -66,7 +54,7 @@ public class EGS_SE_Sockets
     /// <param name="clientSocket">Socket connected to the client</param>
     public void OnNewConnection(Socket clientSocket)
     {
-        if (EGS_ServerManager.DEBUG_MODE > 2)
+        if (EGS_Config.DEBUG_MODE > 2)
             egs_Log.Log("<color=blue>New connection</color>. IP: " + clientSocket.RemoteEndPoint + ".");
 
         // Ask client for user data.
@@ -83,7 +71,7 @@ public class EGS_SE_Sockets
     /// <param name="clientSocket">Client socket disconnected from the server</param>
     public void OnClientDisconnected(Socket clientSocket)
     {
-        if (EGS_ServerManager.DEBUG_MODE > 2)
+        if (EGS_Config.DEBUG_MODE > 2)
             egs_Log.Log("<color=blue>Closed connection</color>. IP: " + clientSocket.RemoteEndPoint + ".");
     }
     #endregion
@@ -102,7 +90,7 @@ public class EGS_SE_Sockets
         IPAddress ipAddress = ips[1]; // IPv4
 
         // Obtain IP direction and endpoint.
-        IPEndPoint localEndPoint = new IPEndPoint(ipAddress, serverPort);
+        IPEndPoint localEndPoint = new IPEndPoint(ipAddress, EGS_Config.serverPort);
 
         // Create a TCP/IP socket.
         socket_listener = new Socket(ipAddress.AddressFamily,

@@ -14,7 +14,7 @@ public class EGS_Client : MonoBehaviour
     public static EGS_Client client_instance;
 
     [Tooltip("Struct that contains the server data")]
-    public static EGS_ServerData serverData;
+    public static EGS_Config serverData;
 
     [Header("Networking")]
     [Tooltip("Bool that indicates if client is connnected to the master server")]
@@ -132,22 +132,25 @@ public class EGS_Client : MonoBehaviour
 
         XmlNode node;
 
-        // Get server version.
-        node = doc.DocumentElement.SelectSingleNode("//version");
-        serverData.version = node.InnerText;
+        /// Server Data.
+        // Get time between round trip times.
+        node = doc.DocumentElement.SelectSingleNode("//server/time-between-rtt");
+        EGS_Config.TIME_BETWEEN_RTTS = int.Parse(node.InnerText);
 
+        /// Networking Data.
         // Get server ip.
-        node = doc.DocumentElement.SelectSingleNode("//server-ip");
-        serverData.serverIP = node.InnerText;
+        node = doc.DocumentElement.SelectSingleNode("//networking/server-ip");
+        EGS_Config.serverIP = node.InnerText;
 
         // Get server port.
-        node = doc.DocumentElement.SelectSingleNode("//port");
-        serverData.serverPort = int.Parse(node.InnerText);
+        node = doc.DocumentElement.SelectSingleNode("//networking/base-port");
+        EGS_Config.serverPort = int.Parse(node.InnerText);
 
+        /// Client Data.
         // TODO: Make possible different ways to get the username.
         // Test.
         // Get player username.
-        node = doc.DocumentElement.SelectSingleNode("//username");
+        node = doc.DocumentElement.SelectSingleNode("//client/username");
         username = node.InnerText;
     }
     #endregion

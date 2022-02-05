@@ -11,13 +11,10 @@ public class EGS_ServerManager : MonoBehaviour
     [Header("General Variables")]
     [Tooltip("Struct that contains the server data")]
     [HideInInspector]
-    public static EGS_ServerData serverData;
+    public static EGS_Config serverData;
 
     [Tooltip("Bool that indicates if the server has started or not")]
     private bool serverStarted = false;
-
-    [Tooltip("Int that indicates the level of debug")]
-    public static readonly int DEBUG_MODE = 2; /// -1: No debug | 0: Release debug | 1: Minimal debug | 2: Some useful debugs | 3: Complete debug
 
     [Header("References")]
     [Tooltip("Reference to the Log")]
@@ -36,7 +33,7 @@ public class EGS_ServerManager : MonoBehaviour
         // Check if server already started.
         if (serverStarted)
         {
-            if (DEBUG_MODE > -1)
+            if (EGS_Config.DEBUG_MODE > -1)
                 egs_Log.LogWarning("Easy Game Server already started.");
             return;
         }
@@ -50,15 +47,17 @@ public class EGS_ServerManager : MonoBehaviour
         /// Read all data.
         // Read Server config data.
         ReadServerData();
+        // Initialize Server Games Manager.
+        EGS_ServerGamesManager.gm_instance.InitializeServerGamesManager();
 
         // TODO: ReadUsersData.
 
         // Log that server started.
-        if (DEBUG_MODE > -1)
-            egs_Log.Log("Started <color=green>EasyGameServer</color> with version <color=orange>" + serverData.version + "</color>.");
+        if (EGS_Config.DEBUG_MODE > -1)
+            egs_Log.Log("Started <color=green>EasyGameServer</color> with version <color=orange>" + EGS_Config.version + "</color>.");
 
         // Create sockets manager.
-        egs_se_sockets = new EGS_SE_Sockets(egs_Log, serverData.serverIP, serverData.serverPort);
+        egs_se_sockets = new EGS_SE_Sockets(egs_Log);
         // Start listening for connections.
         egs_se_sockets.StartListening();
     }
@@ -100,17 +99,47 @@ public class EGS_ServerManager : MonoBehaviour
 
         XmlNode node;
 
-        // Get server version.
-        node = doc.DocumentElement.SelectSingleNode("//version");
-        serverData.version = node.InnerText;
+        /// Server Data.
+        // Get debug mode.
+        node = doc.DocumentElement.SelectSingleNode("//server/debug-mode");
+        EGS_Config.DEBUG_MODE = int.Parse(node.InnerText);
 
+        // Get maximum number of connections.
+        node = doc.DocumentElement.SelectSingleNode("//server/max-connections");
+        EGS_Config.MAX_CONNECTIONS = int.Parse(node.InnerText);
+
+        // Get maximum number of game servers.
+        node = doc.DocumentElement.SelectSingleNode("//server/max-games");
+        EGS_Config.MAX_GAMES = int.Parse(node.InnerText);
+
+        // Get time between round trip times.
+        node = doc.DocumentElement.SelectSingleNode("//server/time-between-rtt");
+        EGS_Config.TIME_BETWEEN_RTTS = int.Parse(node.InnerText);
+
+        // Get time to disconnect client if no response.
+        node = doc.DocumentElement.SelectSingleNode("//server/disconnect-timeout");
+        EGS_Config.DISCONNECT_TIMEOUT = int.Parse(node.InnerText);
+
+
+        /// Game Server Data.
+        // Get Game Server path to the executable in the file explorer.
+        node = doc.DocumentElement.SelectSingleNode("//game-server/path");
+        EGS_Config.GAMESERVER_PATH = node.InnerText;
+
+
+        /// Networking Data.
         // Get server ip.
-        node = doc.DocumentElement.SelectSingleNode("//server-ip");
-        serverData.serverIP = node.InnerText;
+        node = doc.DocumentElement.SelectSingleNode("//networking/server-ip");
+        EGS_Config.serverIP = node.InnerText;
 
         // Get server port.
-        node = doc.DocumentElement.SelectSingleNode("//port");
-        serverData.serverPort = int.Parse(node.InnerText);
+        node = doc.DocumentElement.SelectSingleNode("//networking/base-port");
+        EGS_Config.serverPort = int.Parse(node.InnerText);
+
+
+        /// Games Data.
+        node = doc.DocumentElement.SelectSingleNode("//game/players-per-game"); // TODO: Make MIN_PLAYERS and MAX_PLAYERS.
+        EGS_Config.PLAYERS_PER_GAME = int.Parse(node.InnerText);
     }
     #endregion
     #endregion

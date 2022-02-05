@@ -74,9 +74,9 @@ public class EGS_SE_SocketServer
         try
         {
             socket_listener.Bind(localEP);
-            socket_listener.Listen(100); // TODO: Listen up to MAX_CONNECTIONS.
+            socket_listener.Listen(EGS_Config.MAX_CONNECTIONS);
 
-            if (EGS_ServerManager.DEBUG_MODE > -1)
+            if (EGS_Config.DEBUG_MODE > -1)
                 egs_Log.Log("<color=green>Easy Game Server</color> Listening at port <color=orange>" + serverPort + "</color>.");
 
             // Start listening for connections asynchronously.
@@ -90,7 +90,7 @@ public class EGS_SE_SocketServer
         }
         catch (Exception e)
         {
-            if (EGS_ServerManager.DEBUG_MODE > -1)
+            if (EGS_Config.DEBUG_MODE > -1)
                 egs_Log.LogError(e.ToString());
         }
     }
@@ -163,7 +163,7 @@ public class EGS_SE_SocketServer
                 for (int i = 0; i < (receivedMessages.Length - 1); i++)
                     HandleMessage(receivedMessages[i], handler);
 
-                if (EGS_ServerManager.DEBUG_MODE > 2)
+                if (EGS_Config.DEBUG_MODE > 2)
                     egs_Log.Log("Keep receiving messages from: " + handler.RemoteEndPoint);
             }
             else
@@ -205,7 +205,7 @@ public class EGS_SE_SocketServer
 
             // Complete sending the data to the remote device.  
             int bytesSent = handler.EndSend(ar);
-            if (EGS_ServerManager.DEBUG_MODE > 2)
+            if (EGS_Config.DEBUG_MODE > 2)
                 egs_Log.Log("Sent " + bytesSent + " bytes to client.");
 
         }
@@ -214,7 +214,7 @@ public class EGS_SE_SocketServer
         }
         catch (Exception e)
         {
-            if (EGS_ServerManager.DEBUG_MODE > -1)
+            if (EGS_Config.DEBUG_MODE > -1)
                 egs_Log.LogError(e.ToString());
         }
     }
@@ -238,7 +238,7 @@ public class EGS_SE_SocketServer
             throw e;
         }
 
-        if (EGS_ServerManager.DEBUG_MODE > 2)
+        if (EGS_Config.DEBUG_MODE > 2)
             egs_Log.Log("Read " + content.Length + " bytes from socket - " + handler.RemoteEndPoint +
             " - Message type: " + receivedMessage.messageType);
 
@@ -254,11 +254,11 @@ public class EGS_SE_SocketServer
         switch (receivedMessage.messageType)
         {
             case "TEST_MESSAGE":
-                if (EGS_ServerManager.DEBUG_MODE > 2)
+                if (EGS_Config.DEBUG_MODE > 2)
                     egs_Log.Log("<color=purple>Data:</color> " + receivedMessage.messageContent);
                 break;
             case "KEEP_ALIVE":
-                if (EGS_ServerManager.DEBUG_MODE > 2)
+                if (EGS_Config.DEBUG_MODE > 2)
                     egs_Log.Log("<color=purple>Keep alive:</color> " + connectedUsers[handler].GetUsername());
 
                 socketTimeoutCounters[handler].Stop();
@@ -310,7 +310,7 @@ public class EGS_SE_SocketServer
                 EGS_PlayerToGame newPlayer = new EGS_PlayerToGame(thisUser);
                 EGS_ServerGamesManager.gm_instance.searchingGame_players.Enqueue(newPlayer);
 
-                if (EGS_ServerManager.DEBUG_MODE > 0)
+                if (EGS_Config.DEBUG_MODE > 0)
                     egs_Log.Log("Searching game: " + thisUser.GetUsername() + ".");
 
                 // Check the Queue to Start Game.
@@ -381,7 +381,7 @@ public class EGS_SE_SocketServer
                 }
 
                 // Reset its timer.
-                if (EGS_ServerManager.DEBUG_MODE > 2)
+                if (EGS_Config.DEBUG_MODE > 2)
                     egs_Log.Log("<color=purple>Keep alive Game Server:</color> " + gameServerID + ". Status: " + status + ".");
 
                 socketTimeoutCounters[handler].Stop();
@@ -411,7 +411,7 @@ public class EGS_SE_SocketServer
                 // TODO: Maybe get it from the handler.
                 string gameServerIP = messageInfo[1];
 
-                if (EGS_ServerManager.DEBUG_MODE > -1)
+                if (EGS_Config.DEBUG_MODE > -1)
                     egs_Log.Log("<color=purple>Game Server created and connected</color>: " + gameServerID + ". IP: " + gameServerIP + ".");
 
                 // Assign the created status.
@@ -428,12 +428,12 @@ public class EGS_SE_SocketServer
                 {
                     Send(user.GetSocket(), jsonMSG);
 
-                    if (EGS_ServerManager.DEBUG_MODE > 1)
+                    if (EGS_Config.DEBUG_MODE > 1)
                         egs_Log.Log("SENT ORDER TO: " + user.GetUsername() + ".");
                 }
                 break;
             default:
-                if (EGS_ServerManager.DEBUG_MODE > -1)
+                if (EGS_Config.DEBUG_MODE > -1)
                     egs_Log.Log("<color=yellow>Undefined message type</color>: " + receivedMessage.messageType + ".");
                 break;
         }
@@ -451,7 +451,7 @@ public class EGS_SE_SocketServer
         DisconnectClient(client_socket);
 
         // Display data on the console.
-        if (EGS_ServerManager.DEBUG_MODE > -1)
+        if (EGS_Config.DEBUG_MODE > -1)
             egs_Log.Log("<color=purple>Disconnected To Connect to the Game Server</color>: UserID: " + userToDisconnect.GetUserID() + " - Username: " + userToDisconnect.GetUsername() + " - IP: " + client_socket.RemoteEndPoint + ".");
     }
 
@@ -472,7 +472,7 @@ public class EGS_SE_SocketServer
         }
 
         // Display data on the console.
-        if (EGS_ServerManager.DEBUG_MODE > -1)
+        if (EGS_Config.DEBUG_MODE > -1)
             egs_Log.Log("<color=purple>Connected User</color>: UserID: " + userToConnect.GetUserID() + " - Username: " + userToConnect.GetUsername() + " - IP: " + client_socket.RemoteEndPoint + ".");
     }
 
@@ -493,7 +493,7 @@ public class EGS_SE_SocketServer
         DisconnectClient(client_socket);
 
         // Display data on the console.
-        if (EGS_ServerManager.DEBUG_MODE > -1)
+        if (EGS_Config.DEBUG_MODE > -1)
             egs_Log.Log("<color=purple>Disconnected User</color>: UserID: " + userToDisconnect.GetUserID() + " - Username: " + userToDisconnect.GetUsername() + " - IP: " + client_socket.RemoteEndPoint + ".");
     }
 
@@ -512,7 +512,7 @@ public class EGS_SE_SocketServer
         }
         catch (Exception e)
         {
-            if (EGS_ServerManager.DEBUG_MODE > -1)
+            if (EGS_Config.DEBUG_MODE > -1)
                 egs_Log.LogError(e.ToString());
         }
         finally
@@ -529,7 +529,7 @@ public class EGS_SE_SocketServer
         // TODO: Save on a database? Delegate.
 
         // Display data on the console.
-        if (EGS_ServerManager.DEBUG_MODE > -1)
+        if (EGS_Config.DEBUG_MODE > -1)
             egs_Log.Log("<color=purple>Registered User</color>: UserID: " + userToRegister.GetUserID() + " - Username: " + userToRegister.GetUsername() + ".");
     }
 
@@ -568,7 +568,7 @@ public class EGS_SE_SocketServer
         // TODO: Delete from a database? Delegate.
 
         // Display data on the console.
-        if (EGS_ServerManager.DEBUG_MODE > -1)
+        if (EGS_Config.DEBUG_MODE > -1)
             egs_Log.Log("<color=purple>Deleted User</color>: UserID: " + userToDelete.GetUserID() + " - Username: " + userToDelete.GetUsername());
     }
     #endregion
@@ -586,10 +586,10 @@ public class EGS_SE_SocketServer
         lock (EGS_ServerGamesManager.gm_instance.searchingGame_players)
         {
             // If there are enough players to start a game.
-            if (EGS_ServerGamesManager.gm_instance.searchingGame_players.Count >= EGS_ServerGamesManager.gm_instance.PLAYERS_PER_GAME)
+            if (EGS_ServerGamesManager.gm_instance.searchingGame_players.Count >= EGS_Config.PLAYERS_PER_GAME)
             {
                 areEnoughForAGame = true;
-                for (int i = 0; i < EGS_ServerGamesManager.gm_instance.PLAYERS_PER_GAME; i++)
+                for (int i = 0; i < EGS_Config.PLAYERS_PER_GAME; i++)
                 {
                     // Get the player from the queue.
                     EGS_PlayerToGame playerToGame;
@@ -663,8 +663,7 @@ public class EGS_SE_SocketServer
     /// <param name="client_socket">Socket that handles the client</param>
     private void HeartbeatClient(Socket client_socket)
     {
-        // TODO: Change the time from 15000 to TIME_TO_DISCONNECT.
-        socketTimeoutCounters.Add(client_socket, new System.Timers.Timer(15000));
+        socketTimeoutCounters.Add(client_socket, new System.Timers.Timer(EGS_Config.DISCONNECT_TIMEOUT));
         socketTimeoutCounters[client_socket].Start();
         socketTimeoutCounters[client_socket].Elapsed += (sender, e) => DisconnectClientByTimeout(sender, e, client_socket);
     }
@@ -696,7 +695,7 @@ public class EGS_SE_SocketServer
         DisconnectClient(client_socket);
 
         // Display data on the console.
-        if (EGS_ServerManager.DEBUG_MODE > -1)
+        if (EGS_Config.DEBUG_MODE > -1)
             egs_Log.Log("<color=purple>Disconnected User:</color> UserID: " + userToDisconnect.GetUserID() + " - Username: " + userToDisconnect.GetUsername());
 
         // Remove the user from the connectedUsers dictionary.

@@ -238,7 +238,7 @@ public class EGS_GS_SocketClient
 
             // Complete sending the data to the remote device.  
             int bytesSent = client.EndSend(ar);
-            if (EGS_ServerManager.DEBUG_MODE > 2)
+            if (EGS_Config.DEBUG_MODE > 2)
                 Debug.Log("[CLIENT] Sent " + bytesSent + " bytes to server.");
 
             // Signal that all bytes have been sent.  
@@ -269,7 +269,7 @@ public class EGS_GS_SocketClient
             throw e;
         }
 
-        if (EGS_ServerManager.DEBUG_MODE > 2)
+        if (EGS_Config.DEBUG_MODE > 2)
             Debug.Log("Read " + content.Length + " bytes from socket - " + handler.RemoteEndPoint +
             " - Message type: " + receivedMessage.messageType);
 
@@ -301,9 +301,9 @@ public class EGS_GS_SocketClient
                 // Send a message to the master server.
                 messageToSend.messageType = "CREATED_GAME_SERVER";
 
-                string gameServerIP = EGS_GameServer.gameServer_instance.serverData.serverIP + ":" + EGS_GameServer.gameServer_instance.gameServerPort;
+                string gameServerIP = EGS_Config.serverIP + ":" + EGS_GameServer.gameServer_instance.gameServerPort;
                 messageToSend.messageContent = EGS_GameServer.gameServer_instance.gameServerID + "#" + gameServerIP;
-                EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServer.gameServer_instance.test_text.text += "\nIPADRESS " + EGS_GameServer.gameServer_instance.serverData.serverIP; });
+                EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServer.gameServer_instance.test_text.text += "\nIPADRESS " + EGS_Config.serverIP; });
 
                 // Convert message to JSON.
                 jsonMSG = messageToSend.ConvertMessage();

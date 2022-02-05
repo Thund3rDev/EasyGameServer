@@ -242,7 +242,7 @@ public class EGS_CL_SocketClient
 
             // Complete sending the data to the remote device.  
             int bytesSent = client.EndSend(ar);
-            if (EGS_ServerManager.DEBUG_MODE > 2)
+            if (EGS_Config.DEBUG_MODE > 2)
                 Debug.Log("[CLIENT] Sent " + bytesSent + " bytes to server.");
 
             // Signal that all bytes have been sent.  
@@ -273,7 +273,7 @@ public class EGS_CL_SocketClient
             throw e;
         }
 
-        if (EGS_ServerManager.DEBUG_MODE > 2)
+        if (EGS_Config.DEBUG_MODE > 2)
             Debug.Log("Read " + content.Length + " bytes from socket - " + handler.RemoteEndPoint +
             " - Message type: " + receivedMessage.messageType);
 
@@ -342,7 +342,6 @@ public class EGS_CL_SocketClient
                 // TODO: This should be done in a delegate, so programmer decides.
 
                 EGS_UpdateData gameData = JsonUtility.FromJson<EGS_UpdateData>(receivedMessage.messageContent);
-                Debug.Log("GAME_FOUND MSG: " + receivedMessage.messageContent);
 
                 // Clear the dictionaries and add the new players.
                 EGS_CL_Sockets.playerPositions.Clear();
@@ -361,8 +360,6 @@ public class EGS_CL_SocketClient
                 string[] ep = receivedMessage.messageContent.Split(':');
                 serverIP = ep[0];
                 serverPort = int.Parse(ep[1]);
-
-                EGS_Dispatcher.RunOnMainThread(() => { Debug.Log("Game Server IP: " + receivedMessage.messageContent); });
 
                 // Tell the server that the client received the information so can connect to the game server.
                 messageToSend.messageType = "DISCONNECT_TO_GAME";
@@ -383,7 +380,6 @@ public class EGS_CL_SocketClient
                 socketsController.ConnectToGameServer(serverIP, serverPort);
                 break;
             case "CONNECT_GAME_SERVER":
-                Debug.Log("CONNECT_GAME_SERVER MSG: " + receivedMessage.messageContent);
                 socketsController.thisUser.SetRoom(int.Parse(receivedMessage.messageContent));
 
                 // Convert user to JSON.
@@ -394,8 +390,6 @@ public class EGS_CL_SocketClient
 
                 // Convert message to JSON.
                 jsonMSG = messageToSend.ConvertMessage();
-
-                Debug.Log("JSON MSG: " + jsonMSG);
 
                 // Send data to server.
                 Send(socket_client, jsonMSG);
@@ -450,8 +444,7 @@ public class EGS_CL_SocketClient
 
             //EGS_Dispatcher.RunOnMainThread(() => { Debug.Log("KEEP ALIVE"); });
 
-            // TODO: Change 1000 to TIME_BETWEEN_KEEP_ALIVE.
-            Thread.Sleep(1000);
+            Thread.Sleep(EGS_Config.TIME_BETWEEN_RTTS);
         }
     }
 

@@ -47,7 +47,7 @@ public class EGS_GS_Sockets
     public void ConnectToMasterServer()
     {
         // Create socket and get EndPoint
-        EndPoint remoteEP = CreateSocket(EGS_GameServer.gameServer_instance.serverData.serverIP, EGS_GameServer.gameServer_instance.serverData.serverPort);
+        EndPoint remoteEP = CreateSocket(EGS_Config.serverIP, EGS_Config.serverPort);
 
         // Connect to server
         clientSocketHandler = new EGS_GS_SocketClient(this);
