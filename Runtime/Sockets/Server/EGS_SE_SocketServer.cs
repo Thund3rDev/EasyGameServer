@@ -314,7 +314,7 @@ public class EGS_SE_SocketServer
                     egs_Log.Log("Searching game: " + thisUser.GetUsername() + ".");
 
                 // Check the Queue to Start Game.
-                CheckQueueToStartGame();
+                EGS_ServerGamesManager.gm_instance.CheckQueueToStartGame(this);
                 break;
             case "QUEUE_LEAVE":
                 // Bool to know if player is in queue.
@@ -572,79 +572,6 @@ public class EGS_SE_SocketServer
             egs_Log.Log("<color=purple>Deleted User</color>: UserID: " + userToDelete.GetUserID() + " - Username: " + userToDelete.GetUsername());
     }
     #endregion
-
-    // TODO: Pass this to the EGS_ServerGamesManager.
-    /// <summary>
-    /// Method CheckQueueToStartGame, that check if there are enough players in queue to start a game.
-    /// </summary>
-    private void CheckQueueToStartGame()
-    {
-        bool areEnoughForAGame = false;
-        List<EGS_PlayerToGame> playersForThisGame = new List<EGS_PlayerToGame>();
-
-        // Lock to evit problems with the queue.
-        lock (EGS_ServerGamesManager.gm_instance.searchingGame_players)
-        {
-            // If there are enough players to start a game.
-            if (EGS_ServerGamesManager.gm_instance.searchingGame_players.Count >= EGS_Config.PLAYERS_PER_GAME)
-            {
-                areEnoughForAGame = true;
-                for (int i = 0; i < EGS_Config.PLAYERS_PER_GAME; i++)
-                {
-                    // Get the player from the queue.
-                    EGS_PlayerToGame playerToGame;
-                    EGS_ServerGamesManager.gm_instance.searchingGame_players.TryDequeue(out playerToGame);
-
-                    // Add the player to the list of this game.
-                    playersForThisGame.Add(playerToGame);
-                }
-            }
-        }
-
-        // If there are enough players for a game:
-        if (areEnoughForAGame)
-        {
-            // Construct the message to send.
-            EGS_UpdateData updateData = new EGS_UpdateData();
-
-            for (int i = 0; i < playersForThisGame.Count; i++)
-            {
-                EGS_PlayerData playerData = new EGS_PlayerData(i, playersForThisGame[i].GetUser().GetUsername());
-                playersForThisGame[i].SetIngameID(i);
-                updateData.GetPlayersAtGame().Add(playerData);
-            }
-
-            // Create the game and get the room number.
-            int room = EGS_ServerGamesManager.gm_instance.CreateGame(playersForThisGame);
-
-            // Get a list of the users to the game.
-            List<EGS_User> usersToGame = new List<EGS_User>();
-
-            foreach (EGS_PlayerToGame playerToGame in playersForThisGame)
-            {
-                playerToGame.GetUser().SetRoom(room);
-                usersToGame.Add(playerToGame.GetUser());
-            }
-
-            // Save the users in the room.
-            EGS_ServerGamesManager.gm_instance.usersInRooms.Add(room, usersToGame);
-
-            updateData.SetRoom(room);
-
-            // Message for the players.
-            EGS_Message msg = new EGS_Message();
-            msg.messageType = "GAME_FOUND";
-            msg.messageContent = JsonUtility.ToJson(updateData);
-
-            string jsonMSG = msg.ConvertMessage();
-
-            // Set the room and message the users so they know that found a game.
-            foreach (EGS_User userToGame in usersToGame)
-            {
-                Send(userToGame.GetSocket(), jsonMSG);
-            }
-        }
-    }
 
     #region Networking Methods
     /// <summary>
