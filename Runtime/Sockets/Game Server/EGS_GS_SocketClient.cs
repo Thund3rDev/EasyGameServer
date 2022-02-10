@@ -4,7 +4,6 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Class EGS_GS_SocketClient, that controls the client socket for the game server.
@@ -285,14 +284,24 @@ public class EGS_GS_SocketClient
             case "TEST_MESSAGE":
                 Debug.Log("Received test message from server: " + receivedMessage.messageContent);
                 break;
+            case "RTT":
+                // TODO: Save the time elapsed between RTTs.
+                messageToSend.messageType = "RTT_RESPONSE_GAME_SERVER";
+                messageToSend.messageContent = EGS_GameServer.gameServer_instance.gameServerID.ToString();
+
+                // Convert message to JSON.
+                jsonMSG = messageToSend.ConvertMessage();
+
+                // Send data to server.
+                Send(socket_client, jsonMSG);
+
+                // Wait until send is done.
+                sendDone.WaitOne();
+                break;
             case "CONNECT_TO_MASTER_SERVER":
                 // Change the server state.
                 EGS_GameServer.gameServer_instance.gameServerState = EGS_GameServerData.EGS_GameServerState.CREATED;
                 EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServer.gameServer_instance.test_text.text = "Status: " + Enum.GetName(typeof(EGS_GameServerData.EGS_GameServerState), EGS_GameServer.gameServer_instance.gameServerState); });
-
-                // Start a new thread with the KeepAlive function.
-                keepAliveThread = new Thread(() => KeepAlive());
-                keepAliveThread.Start();
 
                 // Start listening for player connections and wait until it is started.
                 socketsController.StartListening();
@@ -313,11 +322,6 @@ public class EGS_GS_SocketClient
 
                 // Wait until send is done.
                 sendDone.WaitOne();
-
-                // TODO: Check if this should be here.
-                // Start a new thread with the KeepAlive function.
-                //keepAliveThread = new Thread(() => KeepAlive());
-                //keepAliveThread.Start();
                 break;
             case "CLOSE_GAME_SERVER":
                 EGS_GameServer.gameServer_instance.connectedToMasterServer = false;
@@ -327,39 +331,6 @@ public class EGS_GS_SocketClient
                 break;
         }
     }
-
-    /// <summary>
-    /// Method KeepAlive, that sends the master server a message so the server knows that it is still alive.
-    /// </summary>
-    private void KeepAlive()
-    {
-        while (EGS_GameServer.gameServer_instance.connectedToMasterServer)
-        {
-            // Tell the server that this game server is still alive.
-            EGS_Message msg = new EGS_Message();
-            msg.messageType = "KEEP_ALIVE_GAME_SERVER";
-            msg.messageContent = Enum.GetName(typeof(EGS_GameServerData.EGS_GameServerState), EGS_GameServer.gameServer_instance.gameServerState);
-            string jsonMSG = msg.ConvertMessage();
-
-            Send(socket_client, jsonMSG);
-
-            //EGS_Dispatcher.RunOnMainThread(() => { Debug.Log("KEEP ALIVE"); });
-
-            // TODO: Change 1000 to TIME_BETWEEN_KEEP_ALIVE.
-            Thread.Sleep(1000);
-        }
-    }
-
-    #region MainThreadFunctions
-    /// <summary>
-    /// Method LoadScene, that loads a scene in the main thread.
-    /// </summary>
-    /// <param name="sceneName">Scene name</param>
-    private void LoadScene(string sceneName)
-    {
-        EGS_Dispatcher.RunOnMainThread(() => { SceneManager.LoadScene(sceneName); });
-    }
-    #endregion
     #endregion
     #endregion
 }

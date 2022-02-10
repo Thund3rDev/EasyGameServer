@@ -43,7 +43,7 @@ public class EGS_Game
 
     [Header("References")]
     [Tooltip("Reference to the server socket controller")]
-    private EGS_GS_SocketServer socketController;
+    private EGS_GS_ServerSocket socketController;
 
 
     [Header("Game data")]
@@ -60,7 +60,7 @@ public class EGS_Game
     /// </summary>
     /// <param name="sc">Reference of the server socket controller</param>
     /// <param name="room_">Room number</param>
-    public EGS_Game(EGS_GS_SocketServer sc, int room_)
+    public EGS_Game(EGS_GS_ServerSocket sc, int room_)
     {
         socketController = sc;
         room = room_;
@@ -94,7 +94,7 @@ public class EGS_Game
         // Check if all players are ready to start the game.
         int playersReady = ++startGame_Counter;
 
-        if (playersReady == EGS_GameServer.gameServer_instance.PLAYERS_PER_GAME)
+        if (playersReady == EGS_Config.PLAYERS_PER_GAME)
         {
             // Start the game loop and tell that game can start.
             StartGameLoop();

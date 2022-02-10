@@ -1,4 +1,6 @@
 using System;
+using System.IO;
+using System.Xml;
 using UnityEngine;
 
 /// <summary>
@@ -43,8 +45,6 @@ public class EGS_GameServer : MonoBehaviour
     // TODO: Make a Game Server Console with Log and UI.
     public TMPro.TextMeshProUGUI test_text;
 
-    // TODO: Read this from XML.
-    public readonly int PLAYERS_PER_GAME = 2;
     #endregion
 
     #region Unity Methods
@@ -70,6 +70,7 @@ public class EGS_GameServer : MonoBehaviour
     private void Start()
     {
         ReadArguments();
+        ReadConfigData(); // TODO: Read Config Data from Master Server as a JSON Resource.
         ConnectToMasterServer();
     }
     #endregion
@@ -113,5 +114,38 @@ public class EGS_GameServer : MonoBehaviour
         startData = JsonUtility.FromJson<EGS_GameServerStartData>(realArguments[4]);
     }
     #endregion
+
+    /// <summary>
+    /// Method ReadConfigData, to load all server config data.
+    /// </summary>
+    private void ReadConfigData()
+    {
+        // Read server config data.
+        string configXMLPath = "Packages/com.thund3r.easy_game_server/config.xml";
+        if (!File.Exists("Packages/com.thund3r.easy_game_server/config.xml"))
+            configXMLPath = "./config.xml";
+
+        XmlDocument doc = new XmlDocument();
+        doc.Load(configXMLPath);
+
+        XmlNode node;
+
+        /// Server Data.
+        // Get debug mode.
+        node = doc.DocumentElement.SelectSingleNode("//server/debug-mode");
+        EGS_Config.DEBUG_MODE = int.Parse(node.InnerText);
+
+        // Get time between round trip times.
+        node = doc.DocumentElement.SelectSingleNode("//server/time-between-rtt");
+        EGS_Config.TIME_BETWEEN_RTTS = int.Parse(node.InnerText);
+
+        // Get time to disconnect client if no response.
+        node = doc.DocumentElement.SelectSingleNode("//server/disconnect-timeout");
+        EGS_Config.DISCONNECT_TIMEOUT = int.Parse(node.InnerText);
+
+        /// Games Data.
+        node = doc.DocumentElement.SelectSingleNode("//game/players-per-game"); // TODO: Make MIN_PLAYERS and MAX_PLAYERS.
+        EGS_Config.PLAYERS_PER_GAME = int.Parse(node.InnerText);
+    }
     #endregion
 }

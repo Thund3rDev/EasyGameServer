@@ -20,7 +20,7 @@ public class EGS_GS_Sockets
     private Socket socket_server;
 
     [Tooltip("Handler for the server socket")]
-    private EGS_GS_SocketServer serverSocketHandler;
+    private EGS_GS_ServerSocket serverSocketHandler;
 
     [Tooltip("EndPoint to the game server")]
     public EndPoint localEP;
@@ -63,8 +63,8 @@ public class EGS_GS_Sockets
         localEP = CreateGameServerSocket(EGS_GameServer.gameServer_instance.gameServerPort);
 
         // Connect to server.
-        serverSocketHandler = new EGS_GS_SocketServer(this, AfterPlayerConnected, OnPlayerDisconnected);
-        new Thread(() => serverSocketHandler.StartListening(localEP, socket_server)).Start();
+        serverSocketHandler = new EGS_GS_ServerSocket(this, AfterPlayerConnected, OnPlayerDisconnected);
+        new Thread(() => serverSocketHandler.StartListening(localEP, socket_server, EGS_Config.PLAYERS_PER_GAME)).Start();
 
         // Create the Game.
         CreateGame();

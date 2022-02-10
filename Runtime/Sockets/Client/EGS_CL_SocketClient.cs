@@ -315,8 +315,21 @@ public class EGS_CL_SocketClient
                 //EGS_Client.connectedToMasterServer = true;
 
                 // Start a new thread with the KeepAlive function.
-                keepAliveThread = new Thread(() => KeepAlive());
-                keepAliveThread.Start();
+                //keepAliveThread = new Thread(() => KeepAlive());
+                //keepAliveThread.Start();
+                break;
+            case "RTT":
+                // TODO: Save the time elapsed between RTTs.
+                messageToSend.messageType = "RTT_RESPONSE_CLIENT";
+
+                // Convert message to JSON.
+                jsonMSG = messageToSend.ConvertMessage();
+
+                // Send data to server.
+                Send(socket_client, jsonMSG);
+
+                // Wait until send is done.
+                sendDone.WaitOne();
                 break;
             case "DISCONNECT":
                 // Close the socket to disconnect from the server.
@@ -398,8 +411,8 @@ public class EGS_CL_SocketClient
                 sendDone.WaitOne();
 
                 // Start a new thread with the KeepAlive function.
-                keepAliveThread = new Thread(() => KeepAlive());
-                keepAliveThread.Start();
+                //keepAliveThread = new Thread(() => KeepAlive());
+                //keepAliveThread.Start();
                 break;
             case "JOIN_GAME_SERVER":
                 // TODO: LoadGameScene, don't start game.

@@ -8,11 +8,6 @@ using UnityEngine;
 public class EGS_ServerManager : MonoBehaviour
 {
     #region Variables
-    [Header("General Variables")]
-    [Tooltip("Struct that contains the server data")]
-    [HideInInspector]
-    public static EGS_Config serverData;
-
     [Tooltip("Bool that indicates if the server has started or not")]
     private bool serverStarted = false;
 
@@ -46,7 +41,7 @@ public class EGS_ServerManager : MonoBehaviour
 
         /// Read all data.
         // Read Server config data.
-        ReadServerData();
+        ReadConfigData();
         // Initialize Server Games Manager.
         EGS_ServerGamesManager.gm_instance.InitializeServerGamesManager();
 
@@ -87,7 +82,7 @@ public class EGS_ServerManager : MonoBehaviour
     /// <summary>
     /// Method ReadServerData, to load all server config data.
     /// </summary>
-    private void ReadServerData()
+    private void ReadConfigData()
     {
         // Read server config data.
         string configXMLPath = "Packages/com.thund3r.easy_game_server/config.xml";

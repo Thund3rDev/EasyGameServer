@@ -70,7 +70,7 @@ public class EGS_ServerGamesManager : MonoBehaviour
     /// Method CheckQueueToStartGame, that check if there are enough players in queue to start a game.
     /// </summary>
     /// <param name="server_socket">Server socket handler</param>
-    public void CheckQueueToStartGame(EGS_SE_SocketServer server_socket)
+    public void CheckQueueToStartGame(EGS_SE_ServerSocket server_socket)
     {
         bool areEnoughForAGame = false;
         List<EGS_PlayerToGame> playersForThisGame = new List<EGS_PlayerToGame>();

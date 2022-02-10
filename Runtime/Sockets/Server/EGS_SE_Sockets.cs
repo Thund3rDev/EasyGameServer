@@ -13,7 +13,7 @@ public class EGS_SE_Sockets
     private Socket socket_listener;
 
     [Tooltip("Handler for the server socket")]
-    private EGS_SE_SocketServer serverSocketHandler;
+    private EGS_SE_ServerSocket serverSocketHandler;
 
 
     [Header("References")]
@@ -43,8 +43,11 @@ public class EGS_SE_Sockets
         EndPoint localEP = CreateSocket();
 
         // Connect to server.
-        serverSocketHandler = new EGS_SE_SocketServer(egs_Log, OnNewConnection, OnClientDisconnected);
-        serverSocketHandler.StartListening(EGS_Config.serverPort, localEP, socket_listener);
+        serverSocketHandler = new EGS_SE_ServerSocket(egs_Log, OnNewConnection, OnClientDisconnected);
+        serverSocketHandler.StartListening(localEP, socket_listener, EGS_Config.MAX_CONNECTIONS);
+
+        if (EGS_Config.DEBUG_MODE > -1)
+            egs_Log.Log("<color=green>Easy Game Server</color> Listening at port <color=orange>" + EGS_Config.serverPort + "</color>.");
     }
 
     #region Connect and disconnect methods
