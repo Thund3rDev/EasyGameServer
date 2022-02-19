@@ -14,7 +14,7 @@ public class EGS_CL_Sockets
     private Socket socket_client;
 
     [Tooltip("Handler for the client socket")]
-    public EGS_CL_SocketClient clientSocketHandler;
+    public EGS_CL_ClientSocket clientSocketHandler;
 
     // TODO: This CAN'T BE HERE.
     [Header("Game Data")]
@@ -53,7 +53,7 @@ public class EGS_CL_Sockets
         EndPoint remoteEP = CreateEndpoint(serverIpAddress, EGS_Config.serverPort);
 
         // Connect to server.
-        clientSocketHandler = new EGS_CL_SocketClient(this);
+        clientSocketHandler = new EGS_CL_ClientSocket(this);
         clientSocketHandler.StartClient(remoteEP, socket_client);
 
         // TODO: Value if Thread is necessary or not.
@@ -74,7 +74,7 @@ public class EGS_CL_Sockets
         // Get EndPoint.
         EndPoint remoteEP = CreateEndpoint(gameServerIpAddress, serverPort);
 
-        EGS_Client.connectedToGameServer = true;
+        EGS_Client.client_instance.connectedToGameServer = true; // TODO: Check if here or in EGS_CL_ClientSocket.
 
         // Connect to game server.
         clientSocketHandler.StartClient(remoteEP, socket_client);
@@ -117,6 +117,8 @@ public class EGS_CL_Sockets
     {
         socket_client.Shutdown(SocketShutdown.Both);
         socket_client.Close();
+
+        EGS_Client.client_instance.connectedToServer = false;
 
         Debug.Log("[CLIENT] Closed socket.");
     }

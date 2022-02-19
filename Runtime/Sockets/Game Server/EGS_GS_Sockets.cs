@@ -14,7 +14,7 @@ public class EGS_GS_Sockets
     private Socket socket_client;
 
     [Tooltip("Instance of the handler for the client socket")]
-    public EGS_GS_SocketClient clientSocketHandler;
+    public EGS_GS_ClientSocket clientSocketHandler;
 
     [Tooltip("Server Socket")]
     private Socket socket_server;
@@ -50,7 +50,7 @@ public class EGS_GS_Sockets
         EndPoint remoteEP = CreateSocket(EGS_Config.serverIP, EGS_Config.serverPort);
 
         // Connect to server
-        clientSocketHandler = new EGS_GS_SocketClient(this);
+        clientSocketHandler = new EGS_GS_ClientSocket(this);
         new Thread(() => clientSocketHandler.StartClient(remoteEP, socket_client)).Start();
     }
 

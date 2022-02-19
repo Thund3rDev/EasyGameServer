@@ -18,9 +18,11 @@ public class EGS_Client : MonoBehaviour
 
     [Header("Networking")]
     [Tooltip("Bool that indicates if client is connnected to the master server")]
-    public static bool connectedToMasterServer = false;
+    public bool connectedToMasterServer = false;
     [Tooltip("Bool that indicates if client is connnected to the game server")]
-    public static bool connectedToGameServer = false;
+    public bool connectedToGameServer = false;
+    [Tooltip("Bool that indicates if client is connnected to a server")]
+    public bool connectedToServer = false;
 
     [Tooltip("Controller for client socket")]
     public EGS_CL_Sockets clientSocketController = null;
