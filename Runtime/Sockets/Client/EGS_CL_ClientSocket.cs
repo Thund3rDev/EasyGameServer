@@ -95,9 +95,9 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
         // Depending on the messageType, do different things.
         switch (receivedMessage.messageType)
         {
-            case "TEST_MESSAGE":
+            /*case "TEST_MESSAGE":
                 Debug.Log("Received test message from server: " + receivedMessage.messageContent);
-                break;
+                break;*/
             case "CONNECT_TO_MASTER_SERVER":
                 // Save as connected to the master server.
                 EGS_Client.client_instance.connectedToMasterServer = true;
@@ -231,6 +231,7 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
                 break;
             default:
                 Debug.Log("<color=yellow>Undefined message type: </color>" + receivedMessage.messageType);
+                EGS_ClientDelegates.onMessageReceive(receivedMessage);
                 break;
         }
     }

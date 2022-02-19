@@ -102,6 +102,16 @@ public class EGS_Client : MonoBehaviour
     }
 
     /// <summary>
+    /// Method SendMessage, that will send a message to the server
+    /// </summary>
+    /// <param name="messageToSend">Message to send to the server</param>
+    public void SendMessage(EGS_Message messageToSend)
+    {
+        // Send the message by the socket controller.
+        clientSocketController.SendMessage(messageToSend);
+    }
+
+    /// <summary>
     /// Method JoinQueue, that will ask the server for a game.
     /// </summary>
     public void JoinQueue()

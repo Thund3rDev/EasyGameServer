@@ -84,7 +84,7 @@ public class EGS_CL_Sockets
     }
 
     /// <summary>
-    /// Method SendMessage, to send a message to the server.
+    /// Method SendMessage, to send a message to the server given its type and content.
     /// </summary>
     /// <param name="type">Message type</param>
     /// <param name="msg">Message content</param>
@@ -97,6 +97,19 @@ public class EGS_CL_Sockets
 
         // Convert message to JSON .
         string messageJson = thisMessage.ConvertMessage();
+
+        // Send the message.
+        clientSocketHandler.Send(socket_client, messageJson);
+    }
+
+    /// <summary>
+    /// Method SendMessage, to send a message to the server.
+    /// </summary>
+    /// <param name="messageToSend">Message type</param>
+    public void SendMessage(EGS_Message messageToSend)
+    {
+        // Convert message to JSON .
+        string messageJson = messageToSend.ConvertMessage();
 
         // Send the message.
         clientSocketHandler.Send(socket_client, messageJson);

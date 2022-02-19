@@ -113,6 +113,14 @@ public class EGS_SE_ServerSocket : EGS_ServerSocket
                 jsonMSG = messageToSend.ConvertMessage();
 
                 Send(handler, jsonMSG);
+
+                // TODO: TEST ONLY.
+                messageToSend = new EGS_Message();
+                messageToSend.messageType = "TEST_MESSAGE";
+                messageToSend.messageContent = "Test message from server";
+                jsonMSG = messageToSend.ConvertMessage();
+
+                Send(handler, jsonMSG);
                 break;
             case "DISCONNECT_USER":
                 // Get the user.
