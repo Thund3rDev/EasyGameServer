@@ -13,7 +13,7 @@ public class EGS_GS_ClientSocket : EGS_ClientSocket
     #region Variables
     [Header("Networking")]
     [Tooltip("Sockets Controller")]
-    protected EGS_GS_Sockets socketsController; // TODO: Valorate if needed.
+    private EGS_GS_Sockets socketsController;
     #endregion
 
     #region Constructors

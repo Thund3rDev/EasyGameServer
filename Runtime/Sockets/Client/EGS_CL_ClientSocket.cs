@@ -10,7 +10,7 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
     #region Variables
     [Header("Networking")]
     [Tooltip("Sockets Controller")]
-    protected EGS_CL_Sockets socketsController; // TODO: Valorate if needed.
+    private EGS_CL_Sockets socketsController; // TODO: Valorate if needed.
 
 
     [Header("Game Server Data")]

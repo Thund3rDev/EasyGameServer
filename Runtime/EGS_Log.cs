@@ -66,10 +66,7 @@ public class EGS_Log : MonoBehaviour
             Directory.CreateDirectory(Application.persistentDataPath + "/logs");
 
         // Create the log file.
-        string dateString = GetActualDate();
-        dateString = dateString.Replace('/', '-');
-        dateString = dateString.Replace(' ', '_');
-        dateString = dateString.Replace(':', '-');
+        string dateString = GetStartDateAndTime();
         streamWriter = File.CreateText(Application.persistentDataPath +
         "/logs/log_" + dateString + ".txt");
 
@@ -84,7 +81,7 @@ public class EGS_Log : MonoBehaviour
     public void Log(string logString)
     {
         // Format the string to log.
-        string stringToLog = "[" + GetActualDate() + "] " + logString;
+        string stringToLog = "[" + GetCurrentDateTime() + "] " + logString;
 
         // Base string for the log.
         string nonRichStringToLog = stringToLog;
@@ -114,7 +111,7 @@ public class EGS_Log : MonoBehaviour
     public void LogWarning(string logString)
     {
         // Format the string to log.
-        string stringToLog = "[" + GetActualDate() + "] " + "<color=yellow>" + logString + "</color>";
+        string stringToLog = "[" + GetCurrentDateTime() + "] " + "<color=yellow>" + logString + "</color>";
 
         // Log the string.
         lock (logLock)
@@ -138,7 +135,7 @@ public class EGS_Log : MonoBehaviour
     public void LogError(string logString)
     {
         // Format the string to log.
-        string stringToLog = "[" + GetActualDate() + "] " + "<color=red>" + logString + "</color>";
+        string stringToLog = "[" + GetCurrentDateTime() + "] " + "<color=red>" + logString + "</color>";
 
         // Log the string.
         lock (logLock)
@@ -179,13 +176,23 @@ public class EGS_Log : MonoBehaviour
 
     #region Private Methods
     /// <summary>
-    /// Method GetActualDate, that returns the moment hour.
+    /// Method GetStartDateAndTime, that returns the date and time when the server starts.
     /// </summary>
     /// <returns></returns>
-    private string GetActualDate()
+    private string GetStartDateAndTime()
     {
         localTime = DateTime.Now;
-        return localTime.ToString();
+        return localTime.ToString("yyyy-MM-dd_HH-mm-ss");
+    }
+
+    /// <summary>
+    /// Method GetCurrentDateTime, that returns the moment date and time.
+    /// </summary>
+    /// <returns></returns>
+    private string GetCurrentDateTime()
+    {
+        localTime = DateTime.Now;
+        return localTime.ToString("yyyy-MM-dd HH:mm:ss.fff");
     }
     #endregion
     #endregion
