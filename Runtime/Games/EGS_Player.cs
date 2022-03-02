@@ -11,15 +11,19 @@ public class EGS_Player : MonoBehaviour
     [Tooltip("User data of the player")]
     private EGS_User user;
 
+
     [Header("Modifiable from Unity")]
     [Tooltip("Player's in game ID")]
     public int ingameID;
+
     [Tooltip("Client Scripts to DELETE")]
     public List<MonoBehaviour> clientScriptsToDelete = null;
+
 
     [Header("Physics, movement and control")]
     [Tooltip("Player Speed")]
     private float speed = 3f; // TODO: Distinguish between defaultSpeed and currentSpeed.
+
     [Tooltip("Array of player inputs")]
     private bool[] inputs; // TODO: Use EGS_PlayerInputs and permit different type of inputs (bool, float, string...).
     #endregion

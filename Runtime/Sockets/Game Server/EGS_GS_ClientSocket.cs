@@ -37,7 +37,7 @@ public class EGS_GS_ClientSocket : EGS_ClientSocket
         try
         {
             base.ConnectCallback(ar);
-            EGS_GameServer.gameServer_instance.connectedToMasterServer = true;
+            EGS_GameServer.instance.connectedToMasterServer = true;
         }
         catch(Exception e)
         {
@@ -51,7 +51,7 @@ public class EGS_GS_ClientSocket : EGS_ClientSocket
     /// <param name="ar">IAsyncResult</param>
     protected override void ReceiveCallback(IAsyncResult ar)
     {
-        bool connectedToServer = EGS_GameServer.gameServer_instance.connectedToMasterServer;
+        bool connectedToServer = EGS_GameServer.instance.connectedToMasterServer;
         base.ReceiveCallback(ar, connectedToServer);
     }
     #endregion
@@ -89,13 +89,16 @@ public class EGS_GS_ClientSocket : EGS_ClientSocket
         // Depending on the messageType, do different things.
         switch (receivedMessage.messageType)
         {
-            case "TEST_MESSAGE":
-                Debug.Log("Received test message from server: " + receivedMessage.messageContent);
-                break;
             case "RTT":
-                // TODO: Save the time elapsed between RTTs.
+                // Save the client ping then call the delegate On RTT.
+                long lastRTTMilliseconds = long.Parse(receivedMessage.messageContent);
+                EGS_GameServer.instance.SetClientPing(lastRTTMilliseconds);
+
+                EGS_GameServerDelegates.onRTT(lastRTTMilliseconds);
+
+                // Prepare the message to send.
                 messageToSend.messageType = "RTT_RESPONSE_GAME_SERVER";
-                messageToSend.messageContent = EGS_GameServer.gameServer_instance.gameServerID.ToString();
+                messageToSend.messageContent = EGS_GameServer.instance.gameServerID.ToString();
 
                 // Convert message to JSON.
                 jsonMSG = messageToSend.ConvertMessage();
@@ -105,8 +108,8 @@ public class EGS_GS_ClientSocket : EGS_ClientSocket
                 break;
             case "CONNECT_TO_MASTER_SERVER":
                 // Change the server state.
-                EGS_GameServer.gameServer_instance.gameServerState = EGS_GameServerData.EGS_GameServerState.CREATED;
-                EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServer.gameServer_instance.test_text.text = "Status: " + Enum.GetName(typeof(EGS_GameServerData.EGS_GameServerState), EGS_GameServer.gameServer_instance.gameServerState); });
+                EGS_GameServer.instance.gameServerState = EGS_GameServerData.EGS_GameServerState.CREATED;
+                EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServer.instance.test_text.text = "Status: " + Enum.GetName(typeof(EGS_GameServerData.EGS_GameServerState), EGS_GameServer.instance.gameServerState); });
 
                 // Start listening for player connections and wait until it is started.
                 socketsController.StartListening();
@@ -115,9 +118,9 @@ public class EGS_GS_ClientSocket : EGS_ClientSocket
                 // Send a message to the master server.
                 messageToSend.messageType = "CREATED_GAME_SERVER";
 
-                string gameServerIP = EGS_Config.serverIP + ":" + EGS_GameServer.gameServer_instance.gameServerPort;
-                messageToSend.messageContent = EGS_GameServer.gameServer_instance.gameServerID + "#" + gameServerIP;
-                EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServer.gameServer_instance.test_text.text += "\nIPADRESS " + EGS_Config.serverIP; });
+                string gameServerIP = EGS_Config.serverIP + ":" + EGS_GameServer.instance.gameServerPort;
+                messageToSend.messageContent = EGS_GameServer.instance.gameServerID + "#" + gameServerIP;
+                EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServer.instance.test_text.text += "\nIPADRESS " + EGS_Config.serverIP; });
 
                 // Convert message to JSON.
                 jsonMSG = messageToSend.ConvertMessage();
@@ -126,10 +129,11 @@ public class EGS_GS_ClientSocket : EGS_ClientSocket
                 Send(handler, jsonMSG);
                 break;
             case "CLOSE_GAME_SERVER":
-                EGS_GameServer.gameServer_instance.connectedToMasterServer = false;
+                EGS_GameServer.instance.connectedToMasterServer = false;
                 break;
             default:
-                Debug.Log("<color=yellow>Undefined message type: </color>" + receivedMessage.messageType);
+                // Call the onMessageReceive delegate.
+                EGS_GameServerDelegates.onMessageReceive(receivedMessage);
                 break;
         }
     }

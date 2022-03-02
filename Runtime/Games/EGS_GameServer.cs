@@ -11,7 +11,7 @@ public class EGS_GameServer : MonoBehaviour
     #region Variables
     [Header("General Variables")]
     [Tooltip("Singleton")]
-    public static EGS_GameServer gameServer_instance;
+    public static EGS_GameServer instance;
 
     [Tooltip("Struct that contains the server data")]
     public EGS_Config serverData;
@@ -38,10 +38,13 @@ public class EGS_GameServer : MonoBehaviour
     [Tooltip("Instance of the game")]
     public EGS_Game thisGame;
 
-    [Tooltip("Game Server Start Data, that is received on parameters")]
-    public EGS_GameServerStartData startData; // TODO: Think if need to store.
+    [Tooltip("Game found data, that is received on parameters")]
+    public EGS_GameFoundData gameFoundData; // TODO: Think if need to store.
 
-    // Test.
+    [Tooltip("Long that stores the time a RTT lasts since server ask and receive")]
+    private long clientPing;
+
+    // TEST .
     // TODO: Make a Game Server Console with Log and UI.
     public TMPro.TextMeshProUGUI test_text;
 
@@ -53,9 +56,9 @@ public class EGS_GameServer : MonoBehaviour
     /// </summary>
     private void Awake()
     {
-        if (gameServer_instance == null)
+        if (instance == null)
         {
-            gameServer_instance = this;
+            instance = this;
             DontDestroyOnLoad(this.gameObject);
         }
         else
@@ -76,7 +79,7 @@ public class EGS_GameServer : MonoBehaviour
     #endregion
 
     #region Class Methods
-    #region Public Methods
+    #region Private Methods
     /// <summary>
     /// Method ConnectToMasterServer, that tries to connect to the server.
     /// </summary>
@@ -97,9 +100,7 @@ public class EGS_GameServer : MonoBehaviour
         // Stop listening on the sockets.
         gameServerSocketsController.Disconnect();
     }
-    #endregion
 
-    #region Private Methods
     /// <summary>
     /// Method ReadArguments, to load the received arguments.
     /// </summary>
@@ -111,9 +112,8 @@ public class EGS_GameServer : MonoBehaviour
         EGS_Config.serverPort = int.Parse(realArguments[1]);
         gameServerID = int.Parse(realArguments[2]);
         gameServerPort = int.Parse(realArguments[3]);
-        startData = JsonUtility.FromJson<EGS_GameServerStartData>(realArguments[4]);
+        gameFoundData = JsonUtility.FromJson<EGS_GameFoundData>(realArguments[4]);
     }
-    #endregion
 
     /// <summary>
     /// Method ReadConfigData, to load all server config data.
@@ -147,5 +147,26 @@ public class EGS_GameServer : MonoBehaviour
         node = doc.DocumentElement.SelectSingleNode("//game/players-per-game"); // TODO: Make MIN_PLAYERS and MAX_PLAYERS.
         EGS_Config.PLAYERS_PER_GAME = int.Parse(node.InnerText);
     }
+
+    #region Getters and setters
+    /// <summary>
+    /// Getter for the client ping.
+    /// </summary>
+    /// <returns>Client ping</returns>
+    public long GetClientPing()
+    {
+        return clientPing;
+    }
+
+    /// <summary>
+    /// Setter for the client ping.
+    /// </summary>
+    /// <param name="p">New client ping</param>
+    public void SetClientPing(long p)
+    {
+        clientPing = p;
+    }
+    #endregion
+    #endregion
     #endregion
 }

@@ -10,7 +10,7 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
     #region Variables
     [Header("Networking")]
     [Tooltip("Sockets Controller")]
-    private EGS_CL_Sockets socketsController; // TODO: Valorate if needed.
+    private EGS_CL_Sockets socketsController;
 
 
     [Header("Game Server Data")]
@@ -41,7 +41,7 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
         try
         {
             base.ConnectCallback(ar);
-            EGS_Client.client_instance.connectedToServer = true;
+            EGS_Client.instance.connectedToServer = true;
         }
         catch (Exception e)
         {
@@ -55,7 +55,7 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
     /// <param name="ar">IAsyncResult</param>
     protected override void ReceiveCallback(IAsyncResult ar)
     {
-        bool connectedToServer = EGS_Client.client_instance.connectedToServer;
+        bool connectedToServer = EGS_Client.instance.connectedToServer;
         base.ReceiveCallback(ar, connectedToServer);
     }
     #endregion
@@ -91,20 +91,37 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
         string jsonMSG;
         string userJson;
 
-        // TODO: Maybe messageType as an enum?
+        // TODO: Maybe messageType (EGS only) as an enum?
         // Depending on the messageType, do different things.
         switch (receivedMessage.messageType)
         {
-            /*case "TEST_MESSAGE":
-                Debug.Log("Received test message from server: " + receivedMessage.messageContent);
-                break;*/
+            case "RTT":
+                // Save the client ping.
+                long lastRTTMilliseconds = long.Parse(receivedMessage.messageContent);
+                EGS_Client.instance.SetClientPing(lastRTTMilliseconds);
+
+                // Call the OnRTT delegate.
+                EGS_ClientDelegates.onRTT(lastRTTMilliseconds);
+
+                // Prepare the message to send.
+                messageToSend.messageType = "RTT_RESPONSE_CLIENT";
+                messageToSend.messageContent = EGS_Client.instance.GetUser().GetUserID().ToString();
+
+                // Convert message to JSON.
+                jsonMSG = messageToSend.ConvertMessage();
+
+                // Send data to server.
+                Send(handler, jsonMSG);
+                break;
             case "CONNECT_TO_MASTER_SERVER":
                 // Save as connected to the master server.
-                EGS_Client.client_instance.connectedToMasterServer = true;
+                EGS_Client.instance.connectedToMasterServer = true;
 
-                // Create the user instance. // TODO: Assign it to the client data object.
-                EGS_User thisUser = new EGS_User();
-                thisUser.SetUsername(EGS_Client.client_instance.username);
+                // Call the onConnect delegate with type MasterServer.
+                EGS_ClientDelegates.onConnect(EGS_Control.EGS_Type.MasterServer);
+
+                // Get the user instance.
+                EGS_User thisUser = EGS_Client.instance.GetUser();
 
                 // Convert user to JSON.
                 userJson = JsonUtility.ToJson(thisUser);
@@ -118,59 +135,52 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
                 // Send data to server.
                 Send(handler, jsonMSG);
                 break;
-            case "RTT":
-                // TODO: Save the time elapsed between RTTs.
-                messageToSend.messageType = "RTT_RESPONSE_CLIENT";
+            case "JOIN_MASTER_SERVER":
+                // Get and update User Data.
+                EGS_User updatedUser = JsonUtility.FromJson<EGS_User>(receivedMessage.messageContent);
+                EGS_Client.instance.SetUser(updatedUser);
 
-                // Convert message to JSON.
-                jsonMSG = messageToSend.ConvertMessage();
-
-                // Send data to server.
-                Send(handler, jsonMSG);
+                // Call the onJoinMasterServer delegate.
+                EGS_ClientDelegates.onJoinMasterServer(updatedUser);
                 break;
             case "DISCONNECT":
                 // Close the socket to disconnect from the server.
                 socketsController.CloseSocket();
 
-                // Change scene to the MainMenu.
-                LoadScene("MainMenu");
-
-                // TODO: This should be done in a delegate, so programmer decides.
-                break;
-            case "JOIN_SERVER":
-                // Get User Data.
-                socketsController.thisUser = JsonUtility.FromJson<EGS_User>(receivedMessage.messageContent);
-
-                // Load new scene on main thread.
-                LoadScene("MainMenu");
-
-                // TODO: This should be done in a delegate, so programmer decides.
+                // Call the onDisconnect delegate.
+                EGS_ClientDelegates.onDisconnect();
                 break;
             case "GAME_FOUND":
-                // Change scene to the GameLobby.
-                LoadScene("GameLobby");
-                // TODO: This should be done in a delegate, so programmer decides.
+                // Obtain GameFoundData.
+                EGS_GameFoundData gameFoundData = JsonUtility.FromJson<EGS_GameFoundData>(receivedMessage.messageContent);
 
-                EGS_UpdateData gameData = JsonUtility.FromJson<EGS_UpdateData>(receivedMessage.messageContent);
-
-                // Clear the dictionaries and add the new players.
-                EGS_CL_Sockets.playerPositions.Clear();
-                EGS_CL_Sockets.playerUsernames.Clear();
-
-                foreach (EGS_PlayerData playerData in gameData.GetPlayersAtGame())
+                foreach (EGS_User userToGame in gameFoundData.GetUsersToGame())
                 {
-                    EGS_CL_Sockets.playerPositions.Add(playerData.GetIngameID(), playerData.GetPosition());
-                    EGS_CL_Sockets.playerUsernames.Add(playerData.GetIngameID(), playerData.GetUsername());
+                    // Save the player usernames.
+                    EGS_Client.instance.GetPlayerUsernames().Add(userToGame.GetIngameID(), userToGame.GetUsername());
+
+                    // Assign the client user ingame ID.
+                    if (userToGame.GetUserID() == EGS_Client.instance.GetUser().GetUserID())
+                    {
+                        EGS_Client.instance.GetUser().SetIngameID(userToGame.GetIngameID());
+                        break;
+                    }
                 }
 
-                // TODO: Save Client Room.
-                // room = gameData.GetRoom();
+                // Assign the room number.
+                EGS_Client.instance.GetUser().SetRoom(gameFoundData.GetRoom());
+
+                // Execute code on game found.
+                EGS_ClientDelegates.onGameFound(gameFoundData);
                 break;
             case "CHANGE_TO_GAME_SERVER":
-                // Construct the EndPoint to Game Server.
+                // Save the Game Server connection data (IP and port).
                 string[] ep = receivedMessage.messageContent.Split(':');
                 gameServerIP = ep[0];
                 gameServerPort = int.Parse(ep[1]);
+
+                // Call the onPrepareToChangeFromMasterToGameServer delegate.
+                EGS_ClientDelegates.onPrepareToChangeFromMasterToGameServer(gameServerIP, gameServerPort);
 
                 // Tell the server that the client received the information so can connect to the game server.
                 messageToSend.messageType = "DISCONNECT_TO_GAME";
@@ -180,25 +190,29 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
 
                 // Send data to server.
                 Send(handler, jsonMSG);
-
                 break;
             case "DISCONNECT_TO_GAME":
                 // Close the socket to disconnect from the server.
                 socketsController.CloseSocket();
-                EGS_Client.client_instance.connectedToMasterServer = false; // TODO: Check if this should be here.
+
+                // Save as disconnected from the master server.
+                EGS_Client.instance.connectedToMasterServer = false;
+
+                // Call the onChangeFromMasterToGameServer delegate.
+                EGS_ClientDelegates.onChangeFromMasterToGameServer(gameServerIP, gameServerPort);
 
                 // Try to connect to Game Server.
                 socketsController.ConnectToGameServer(gameServerIP, gameServerPort);
                 break;
-            case "CONNECT_GAME_SERVER":
+            case "CONNECT_TO_GAME_SERVER":
                 // Save as connected to the game server.
-                EGS_Client.client_instance.connectedToGameServer = true;
+                EGS_Client.instance.connectedToGameServer = true;
 
-                // Save the room.
-                socketsController.thisUser.SetRoom(int.Parse(receivedMessage.messageContent));
+                // Call the onConnect delegate with type GameServer.
+                EGS_ClientDelegates.onConnect(EGS_Control.EGS_Type.GameServer);
 
                 // Convert user to JSON.
-                userJson = JsonUtility.ToJson(socketsController.thisUser);
+                userJson = JsonUtility.ToJson(EGS_Client.instance.GetUser());
 
                 messageToSend.messageType = "JOIN_GAME_SERVER";
                 messageToSend.messageContent = userJson;
@@ -210,27 +224,19 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
                 Send(handler, jsonMSG);
                 break;
             case "JOIN_GAME_SERVER":
-                // TODO: LoadGameScene, don't start game.
-                //LoadScene("TestGame");
+                // Call the onJoinMasterServer delegate.
+                EGS_ClientDelegates.onJoinGameServer();
                 break;
             case "GAME_START":
-                // Load new scene on main thread.
-                LoadScene("TestGame");
-                // TODO: This should be done in a delegate, so programmer decides.
+                // Call the onGameStart delegate.
+                EGS_ClientDelegates.onGameStart(receivedMessage);
                 break;
             case "UPDATE":
-                //Debug.Log("Update MSG: " + receivedMessage.messageContent);
-                EGS_UpdateData updateData = JsonUtility.FromJson<EGS_UpdateData>(receivedMessage.messageContent);
-
-                foreach (EGS_PlayerData playerData in updateData.GetPlayersAtGame())
-                {
-                    EGS_CL_Sockets.playerPositions[playerData.GetIngameID()] = playerData.GetPosition();
-                }
-
-                // TODO: Delegate to to things on server update message.
+                // Call the onGameUpdate delegate.
+                EGS_ClientDelegates.onGameUpdate(receivedMessage);
                 break;
             default:
-                Debug.Log("<color=yellow>Undefined message type: </color>" + receivedMessage.messageType);
+                // Call the onMessageReceive delegate.
                 EGS_ClientDelegates.onMessageReceive(receivedMessage);
                 break;
         }

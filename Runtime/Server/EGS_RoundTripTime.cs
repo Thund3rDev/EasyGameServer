@@ -110,7 +110,7 @@ public class EGS_RoundTripTime
         {
             EGS_Message msg = new EGS_Message();
             msg.messageType = "RTT";
-            msg.messageContent = "";
+            msg.messageContent = lastRTTMilliseconds.ToString();
             string jsonMSG = msg.ConvertMessage();
             
             roundTripTimeStopwatch.Start();

@@ -108,16 +108,8 @@ public class EGS_SE_ServerSocket : EGS_ServerSocket
                 CreateRTT(handler);
 
                 // Echo the data back to the client.
-                messageToSend.messageType = "JOIN_SERVER";
+                messageToSend.messageType = "JOIN_MASTER_SERVER";
                 messageToSend.messageContent = JsonUtility.ToJson(thisUser);
-                jsonMSG = messageToSend.ConvertMessage();
-
-                Send(handler, jsonMSG);
-
-                // TODO: TEST ONLY.
-                messageToSend = new EGS_Message();
-                messageToSend.messageType = "TEST_MESSAGE";
-                messageToSend.messageContent = "Test message from server";
                 jsonMSG = messageToSend.ConvertMessage();
 
                 Send(handler, jsonMSG);
@@ -140,8 +132,7 @@ public class EGS_SE_ServerSocket : EGS_ServerSocket
                 thisUser = connectedUsers[handler];
 
                 // Add the player to the queue.
-                EGS_PlayerToGame newPlayer = new EGS_PlayerToGame(thisUser);
-                EGS_ServerGamesManager.gm_instance.searchingGame_players.Enqueue(newPlayer);
+                EGS_ServerGamesManager.gm_instance.searchingGame_Users.Enqueue(thisUser); // TODO: Encapsulate.
 
                 if (EGS_Config.DEBUG_MODE > 0)
                     egs_Log.Log("Searching game: " + thisUser.GetUsername() + ".");
@@ -151,26 +142,32 @@ public class EGS_SE_ServerSocket : EGS_ServerSocket
                 break;
             case "QUEUE_LEAVE":
                 // Bool to know if player is in queue.
-                bool isPlayerInQueue = false;
+                bool isUserInQueue = false;
 
-                // Lock the queue.
-                lock (EGS_ServerGamesManager.gm_instance.searchingGame_players)
+                // Get the user.
+                thisUser = connectedUsers[handler];
+
+                // Lock the queue. // TODO: Encapsulate.
+                lock (EGS_ServerGamesManager.gm_instance.searchingGame_Users)
                 {
-                    // Check if player is in queue.
-                    foreach (EGS_PlayerToGame playerInQueue in EGS_ServerGamesManager.gm_instance.searchingGame_players)
+                    // Check if user is in queue.
+                    foreach (EGS_User userInQueue in EGS_ServerGamesManager.gm_instance.searchingGame_Users)
                     {
-                        if (playerInQueue.GetUser().GetSocket() == handler)
+                        if (userInQueue.GetUserID() == thisUser.GetUserID())
                         {
-                            isPlayerInQueue = true;
+                            isUserInQueue = true;
                             break;
                         }
                     }
 
-                    if (isPlayerInQueue)
+                    if (isUserInQueue)
                     {
                         // Remove the player from the Queue by constructing a new queue based on the previous one but without the left player.
-                        EGS_ServerGamesManager.gm_instance.searchingGame_players =
-                            new ConcurrentQueue<EGS_PlayerToGame>(EGS_ServerGamesManager.gm_instance.searchingGame_players.Where(x => x.GetUser().GetSocket() != handler));
+                        EGS_ServerGamesManager.gm_instance.searchingGame_Users =
+                            new ConcurrentQueue<EGS_User>(EGS_ServerGamesManager.gm_instance.searchingGame_Users.Where(x => x.GetSocket() != handler));
+
+                        if (EGS_Config.DEBUG_MODE > 0)
+                            egs_Log.Log("Leave Queue: " + thisUser.GetUsername() + ".");
                     }
                 }
                 break;

@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using UnityEngine;
@@ -15,18 +14,6 @@ public class EGS_CL_Sockets
 
     [Tooltip("Handler for the client socket")]
     public EGS_CL_ClientSocket clientSocketHandler;
-
-    // TODO: This CAN'T BE HERE.
-    [Header("Game Data")]
-    [Tooltip("Dictionary of player positions by their ingameID")]
-    public static Dictionary<int, Vector3> playerPositions = new Dictionary<int, Vector3>();
-    [Tooltip("Dictionary of player usernames by their ingameID")]
-    public static Dictionary<int, string> playerUsernames = new Dictionary<int, string>();
-
-    // TODO: This CAN'T BE HERE. Should be in the client data object.
-    // Test:
-    [Tooltip("Instance of the client user")]
-    public EGS_User thisUser;
     #endregion
 
     #region Constructors
@@ -74,7 +61,7 @@ public class EGS_CL_Sockets
         // Get EndPoint.
         EndPoint remoteEP = CreateEndpoint(gameServerIpAddress, serverPort);
 
-        EGS_Client.client_instance.connectedToGameServer = true; // TODO: Check if here or in EGS_CL_ClientSocket.
+        EGS_Client.instance.connectedToGameServer = true; // TODO: Check if here or in EGS_CL_ClientSocket.
 
         // Connect to game server.
         clientSocketHandler.StartClient(remoteEP, socket_client);
@@ -131,7 +118,7 @@ public class EGS_CL_Sockets
         socket_client.Shutdown(SocketShutdown.Both);
         socket_client.Close();
 
-        EGS_Client.client_instance.connectedToServer = false;
+        EGS_Client.instance.connectedToServer = false;
 
         Debug.Log("[CLIENT] Closed socket.");
     }

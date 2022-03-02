@@ -60,7 +60,7 @@ public class EGS_GS_Sockets
     public void StartListening()
     {
         // Create socket and get EndPoint.
-        localEP = CreateGameServerSocket(EGS_GameServer.gameServer_instance.gameServerPort);
+        localEP = CreateGameServerSocket(EGS_GameServer.instance.gameServerPort);
 
         // Connect to server.
         serverSocketHandler = new EGS_GS_ServerSocket(this, AfterPlayerConnected, OnPlayerDisconnected);
@@ -93,11 +93,10 @@ public class EGS_GS_Sockets
     {
         // Ask client for user data.
         EGS_Message msg = new EGS_Message();
-        msg.messageType = "CONNECT_GAME_SERVER";
-        msg.messageContent = EGS_GameServer.gameServer_instance.thisGame.GetRoom().ToString();
+        msg.messageType = "CONNECT_TO_GAME_SERVER";
         string jsonMSG = msg.ConvertMessage();
 
-        EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServer.gameServer_instance.test_text.text += "\nPLAYER CONNECTED: " + clientSocket.RemoteEndPoint; });
+        EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServer.instance.test_text.text += "\nPLAYER CONNECTED: " + clientSocket.RemoteEndPoint; });
         serverSocketHandler.Send(clientSocket, jsonMSG);
     }
 
@@ -125,7 +124,8 @@ public class EGS_GS_Sockets
     private void CreateGame()
     {
         // Create the game data.
-        EGS_GameServer.gameServer_instance.thisGame = new EGS_Game(serverSocketHandler, EGS_GameServer.gameServer_instance.startData.GetRoom());
+        EGS_GameServer.instance.thisGame = new EGS_Game(serverSocketHandler, EGS_GameServer.instance.gameFoundData.GetRoom(), "Level_0");
+        // TODO: Get the scene name from the server.
     }
 
 

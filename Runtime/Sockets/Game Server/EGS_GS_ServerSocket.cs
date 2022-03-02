@@ -24,10 +24,9 @@ public class EGS_GS_ServerSocket : EGS_ServerSocket
         socketsController = socketsController_;
 
         // Get the info of users to this game.
-        foreach (EGS_PlayerToGame playerToGame in EGS_GameServer.gameServer_instance.startData.GetPlayersToGame())
+        foreach (EGS_User userToGame in EGS_GameServer.instance.gameFoundData.GetUsersToGame())
         {
-            EGS_User thisUser = playerToGame.GetUser();
-            allUsers.Add(thisUser.GetUsername(), thisUser);
+            allUsers.Add(userToGame.GetUsername(), userToGame);
         }
     }
     #endregion
@@ -62,7 +61,7 @@ public class EGS_GS_ServerSocket : EGS_ServerSocket
         }
         catch (Exception e)
         {
-            EGS_Dispatcher.RunOnMainThread(()=> { EGS_GameServer.gameServer_instance.test_text.text += ("\nPError parsing receivedMessage from JSON: " + e.StackTrace); });
+            EGS_Dispatcher.RunOnMainThread(()=> { EGS_GameServer.instance.test_text.text += ("\nPError parsing receivedMessage from JSON: " + e.StackTrace); });
             throw e;
         }
 
@@ -91,7 +90,7 @@ public class EGS_GS_ServerSocket : EGS_ServerSocket
                     // If the user is on the list to play this game.
                     if (allUsers.ContainsKey(receivedUser.GetUsername()))
                     {
-                        EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServer.gameServer_instance.test_text.text += "\nPLAYER JOINED: " + receivedUser.GetUsername(); });
+                        EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServer.instance.test_text.text += "\nPLAYER JOINED: " + receivedUser.GetUsername(); });
                             
                         // Connect the user.
                         ConnectUser(receivedUser, handler);
@@ -106,41 +105,24 @@ public class EGS_GS_ServerSocket : EGS_ServerSocket
 
                         // Check if game started / are all players.
                         // TODO: Only prepare the game, not start it.
-                        bool startedGame = EGS_GameServer.gameServer_instance.thisGame.Ready();
-                        EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServer.gameServer_instance.test_text.text += "\nStartedGame: " + startedGame; });
+                        bool startedGame = EGS_GameServer.instance.thisGame.Ready();
+                        EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServer.instance.test_text.text += "\nStartedGame: " + startedGame; });
 
                         if (startedGame)
                         {
-                            // TODO: Send to the master server the info of the started game.
-
-                            messageToSend = new EGS_Message();
-                            messageToSend.messageType = "GAME_START";
-                            messageToSend.messageContent = "";
-
-                            jsonMSG = messageToSend.ConvertMessage();
-
-                            string playersString = "";
-                            foreach(EGS_PlayerToGame player in EGS_GameServer.gameServer_instance.startData.GetPlayersToGame())
-                            {
-                                playersString += player.GetUser().GetUsername() + ", ";
-                            }
-
-                            EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServer.gameServer_instance.test_text.text += "\n" + EGS_GameServer.gameServer_instance.thisGame.GetPlayers().Count + " | " + playersString; });
-                            foreach (EGS_PlayerToGame player in EGS_GameServer.gameServer_instance.startData.GetPlayersToGame())
-                            {
-                                EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServer.gameServer_instance.test_text.text += "\nSEND TO : " + player.GetUser().GetUsername(); });
-                                Send(player.GetUser().GetSocket(), jsonMSG);
-                            }
-
-                            // TODO: Escena jugable
                             // TODO: Delegates.
-                            LoadScene("TestGame");
+
+                            // Load the Game Scene.
+                            LoadScene(EGS_GameServer.instance.thisGame.GetGameSceneName());
+
+                            // Put an event to execute on Game Scene Load.
+                            SceneManager.sceneLoaded += OnGameSceneLoad;
                         }
                     }
                 }
                 catch (Exception e)
                 {
-                    EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServer.gameServer_instance.test_text.text += "\nEXCEPTION: " + e.ToString(); });
+                    EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServer.instance.test_text.text += "\nEXCEPTION: " + e.ToString(); });
                 }
                 break;
             case "DISCONNECT_USER":
@@ -170,11 +152,38 @@ public class EGS_GS_ServerSocket : EGS_ServerSocket
                 EGS_Player leftPlayer = EGS_GameManager.instance.GetPlayersByID()[int.Parse(receivedMessage.messageContent)];
                 EGS_GameManager.instance.GetPlayersByID().Remove(int.Parse(receivedMessage.messageContent));
 
-                EGS_GameServer.gameServer_instance.thisGame.QuitPlayerFromGame(leftPlayer);
+                EGS_GameServer.instance.thisGame.QuitPlayerFromGame(leftPlayer);
                 break;
             default:
-                EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServer.gameServer_instance.test_text.text += "\nUndefined message type: " + receivedMessage.messageType; });
+                EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServer.instance.test_text.text += "\nUndefined message type: " + receivedMessage.messageType; });
                 break;
+        }
+    }
+
+    private void OnGameSceneLoad(Scene s, LoadSceneMode ls)
+    {
+        if (s.name.Equals(EGS_GameServer.instance.thisGame.GetGameSceneName()))
+            EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServerDelegates.onGameStart(); });
+
+        // TODO: Send to the master server the info of the started game.
+
+        EGS_Message messageToSend = new EGS_Message();
+        messageToSend.messageType = "GAME_START";
+        messageToSend.messageContent = "";
+
+        string jsonMSG = messageToSend.ConvertMessage();
+
+        string playersString = "";
+        foreach (EGS_User user in EGS_GameServer.instance.gameFoundData.GetUsersToGame())
+        {
+            playersString += user.GetUsername() + ", ";
+        }
+
+        EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServer.instance.test_text.text += "\n" + EGS_GameServer.instance.thisGame.GetPlayers().Count + " | " + playersString; });
+        foreach (EGS_User user in EGS_GameServer.instance.gameFoundData.GetUsersToGame())
+        {
+            EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServer.instance.test_text.text += "\nSEND TO : " + user.GetUsername(); });
+            Send(user.GetSocket(), jsonMSG);
         }
     }
 

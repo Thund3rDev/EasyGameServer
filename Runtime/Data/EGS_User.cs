@@ -18,6 +18,9 @@ public class EGS_User
 
     [Tooltip("Game room")]
     [SerializeField] private int room;
+
+    [Tooltip("Ingame ID")]
+    [SerializeField] private int ingameID;
     #endregion
 
     #region Constructors
@@ -29,6 +32,7 @@ public class EGS_User
         this.userID = -1;
         this.username = "";
         this.room = -1;
+        this.ingameID = -1;
     }
     #endregion
 
@@ -54,7 +58,7 @@ public class EGS_User
     /// <summary>
     /// Setter for user socket.
     /// </summary>
-    /// <param name="u">New user socket</param>
+    /// <param name="s">New user socket</param>
     public void SetSocket(Socket s) { socket = s; }
 
     /// <summary>
@@ -73,13 +77,25 @@ public class EGS_User
     /// Getter for the room.
     /// </summary>
     /// <returns>Room</returns>
-    public int GetRoom() { return userID; }
+    public int GetRoom() { return room; }
 
     /// <summary>
     /// Setter for the room.
     /// </summary>
-    /// <param name="u">New room</param>
+    /// <param name="r">New room</param>
     public void SetRoom(int r) { room = r; }
+
+    /// <summary>
+    /// Getter for the ingame ID.
+    /// </summary>
+    /// <returns>Ingame ID</returns>
+    public int GetIngameID() { return ingameID; }
+
+    /// <summary>
+    /// Setter for the ingame ID.
+    /// </summary>
+    /// <param name="i">New ingame ID</param>
+    public void SetIngameID(int i) { ingameID = i; }
     #endregion
 
 }

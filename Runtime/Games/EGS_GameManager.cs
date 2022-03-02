@@ -58,16 +58,16 @@ public class EGS_GameManager : MonoBehaviour
             foreach (EGS_Player player in playersInGame)
             {
                 // Assign User info.
-                foreach (EGS_PlayerToGame playerToGame in EGS_GameServer.gameServer_instance.startData.GetPlayersToGame())
+                foreach (EGS_User userToGame in EGS_GameServer.instance.gameFoundData.GetUsersToGame())
                 {
-                    if (player.GetIngameID() == playerToGame.GetIngameID())
+                    if (player.GetIngameID() == userToGame.GetIngameID())
                     {
-                        player.SetUser(playerToGame.GetUser());
+                        player.SetUser(userToGame);
                     }
                 }
 
                 // Add player to lists.
-                EGS_GameServer.gameServer_instance.thisGame.AddPlayer(player);
+                EGS_GameServer.instance.thisGame.AddPlayer(player);
                 playersByID.Add(player.GetIngameID(), player);
             }
         }

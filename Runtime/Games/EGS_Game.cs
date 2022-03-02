@@ -24,6 +24,9 @@ public class EGS_Game
     [Tooltip("Room number")]
     private int room;
 
+    [Tooltip("Game Scene name")]
+    private string gameSceneName;
+
 
     [Header("Game Start Control")]
     [Tooltip("Lock for protect concurrent user confirmations to start the game")]
@@ -60,10 +63,12 @@ public class EGS_Game
     /// </summary>
     /// <param name="sc">Reference of the server socket controller</param>
     /// <param name="room_">Room number</param>
-    public EGS_Game(EGS_GS_ServerSocket sc, int room_)
+    /// <param name="gameSceneName_">Name of the Game Scene</param>
+    public EGS_Game(EGS_GS_ServerSocket sc, int room_, string gameSceneName_)
     {
         socketController = sc;
         room = room_;
+        gameSceneName = gameSceneName_;
         startGame_Lock = new Mutex();
     }
     #endregion
@@ -295,5 +300,19 @@ public class EGS_Game
     /// </summary>
     /// <returns>List of players in the game</returns>
     public List<EGS_Player> GetPlayers() { return players; }
+
+
+    /// <summary>
+    /// Getter for the Game Scene Name.
+    /// </summary>
+    public string GetGameSceneName() { return gameSceneName; }
+
+    /// <summary>
+    /// Setter for the Game Scene Name.
+    /// </summary>
+    /// <param name="gameSceneName_">New Game Scene Name</param>
+    public void SetGameSceneName(string gameSceneName_) { gameSceneName = gameSceneName_; }
+
+    
     #endregion
 }

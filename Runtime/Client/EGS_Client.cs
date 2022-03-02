@@ -1,5 +1,5 @@
+using System.Collections.Generic;
 using System.IO;
-using System.Net.Sockets;
 using System.Xml;
 using UnityEngine;
 
@@ -11,10 +11,11 @@ public class EGS_Client : MonoBehaviour
     #region Variables
     [Header("General Variables")]
     [Tooltip("Singleton")]
-    public static EGS_Client client_instance;
+    public static EGS_Client instance;
 
     [Tooltip("Struct that contains the server data")]
     public static EGS_Config serverData;
+
 
     [Header("Networking")]
     [Tooltip("Bool that indicates if client is connnected to the master server")]
@@ -27,10 +28,18 @@ public class EGS_Client : MonoBehaviour
     [Tooltip("Controller for client socket")]
     public EGS_CL_Sockets clientSocketController = null;
 
-    // User Data.
-    // TODO: Put this in an object and save an EGS_USER instance and other variables.
-    public string username;
-    public int ingameID;
+
+    [Header("Client Data")]
+    [Tooltip("Instance of the EGS User for this client")]
+    private EGS_User user;
+
+    [Tooltip("Long that stores the time a RTT lasts since server ask and receive")]
+    private long clientPing;
+
+
+    [Header("Game Data")]
+    [Tooltip("Dictionary of player usernames by their ingameID")]
+    private Dictionary<int, string> playerUsernames = new Dictionary<int, string>();
     #endregion
 
     #region Unity Methods
@@ -39,15 +48,17 @@ public class EGS_Client : MonoBehaviour
     /// </summary>
     private void Awake()
     {
-        if (client_instance == null)
+        if (instance == null)
         {
-            client_instance = this;
+            instance = this;
             DontDestroyOnLoad(this.gameObject);
         }
         else
         {
             Destroy(this.gameObject);
         }
+
+        user = new EGS_User();
     }
     #endregion
 
@@ -160,10 +171,66 @@ public class EGS_Client : MonoBehaviour
 
         /// Client Data.
         // TODO: Make possible different ways to get the username.
-        // Test.
+        // TEST.
         // Get player username.
         node = doc.DocumentElement.SelectSingleNode("//client/username");
-        username = node.InnerText;
+        user.SetUsername(node.InnerText);
+    }
+    #endregion
+
+    #region Getters and Setters
+    /// <summary>
+    /// Getter for the client user.
+    /// </summary>
+    /// <returns>Client user</returns>
+    public EGS_User GetUser()
+    {
+        return user;
+    }
+
+    /// <summary>
+    /// Setter for the client user.
+    /// </summary>
+    /// <param name="u">New client user</param>
+    public void SetUser(EGS_User u)
+    {
+        user = u;
+    }
+
+    /// <summary>
+    /// Getter for the client ping.
+    /// </summary>
+    /// <returns>Client ping</returns>
+    public long GetClientPing()
+    {
+        return clientPing;
+    }
+
+    /// <summary>
+    /// Setter for the client ping.
+    /// </summary>
+    /// <param name="p">New client ping</param>
+    public void SetClientPing(long p)
+    {
+        clientPing = p;
+    }
+
+    /// <summary>
+    /// Getter for the player usernames dictionary.
+    /// </summary>
+    /// <returns>Dictionary of player usernames</returns>
+    public Dictionary<int, string> GetPlayerUsernames()
+    {
+        return playerUsernames;
+    }
+
+    /// <summary>
+    /// Setter for the player usernames dictionary.
+    /// </summary>
+    /// <param name="p">New dictionary of player usernames</param>
+    public void SetPlayerUsernames(Dictionary<int, string> p)
+    {
+        playerUsernames = p;
     }
     #endregion
 }
