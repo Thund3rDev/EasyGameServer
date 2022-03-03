@@ -101,7 +101,7 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
                 EGS_Client.instance.SetClientPing(lastRTTMilliseconds);
 
                 // Call the OnRTT delegate.
-                EGS_ClientDelegates.onRTT(lastRTTMilliseconds);
+                EGS_ClientDelegates.onRTT?.Invoke(lastRTTMilliseconds);
 
                 // Prepare the message to send.
                 messageToSend.messageType = "RTT_RESPONSE_CLIENT";
@@ -118,7 +118,7 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
                 EGS_Client.instance.connectedToMasterServer = true;
 
                 // Call the onConnect delegate with type MasterServer.
-                EGS_ClientDelegates.onConnect(EGS_Control.EGS_Type.MasterServer);
+                EGS_ClientDelegates.onConnect?.Invoke(EGS_Control.EGS_Type.MasterServer);
 
                 // Get the user instance.
                 EGS_User thisUser = EGS_Client.instance.GetUser();
@@ -141,14 +141,14 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
                 EGS_Client.instance.SetUser(updatedUser);
 
                 // Call the onJoinMasterServer delegate.
-                EGS_ClientDelegates.onJoinMasterServer(updatedUser);
+                EGS_ClientDelegates.onJoinMasterServer?.Invoke(updatedUser);
                 break;
             case "DISCONNECT":
                 // Close the socket to disconnect from the server.
                 socketsController.CloseSocket();
 
                 // Call the onDisconnect delegate.
-                EGS_ClientDelegates.onDisconnect();
+                EGS_ClientDelegates.onDisconnect?.Invoke();
                 break;
             case "GAME_FOUND":
                 // Obtain GameFoundData.
@@ -171,7 +171,7 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
                 EGS_Client.instance.GetUser().SetRoom(gameFoundData.GetRoom());
 
                 // Execute code on game found.
-                EGS_ClientDelegates.onGameFound(gameFoundData);
+                EGS_ClientDelegates.onGameFound?.Invoke(gameFoundData);
                 break;
             case "CHANGE_TO_GAME_SERVER":
                 // Save the Game Server connection data (IP and port).
@@ -180,7 +180,7 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
                 gameServerPort = int.Parse(ep[1]);
 
                 // Call the onPrepareToChangeFromMasterToGameServer delegate.
-                EGS_ClientDelegates.onPrepareToChangeFromMasterToGameServer(gameServerIP, gameServerPort);
+                EGS_ClientDelegates.onPrepareToChangeFromMasterToGameServer?.Invoke(gameServerIP, gameServerPort);
 
                 // Tell the server that the client received the information so can connect to the game server.
                 messageToSend.messageType = "DISCONNECT_TO_GAME";
@@ -199,7 +199,7 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
                 EGS_Client.instance.connectedToMasterServer = false;
 
                 // Call the onChangeFromMasterToGameServer delegate.
-                EGS_ClientDelegates.onChangeFromMasterToGameServer(gameServerIP, gameServerPort);
+                EGS_ClientDelegates.onChangeFromMasterToGameServer?.Invoke(gameServerIP, gameServerPort);
 
                 // Try to connect to Game Server.
                 socketsController.ConnectToGameServer(gameServerIP, gameServerPort);
@@ -209,7 +209,7 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
                 EGS_Client.instance.connectedToGameServer = true;
 
                 // Call the onConnect delegate with type GameServer.
-                EGS_ClientDelegates.onConnect(EGS_Control.EGS_Type.GameServer);
+                EGS_ClientDelegates.onConnect?.Invoke(EGS_Control.EGS_Type.GameServer);
 
                 // Convert user to JSON.
                 userJson = JsonUtility.ToJson(EGS_Client.instance.GetUser());
@@ -225,19 +225,19 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
                 break;
             case "JOIN_GAME_SERVER":
                 // Call the onJoinMasterServer delegate.
-                EGS_ClientDelegates.onJoinGameServer();
+                EGS_ClientDelegates.onJoinGameServer?.Invoke();
                 break;
             case "GAME_START":
                 // Call the onGameStart delegate.
-                EGS_ClientDelegates.onGameStart(receivedMessage);
+                EGS_ClientDelegates.onGameStart?.Invoke(receivedMessage);
                 break;
             case "UPDATE":
                 // Call the onGameUpdate delegate.
-                EGS_ClientDelegates.onGameUpdate(receivedMessage);
+                EGS_ClientDelegates.onGameUpdate?.Invoke(receivedMessage);
                 break;
             default:
                 // Call the onMessageReceive delegate.
-                EGS_ClientDelegates.onMessageReceive(receivedMessage);
+                EGS_ClientDelegates.onMessageReceive?.Invoke(receivedMessage);
                 break;
         }
     }
