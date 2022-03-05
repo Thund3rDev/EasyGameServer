@@ -22,5 +22,8 @@ public static class EGS_GameServerDelegates
     [Header("Control Delegates")]
     [Tooltip("Delegate to the OnRTT function")]
     public static Action<long> onRTT;
+
+    [Tooltip("Delegate to the OnReceiveClientRTT function")]
+    public static Action<int, long> onReceiveClientRTT;
     #endregion
 }

@@ -16,7 +16,7 @@ public class EGS_ServerManager : MonoBehaviour
     [SerializeField] private EGS_Log egs_Log = null;
 
     [Tooltip("Reference to the server socket manager")]
-    private EGS_SE_Sockets egs_se_sockets = null;
+    private EGS_SE_Sockets socketsController = null;
     #endregion
 
     #region Class Methods
@@ -39,22 +39,28 @@ public class EGS_ServerManager : MonoBehaviour
         // Start the server log.
         egs_Log.StartLog();
 
-        /// Read all data.
         // Read Server config data.
         ReadConfigData();
+
         // Initialize Server Games Manager.
-        EGS_ServerGamesManager.gm_instance.InitializeServerGamesManager();
+        EGS_ServerGamesManager.instance.InitializeServerGamesManager();
 
         // TODO: ReadUsersData.
+
+
+        // Call the onMasterServerStart delegate.
+        EGS_MasterServerDelegates.onMasterServerStart?.Invoke();
 
         // Log that server started.
         if (EGS_Config.DEBUG_MODE > -1)
             egs_Log.Log("Started <color=green>EasyGameServer</color> with version <color=orange>" + EGS_Config.version + "</color>.");
 
+
         // Create sockets manager.
-        egs_se_sockets = new EGS_SE_Sockets(egs_Log);
+        socketsController = new EGS_SE_Sockets(egs_Log);
+
         // Start listening for connections.
-        egs_se_sockets.StartListening();
+        socketsController.StartListening();
     }
 
     /// <summary>
@@ -70,11 +76,15 @@ public class EGS_ServerManager : MonoBehaviour
         serverStarted = false;
 
         // Stop listening on the socket.
-        egs_se_sockets.StopListening();
+        socketsController.StopListening();
 
-        // TODO:  Save all data.
         // TODO:  Disconnect players.
-        // TODO:  On Server Shutdown.
+        // TODO:  Save all data.
+
+        // Call the onMasterServerShutdown delegate.
+        EGS_MasterServerDelegates.onMasterServerShutdown?.Invoke();
+
+        // Close the Log.
         egs_Log.CloseLog();
     }
 

@@ -63,7 +63,7 @@ public class EGS_GS_Sockets
         localEP = CreateGameServerSocket(EGS_GameServer.instance.gameServerPort);
 
         // Connect to server.
-        serverSocketHandler = new EGS_GS_ServerSocket(this, AfterPlayerConnected, OnPlayerDisconnected);
+        serverSocketHandler = new EGS_GS_ServerSocket(this);
         new Thread(() => serverSocketHandler.StartListening(localEP, socket_server, EGS_Config.PLAYERS_PER_GAME)).Start();
 
         // Create the Game.
@@ -83,32 +83,6 @@ public class EGS_GS_Sockets
         // Send the message.
         clientSocketHandler.Send(socket_client, messageJson);
     }
-
-    #region Connect and disconnect methods
-    /// <summary>
-    /// Method AfterPlayerConnected, that manages a new connection.
-    /// </summary>
-    /// <param name="clientSocket">Socket connected to the client</param>
-    public void AfterPlayerConnected(Socket clientSocket)
-    {
-        // Ask client for user data.
-        EGS_Message msg = new EGS_Message();
-        msg.messageType = "CONNECT_TO_GAME_SERVER";
-        string jsonMSG = msg.ConvertMessage();
-
-        EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServer.instance.test_text.text += "\nPLAYER CONNECTED: " + clientSocket.RemoteEndPoint; });
-        serverSocketHandler.Send(clientSocket, jsonMSG);
-    }
-
-    /// <summary>
-    /// Method OnPlayerDisconnected, that manages a disconnection.
-    /// </summary>
-    /// <param name="clientSocket">Client socket disconnected from the server</param>
-    public void OnPlayerDisconnected(Socket clientSocket)
-    {
-        // TODO: Make this work.
-    }
-    #endregion
 
     /// <summary>
     /// Method Disconnect, to stop the client thread and disconnect from server.
@@ -144,7 +118,7 @@ public class EGS_GS_Sockets
         IPEndPoint remoteEP = new IPEndPoint(ipAddress, serverPort);
 
         // Create a TCP/IP socket
-        socket_client = new Socket(ipAddress.AddressFamily,
+        socket_client = new Socket(AddressFamily.InterNetwork,
             SocketType.Stream, ProtocolType.Tcp);
 
         // Return the EndPoint
@@ -164,7 +138,7 @@ public class EGS_GS_Sockets
         IPEndPoint localEndPoint = new IPEndPoint(ipAddress, gameServerPort);
 
         // Create a TCP/IP socket
-        socket_server = new Socket(ipAddress.AddressFamily,
+        socket_server = new Socket(AddressFamily.InterNetwork,
             SocketType.Stream, ProtocolType.Tcp);
 
         // Return the EndPoint

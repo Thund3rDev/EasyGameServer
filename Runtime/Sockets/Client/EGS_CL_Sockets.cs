@@ -61,8 +61,6 @@ public class EGS_CL_Sockets
         // Get EndPoint.
         EndPoint remoteEP = CreateEndpoint(gameServerIpAddress, serverPort);
 
-        EGS_Client.instance.connectedToGameServer = true; // TODO: Check if here or in EGS_CL_ClientSocket.
-
         // Connect to game server.
         clientSocketHandler.StartClient(remoteEP, socket_client);
 
@@ -133,7 +131,7 @@ public class EGS_CL_Sockets
     private void CreateClientSocket(IPAddress ipAddress)
     {
         // Create a TCP/IP socket.
-        socket_client = new Socket(ipAddress.AddressFamily,
+        socket_client = new Socket(AddressFamily.InterNetwork,
             SocketType.Stream, ProtocolType.Tcp);
     }
 

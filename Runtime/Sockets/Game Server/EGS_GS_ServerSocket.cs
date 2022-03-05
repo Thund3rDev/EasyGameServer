@@ -19,14 +19,14 @@ public class EGS_GS_ServerSocket : EGS_ServerSocket
     /// <summary>
     /// Base constructor.
     /// </summary>
-    public EGS_GS_ServerSocket(EGS_GS_Sockets socketsController_, Action<Socket> afterPlayerConnected, Action<Socket> afterPlayerDisconnect) : base(afterPlayerConnected, afterPlayerDisconnect)
+    public EGS_GS_ServerSocket(EGS_GS_Sockets socketsController_)
     {
         socketsController = socketsController_;
 
         // Get the info of users to this game.
         foreach (EGS_User userToGame in EGS_GameServer.instance.gameFoundData.GetUsersToGame())
         {
-            allUsers.Add(userToGame.GetUsername(), userToGame);
+            allUsers.Add(userToGame.GetUserID(), userToGame);
         }
     }
     #endregion
@@ -88,7 +88,7 @@ public class EGS_GS_ServerSocket : EGS_ServerSocket
                     receivedUser.SetSocket(handler);
 
                     // If the user is on the list to play this game.
-                    if (allUsers.ContainsKey(receivedUser.GetUsername()))
+                    if (allUsers.ContainsKey(receivedUser.GetUserID()))
                     {
                         EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServer.instance.test_text.text += "\nPLAYER JOINED: " + receivedUser.GetUsername(); });
                             
@@ -159,6 +159,32 @@ public class EGS_GS_ServerSocket : EGS_ServerSocket
                 break;
         }
     }
+
+    #region Connect and disconnect methods
+    /// <summary>
+    /// Method OnNewConnection, that manages a new connection.
+    /// </summary>
+    /// <param name="client_socket">Socket connected to the client</param>
+    protected override void OnNewConnection(Socket client_socket)
+    {
+        // Ask client for user data.
+        EGS_Message msg = new EGS_Message();
+        msg.messageType = "CONNECT_TO_GAME_SERVER";
+        string jsonMSG = msg.ConvertMessage();
+
+        EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServer.instance.test_text.text += "\nPLAYER CONNECTED: " + client_socket.RemoteEndPoint; });
+        Send(client_socket, jsonMSG);
+    }
+
+    /// <summary>
+    /// Method OnClientDisconnected, that manages a disconnection.
+    /// </summary>
+    /// <param name="client_socket">Client socket disconnected from the server</param>
+    public override void OnClientDisconnected(Socket client_socket)
+    {
+        // TODO: Make this work.
+    }
+    #endregion
 
     private void OnGameSceneLoad(Scene s, LoadSceneMode ls)
     {

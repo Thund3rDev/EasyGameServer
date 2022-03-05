@@ -13,7 +13,8 @@ public class EGS_ServerGamesManager : MonoBehaviour
     #region Variables
     [Header("General Variables")]
     [Tooltip("Singleton")]
-    public static EGS_ServerGamesManager gm_instance;
+    public static EGS_ServerGamesManager instance;
+
 
     [Header("Games")]
     [Tooltip("Dictionary that stores users by their room")]
@@ -25,13 +26,16 @@ public class EGS_ServerGamesManager : MonoBehaviour
     [Tooltip("Array with the Game Servers")]
     public EGS_GameServerData[] gameServers;
 
+
     [Header("Control")]
     [Tooltip("Integer that assigns the room number for the next room")]
     private int nextRoom = 0;
 
+
     [Header("Sync")]
     [Tooltip("Mutex that controls concurrency for create and delete games")]
     public Mutex gamesLock = new Mutex();
+
 
     [Header("References")]
     [Tooltip("Reference to the log")]
@@ -44,9 +48,9 @@ public class EGS_ServerGamesManager : MonoBehaviour
     /// </summary>
     private void Awake()
     {
-        if (gm_instance == null)
+        if (instance == null)
         {
-            gm_instance = this;
+            instance = this;
             DontDestroyOnLoad(this.gameObject);
         }
         else
@@ -107,7 +111,7 @@ public class EGS_ServerGamesManager : MonoBehaviour
             }
 
             // Create the game and get the room number.
-            int room = CreateGame(usersForThisGame);
+            int room = CreateGame(gameFoundData);
 
             // Set the room for the users.
             foreach (EGS_User userToGame in usersForThisGame)
@@ -119,7 +123,7 @@ public class EGS_ServerGamesManager : MonoBehaviour
             usersInRooms.Add(room, usersForThisGame);
 
             // Update the game found data room.
-            gameFoundData.SetRoom(room);
+            //gameFoundData.SetRoom(room);
 
             // Message for the players.
             EGS_Message msg = new EGS_Message();
@@ -133,6 +137,9 @@ public class EGS_ServerGamesManager : MonoBehaviour
             {
                 server_socket.Send(userToGame.GetSocket(), jsonMSG);
             }
+
+            // Call the onGameFound delegate.
+            EGS_MasterServerDelegates.onGameFound?.Invoke(gameFoundData);
         }
     }
 
@@ -141,22 +148,23 @@ public class EGS_ServerGamesManager : MonoBehaviour
     /// </summary>
     /// <param name="usersToGame">List of users that will play that game</param>
     /// <returns>Room number</returns>
-    public int CreateGame(List<EGS_User> usersToGame)
+    public int CreateGame(EGS_GameFoundData gameFoundData)
     {
         // Get the room number.
         int room = Interlocked.Increment(ref nextRoom);
+        gameFoundData.SetRoom(room);
 
         string logString = "Created game with room " + room + ". Players: ";
 
         // Assign the room number to the players.
-        foreach (EGS_User userToGame in usersToGame)
+        foreach (EGS_User userToGame in gameFoundData.GetUsersToGame())
         {
             userToGame.SetRoom(room);
             logString += userToGame.GetUsername() + ", ";
         }
 
         // Launch the GameServer.
-        LaunchGameServer(room, usersToGame);
+        LaunchGameServer(gameFoundData);
 
         // Log the information.
         egs_Log.Log(logString);
@@ -202,7 +210,7 @@ public class EGS_ServerGamesManager : MonoBehaviour
     /// </summary>
     /// <param name="room">Room number</param>
     /// <param name="playersToGame">List of users to play that game</param>
-    private void LaunchGameServer(int room, List<EGS_User> usersToGame)
+    private void LaunchGameServer(EGS_GameFoundData gameFoundData)
     {
         int gameServerID = -1;
         bool serverAvailable = false;
@@ -225,14 +233,6 @@ public class EGS_ServerGamesManager : MonoBehaviour
         // There is a server available.
         if (gameServerID > -1)
         {
-            // Prepare the data to be sent at launch.
-            EGS_GameFoundData gameFoundData = new EGS_GameFoundData();
-
-            foreach (EGS_User userToGame in usersToGame)
-            {
-                gameFoundData.GetUsersToGame().Add(userToGame);
-            }
-
             // TODO: Put this on a class to serialize as json -> EGS_GameServerStartData.
             // Construct the arguments.
             int gameServerPort = EGS_Config.serverPort + gameServerID + 1;
@@ -241,7 +241,7 @@ public class EGS_ServerGamesManager : MonoBehaviour
             arguments += "#" + jsonString;
 
             // Save the GameServer data.
-            gameServers[gameServerID] = new EGS_GameServerData(gameServerID, room);
+            gameServers[gameServerID] = new EGS_GameServerData(gameServerID, gameFoundData.GetRoom());
 
             // Try to launch the GameServer.
             try

@@ -14,11 +14,11 @@ public class EGS_ClientSocket
     #region Variables
     [Header("ManualResetEvents")]
     [Tooltip("ManualResetEvent for when connection is done")]
-    protected ManualResetEvent connectDone = new ManualResetEvent(false); // TODO: Valorate if needed.
+    protected ManualResetEvent connectDone = new ManualResetEvent(false);
     [Tooltip("ManualResetEvent for when send is done.")]
-    protected ManualResetEvent sendDone = new ManualResetEvent(false); // TODO: Valorate if needed.
+    protected ManualResetEvent sendDone = new ManualResetEvent(false);
     [Tooltip("ManualResetEvent for when receive is done")]
-    protected ManualResetEvent receiveDone = new ManualResetEvent(false); // TODO: Valorate if needed.
+    protected ManualResetEvent receiveDone = new ManualResetEvent(false);
 
     // Since a client can only be connected to ONE server, it will never overwrite data.
     // It is needed because data can be splitted among messages.
@@ -52,8 +52,6 @@ public class EGS_ClientSocket
 
             // Receive the response from the remote device.  
             Receive(socket_client);
-            receiveDone.WaitOne();
-
         }
         catch (ThreadAbortException)
         {

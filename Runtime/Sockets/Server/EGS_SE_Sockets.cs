@@ -43,41 +43,12 @@ public class EGS_SE_Sockets
         EndPoint localEP = CreateSocket();
 
         // Connect to server.
-        serverSocketHandler = new EGS_SE_ServerSocket(egs_Log, OnNewConnection, OnClientDisconnected);
+        serverSocketHandler = new EGS_SE_ServerSocket(egs_Log);
         serverSocketHandler.StartListening(localEP, socket_listener, EGS_Config.MAX_CONNECTIONS);
 
         if (EGS_Config.DEBUG_MODE > -1)
             egs_Log.Log("<color=green>Easy Game Server</color> Listening at port <color=orange>" + EGS_Config.serverPort + "</color>.");
     }
-
-    #region Connect and disconnect methods
-    /// <summary>
-    /// Method OnNewConnection, that manages a new connection.
-    /// </summary>
-    /// <param name="clientSocket">Socket connected to the client</param>
-    public void OnNewConnection(Socket clientSocket)
-    {
-        if (EGS_Config.DEBUG_MODE > 2)
-            egs_Log.Log("<color=blue>New connection</color>. IP: " + clientSocket.RemoteEndPoint + ".");
-
-        // Ask client for user data.
-        EGS_Message msg = new EGS_Message();
-        msg.messageType = "CONNECT_TO_MASTER_SERVER";
-        string jsonMSG = msg.ConvertMessage();
-
-        serverSocketHandler.Send(clientSocket, jsonMSG);
-    }
-
-    /// <summary>
-    /// Method OnClientDisconnected, that manages a disconnection.
-    /// </summary>
-    /// <param name="clientSocket">Client socket disconnected from the server</param>
-    public void OnClientDisconnected(Socket clientSocket)
-    {
-        if (EGS_Config.DEBUG_MODE > 2)
-            egs_Log.Log("<color=blue>Closed connection</color>. IP: " + clientSocket.RemoteEndPoint + ".");
-    }
-    #endregion
     #endregion
 
     #region Private Methods
@@ -96,7 +67,7 @@ public class EGS_SE_Sockets
         IPEndPoint localEndPoint = new IPEndPoint(ipAddress, EGS_Config.serverPort);
 
         // Create a TCP/IP socket.
-        socket_listener = new Socket(ipAddress.AddressFamily,
+        socket_listener = new Socket(AddressFamily.InterNetwork,
             SocketType.Stream, ProtocolType.Tcp);
 
         // Return the EndPoint

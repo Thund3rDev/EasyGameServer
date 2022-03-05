@@ -13,17 +13,9 @@ using System.Timers;
 public class EGS_ServerSocket
 {
     #region Variables
-    // TODO: Move Delegates to a static class, singleton or global object.
-    [Header("Delegates")]
-    [Tooltip("Delegate to the OnNewConnection function")]
-    protected Action<Socket> onNewConnection;
-    [Tooltip("Delegate to the OnClientDisconnect function")]
-    protected Action<Socket> onDisconnectDelegate;
-
-
     [Header("User data")]
-    [Tooltip("Dictionary that stores ALL users by their username")] // TODO: Make this By ID.
-    protected Dictionary<string, EGS_User> allUsers = new Dictionary<string, EGS_User>();
+    [Tooltip("Dictionary that stores ALL users by their ID")]
+    protected Dictionary<int, EGS_User> allUsers = new Dictionary<int, EGS_User>();
     [Tooltip("Dictionary that stores the CURRENTLY CONNECTED users by their socket")]
     protected Dictionary<Socket, EGS_User> connectedUsers = new Dictionary<Socket, EGS_User>();
 
@@ -33,12 +25,11 @@ public class EGS_ServerSocket
 
     #region Constructors
     /// <summary>
-    /// Base constructor.
+    /// Empty constructor.
     /// </summary>
-    public EGS_ServerSocket(Action<Socket> onNewConnection, Action<Socket> onClientDisconnect)
+    public EGS_ServerSocket()
     {
-        this.onNewConnection = onNewConnection;
-        this.onDisconnectDelegate = onClientDisconnect;
+
     }
     #endregion
 
@@ -83,7 +74,7 @@ public class EGS_ServerSocket
         Socket handler = listener.EndAccept(ar);
 
         // Do things on client connected.
-        onNewConnection(handler);
+        OnNewConnection(handler);
 
         // Create the state object and begin receive.  
         StateObject state = new StateObject();
@@ -211,16 +202,16 @@ public class EGS_ServerSocket
     protected virtual void ConnectUser(EGS_User userToConnect, Socket client_socket)
     {
         // Update its socket.
-        allUsers[userToConnect.GetUsername()].SetSocket(client_socket);
-
-        // Set its user ID.
-        userToConnect.SetUserID(allUsers[userToConnect.GetUsername()].GetUserID());
+        allUsers[userToConnect.GetUserID()].SetSocket(client_socket);
 
         // Save user data on the dictionary of connectedUsers.
         lock (connectedUsers)
         {
             connectedUsers.Add(client_socket, userToConnect);
         }
+
+        // Call the onUserJoinServer delegate.
+        //EGS_MasterServerDelegates.onUserJoinServer?.Invoke(thisUser);
     }
 
     /// <summary>
@@ -230,7 +221,7 @@ public class EGS_ServerSocket
     protected virtual void DisconnectUser(EGS_User userToDisconnect)
     {
         // Get the socket.
-        userToDisconnect.SetSocket(allUsers[userToDisconnect.GetUsername()].GetSocket());
+        userToDisconnect.SetSocket(allUsers[userToDisconnect.GetUserID()].GetSocket());
 
         // Disconnect it from server.
         lock (connectedUsers)
@@ -244,13 +235,33 @@ public class EGS_ServerSocket
     #endregion
 
     #region Networking Methods
+    #region Connect and disconnect methods
+    /// <summary>
+    /// Method OnNewConnection, that manages a new connection.
+    /// </summary>
+    /// <param name="clientSocket">Socket connected to the client</param>
+    protected virtual void OnNewConnection(Socket client_socket)
+    {
+
+    }
+
+    /// <summary>
+    /// Method OnClientDisconnected, that manages a disconnection.
+    /// </summary>
+    /// <param name="client_socket">Client socket disconnected from the server</param>
+    public virtual void OnClientDisconnected(Socket client_socket)
+    {
+
+    }
+    #endregion
+
     /// <summary>
     /// Method DisconnectClient, that disconnect a client from the server.
     /// </summary>
     /// <param name="client_socket">Socket that handles the client</param>
     public void DisconnectClient(Socket client_socket)
     {
-        onDisconnectDelegate(client_socket);
+        OnClientDisconnected(client_socket);
         StopRTT(client_socket);
     }
 

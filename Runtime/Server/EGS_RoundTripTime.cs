@@ -117,7 +117,8 @@ public class EGS_RoundTripTime
 
             try
             {
-                socketController.Send(client_socket, jsonMSG);
+                if (client_socket.Connected)
+                    socketController.Send(client_socket, jsonMSG);
                 // TODO: BUG: If this fails, client_socket loses its RemoteEndPoint.
             }
             catch (SocketException)
