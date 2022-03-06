@@ -116,8 +116,6 @@ public class EGS_CL_Sockets
         socket_client.Shutdown(SocketShutdown.Both);
         socket_client.Close();
 
-        EGS_Client.instance.connectedToServer = false;
-
         Debug.Log("[CLIENT] Closed socket.");
     }
     #endregion

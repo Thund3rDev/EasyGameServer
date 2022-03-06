@@ -41,7 +41,6 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
         try
         {
             base.ConnectCallback(ar);
-            EGS_Client.instance.connectedToServer = true;
         }
         catch (Exception e)
         {
@@ -55,8 +54,14 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
     /// <param name="ar">IAsyncResult</param>
     protected override void ReceiveCallback(IAsyncResult ar)
     {
-        bool connectedToServer = EGS_Client.instance.connectedToServer;
-        base.ReceiveCallback(ar, connectedToServer);
+        try
+        {
+            base.ReceiveCallback(ar);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError("[CLIENT] " + e.ToString());
+        }
     }
     #endregion
 
@@ -100,7 +105,7 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
                 long lastRTTMilliseconds = long.Parse(receivedMessage.messageContent);
                 EGS_Client.instance.SetClientPing(lastRTTMilliseconds);
 
-                // Call the OnRTT delegate.
+                // Call the onRTT delegate.
                 EGS_ClientDelegates.onRTT?.Invoke(lastRTTMilliseconds);
 
                 // Prepare the message to send.

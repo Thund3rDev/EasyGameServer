@@ -16,6 +16,7 @@ public class EGS_MasterServerDelegates
     [Tooltip("Delegate to the OnMasterServerShutdown function")]
     public static Action onMasterServerShutdown;
 
+
     [Header("User Control Delegates")]
     [Tooltip("Delegate to the OnUserJoinServer function")]
     public static Action<EGS_User> onUserJoinServer;

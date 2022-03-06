@@ -37,11 +37,10 @@ public class EGS_GS_ClientSocket : EGS_ClientSocket
         try
         {
             base.ConnectCallback(ar);
-            EGS_GameServer.instance.connectedToMasterServer = true;
         }
         catch(Exception e)
         {
-            Debug.LogError("[CLIENT] " + e.ToString());
+            Debug.LogError("[Game Server] " + e.ToString());
         }
     }
 
@@ -51,8 +50,14 @@ public class EGS_GS_ClientSocket : EGS_ClientSocket
     /// <param name="ar">IAsyncResult</param>
     protected override void ReceiveCallback(IAsyncResult ar)
     {
-        bool connectedToServer = EGS_GameServer.instance.connectedToMasterServer;
-        base.ReceiveCallback(ar, connectedToServer);
+        try
+        {
+            base.ReceiveCallback(ar);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError("[Game Server] " + e.ToString());
+        }
     }
     #endregion
 
@@ -90,11 +95,12 @@ public class EGS_GS_ClientSocket : EGS_ClientSocket
         switch (receivedMessage.messageType)
         {
             case "RTT":
-                // Save the client ping then call the delegate On RTT.
+                // Save the client ping.
                 long lastRTTMilliseconds = long.Parse(receivedMessage.messageContent);
                 EGS_GameServer.instance.SetClientPing(lastRTTMilliseconds);
 
-                EGS_GameServerDelegates.onRTT(lastRTTMilliseconds);
+                // Call the onRTT delegate.
+                EGS_GameServerDelegates.onRTT?.Invoke(lastRTTMilliseconds);
 
                 // Prepare the message to send.
                 messageToSend.messageType = "RTT_RESPONSE_GAME_SERVER";
@@ -107,17 +113,27 @@ public class EGS_GS_ClientSocket : EGS_ClientSocket
                 Send(handler, jsonMSG);
                 break;
             case "CONNECT_TO_MASTER_SERVER":
+                // Save as connected to the master server.
+                EGS_GameServer.instance.connectedToMasterServer = true;
+
                 // Change the server state.
-                EGS_GameServer.instance.gameServerState = EGS_GameServerData.EGS_GameServerState.CREATED;
+                EGS_GameServer.instance.gameServerState = EGS_GameServerData.EGS_GameServerState.WAITING_PLAYERS;
                 EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServer.instance.test_text.text = "Status: " + Enum.GetName(typeof(EGS_GameServerData.EGS_GameServerState), EGS_GameServer.instance.gameServerState); });
+
+                // Call the onConnectToMasterServer delegate.
+                EGS_GameServerDelegates.onConnectToMasterServer?.Invoke();
 
                 // Start listening for player connections and wait until it is started.
                 socketsController.StartListening();
                 socketsController.startDone.WaitOne();
 
+                // Call the onReadyToConnectPlayers delegate.
+                EGS_GameServerDelegates.onReadyToConnectPlayers?.Invoke();
+
                 // Send a message to the master server.
                 messageToSend.messageType = "CREATED_GAME_SERVER";
 
+                // TODO: Send as an object.
                 string gameServerIP = EGS_Config.serverIP + ":" + EGS_GameServer.instance.gameServerPort;
                 messageToSend.messageContent = EGS_GameServer.instance.gameServerID + "#" + gameServerIP;
                 EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServer.instance.test_text.text += "\nIPADRESS " + EGS_Config.serverIP; });
@@ -128,12 +144,16 @@ public class EGS_GS_ClientSocket : EGS_ClientSocket
                 // Send data to server.
                 Send(handler, jsonMSG);
                 break;
-            case "CLOSE_GAME_SERVER":
+            case "MASTER_SERVER_CLOSE_GAME_SERVER":
+                // Save as disconnected from the master server.
                 EGS_GameServer.instance.connectedToMasterServer = false;
+
+                // Call the onMasterServerCloseGameServer delegate.
+                EGS_GameServerDelegates.onMasterServerCloseGameServer?.Invoke();
                 break;
             default:
-                // Call the onMessageReceive delegate.
-                EGS_GameServerDelegates.onMessageReceive(receivedMessage);
+                // Call the onServerMessageReceive delegate.
+                EGS_GameServerDelegates.onServerMessageReceive?.Invoke(receivedMessage);
                 break;
         }
     }

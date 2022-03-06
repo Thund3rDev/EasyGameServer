@@ -70,30 +70,41 @@ public class EGS_GS_ServerSocket : EGS_ServerSocket
 
         // Local variables that are used in the cases below.
         string jsonMSG;
-        EGS_User receivedUser;
+        EGS_User thisUser;
         EGS_Player thisPlayer;
+        long rttPing;
 
         // Depending on the messageType, do different things.
         switch (receivedMessage.messageType)
         {
             case "RTT_RESPONSE_CLIENT":
-                long rttPing = roundTripTimes[handler].ReceiveRTT();
-                // TODO: Update UI? I think it is better on UI Update method.
+                // Get the needed data.
+                rttPing = roundTripTimes[handler].ReceiveRTT();
+                thisUser = connectedUsers[handler];
+
+                // TODO: Log in the Game Server Console.
+                /*if (EGS_Config.DEBUG_MODE > 2)
+                    egs_Log.Log("<color=blue>Round Trip Time (Client):</color> " + thisUser.GetUsername() + " (" + rttPing + " ms).");*/
+
+                // Call the onReceiveClientRTT delegate with UserID and the rtt ping in milliseconds.
+                EGS_GameServerDelegates.onReceiveClientRTT?.Invoke(thisUser.GetUserID(), rttPing);
+
+                // TODO: Update UI? I think it is better on UI Update method or in the delegate.
                 break;
             case "JOIN_GAME_SERVER":
                 try
                 {
                     // Get the received user
-                    receivedUser = JsonUtility.FromJson<EGS_User>(receivedMessage.messageContent);
-                    receivedUser.SetSocket(handler);
+                    thisUser = JsonUtility.FromJson<EGS_User>(receivedMessage.messageContent);
+                    thisUser.SetSocket(handler);
 
                     // If the user is on the list to play this game.
-                    if (allUsers.ContainsKey(receivedUser.GetUserID()))
+                    if (allUsers.ContainsKey(thisUser.GetUserID()))
                     {
-                        EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServer.instance.test_text.text += "\nPLAYER JOINED: " + receivedUser.GetUsername(); });
+                        EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServer.instance.test_text.text += "\nPLAYER JOINED: " + thisUser.GetUsername(); });
                             
                         // Connect the user.
-                        ConnectUser(receivedUser, handler);
+                        ConnectUser(thisUser, handler);
 
                         // Put a heartbeat for the client socket.
                         CreateRTT(handler);
@@ -103,14 +114,18 @@ public class EGS_GS_ServerSocket : EGS_ServerSocket
                         jsonMSG = messageToSend.ConvertMessage();
                         Send(handler, jsonMSG);
 
+                        // Call the onUserJoinServer delegate.
+                        EGS_GameServerDelegates.onUserJoinServer?.Invoke(thisUser);
+
                         // Check if game started / are all players.
                         // TODO: Only prepare the game, not start it.
-                        bool startedGame = EGS_GameServer.instance.thisGame.Ready();
-                        EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServer.instance.test_text.text += "\nStartedGame: " + startedGame; });
+                        bool allPlayersConnected = EGS_GameServer.instance.thisGame.Ready();
+                        EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServer.instance.test_text.text += "\nAllPlayersConnected: " + allPlayersConnected; });
 
-                        if (startedGame)
+                        if (allPlayersConnected)
                         {
-                            // TODO: Delegates.
+                            // Call the onAllPlayersConnected delegate.
+                            EGS_GameServerDelegates.onAllPlayersConnected?.Invoke();
 
                             // Load the Game Scene.
                             LoadScene(EGS_GameServer.instance.thisGame.GetGameSceneName());
@@ -127,9 +142,9 @@ public class EGS_GS_ServerSocket : EGS_ServerSocket
                 break;
             case "DISCONNECT_USER":
                 // Get the received user
-                receivedUser = JsonUtility.FromJson<EGS_User>(receivedMessage.messageContent);
+                thisUser = JsonUtility.FromJson<EGS_User>(receivedMessage.messageContent);
 
-                DisconnectUser(receivedUser);
+                DisconnectUser(thisUser);
                 break;
             case "INPUT":
                 // TODO: Input object and delegate.
@@ -146,16 +161,25 @@ public class EGS_GS_ServerSocket : EGS_ServerSocket
 
                 // Assign its inputs.
                 thisPlayer.SetInputs(realInputs);
+
+                // Call the onPlayerSendInput delegate.
+                EGS_GameServerDelegates.onPlayerSendInput?.Invoke(thisPlayer);
                 break;
             case "LEAVE_GAME":
                 // Get the player.
-                EGS_Player leftPlayer = EGS_GameManager.instance.GetPlayersByID()[int.Parse(receivedMessage.messageContent)];
-                EGS_GameManager.instance.GetPlayersByID().Remove(int.Parse(receivedMessage.messageContent));
+                int playerID = int.Parse(receivedMessage.messageContent);
+                thisPlayer = EGS_GameManager.instance.GetPlayersByID()[playerID];
 
-                EGS_GameServer.instance.thisGame.QuitPlayerFromGame(leftPlayer);
+                // Remove the player from the game.
+                EGS_GameManager.instance.GetPlayersByID().Remove(playerID);
+                EGS_GameServer.instance.thisGame.QuitPlayerFromGame(thisPlayer);
+
+                // Call the onPlayerLeaveGame delegate.
+                EGS_GameServerDelegates.onPlayerLeaveGame?.Invoke(thisPlayer);
                 break;
             default:
-                EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServer.instance.test_text.text += "\nUndefined message type: " + receivedMessage.messageType; });
+                // Call the onClientMessageReceive delegate.
+                EGS_GameServerDelegates.onClientMessageReceive?.Invoke(receivedMessage);
                 break;
         }
     }
@@ -186,6 +210,41 @@ public class EGS_GS_ServerSocket : EGS_ServerSocket
     }
     #endregion
 
+    #region User Management Methods
+    /// <summary>
+    /// Method ConnectUser, that connects an user to the server.
+    /// </summary>
+    /// <param name="userToConnect">User to connect to the server</param>
+    /// <param name="client_socket">Socket that handles the client connection</param>
+    protected override void ConnectUser(EGS_User userToConnect, Socket client_socket)
+    {
+        base.ConnectUser(userToConnect, client_socket);
+
+        // Display data on the console. // LOG.
+        //if (EGS_Config.DEBUG_MODE > -1)
+            //egs_Log.Log("<color=purple>Connected User</color>: UserID: " + userToConnect.GetUserID() + " - Username: " + userToConnect.GetUsername() + " - IP: " + client_socket.RemoteEndPoint + ".");
+
+        // Call the onUserConnect delegate.
+        EGS_GameServerDelegates.onUserConnect?.Invoke(userToConnect);
+    }
+
+    /// <summary>
+    /// Method DisconnectUser, that disconnects an user from the server.
+    /// </summary>
+    /// <param name="userToDisconnect">User to disconnect from the server</param>
+    protected override void DisconnectUser(EGS_User userToDisconnect)
+    {
+        base.DisconnectUser(userToDisconnect);
+
+        // Display data on the console. // LOG.
+        //if (EGS_Config.DEBUG_MODE > -1)
+            //egs_Log.Log("<color=purple>Disconnected User</color>: UserID: " + userToDisconnect.GetUserID() + " - Username: " + userToDisconnect.GetUsername() + " - IP: " + userToDisconnect.GetSocket().RemoteEndPoint + ".");
+
+        // Call the onUserDisconnect delegate.
+        EGS_GameServerDelegates.onUserDisconnect?.Invoke(userToDisconnect);
+    }
+    #endregion
+
     private void OnGameSceneLoad(Scene s, LoadSceneMode ls)
     {
         if (s.name.Equals(EGS_GameServer.instance.thisGame.GetGameSceneName()))
@@ -211,6 +270,9 @@ public class EGS_GS_ServerSocket : EGS_ServerSocket
             EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServer.instance.test_text.text += "\nSEND TO : " + user.GetUsername(); });
             Send(user.GetSocket(), jsonMSG);
         }
+
+        // Call the onGameStart delegate.
+        EGS_GameServerDelegates.onGameStart?.Invoke();
     }
 
     #region MainThreadFunctions

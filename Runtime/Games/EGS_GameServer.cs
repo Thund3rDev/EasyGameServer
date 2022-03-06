@@ -28,7 +28,7 @@ public class EGS_GameServer : MonoBehaviour
     public bool connectedToMasterServer;
 
 
-    [Header("Game Server Data")]
+    [Header("Game Server Data")] // TODO: Save as an EGS_GameServerData object.
     [Tooltip("Game Server State")]
     public EGS_GameServerData.EGS_GameServerState gameServerState;
 
@@ -74,6 +74,15 @@ public class EGS_GameServer : MonoBehaviour
     {
         ReadArguments();
         ReadConfigData(); // TODO: Read Config Data from Master Server as a JSON Resource.
+
+        // Change the server state.
+        gameServerState = EGS_GameServerData.EGS_GameServerState.CREATED;
+        EGS_Dispatcher.RunOnMainThread(() => { test_text.text = "Status: " + Enum.GetName(typeof(EGS_GameServerData.EGS_GameServerState), gameServerState); });
+
+        // Call the onGameServerCreated delegate.
+        EGS_GameServerDelegates.onGameServerCreated?.Invoke();
+
+        // Connect to the master server.
         ConnectToMasterServer();
     }
     #endregion

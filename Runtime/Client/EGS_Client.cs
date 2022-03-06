@@ -22,8 +22,6 @@ public class EGS_Client : MonoBehaviour
     public bool connectedToMasterServer = false;
     [Tooltip("Bool that indicates if client is connnected to the game server")]
     public bool connectedToGameServer = false;
-    [Tooltip("Bool that indicates if client is connnected to a server")]
-    public bool connectedToServer = false;
 
     [Tooltip("Controller for client socket")]
     public EGS_CL_Sockets clientSocketController = null;

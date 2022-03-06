@@ -120,15 +120,6 @@ public class EGS_ClientSocket
     /// <param name="ar">IAsyncResult</param>
     protected virtual void ReceiveCallback(IAsyncResult ar)
     {
-        ReceiveCallback(ar, false);
-    }
-
-    /// <summary>
-    /// Method ReceiveCallback, called when received data from server.
-    /// </summary>
-    /// <param name="ar">IAsyncResult</param>
-    protected virtual void ReceiveCallback(IAsyncResult ar, bool connectedToServer)
-    {
         try
         {
             // Retrieve the state object and the client socket from the asynchronous state object.  
@@ -138,7 +129,7 @@ public class EGS_ClientSocket
             // Read data from the remote device.  
             int bytesRead = 0;
 
-            if (connectedToServer)
+            if (handler.Connected)
             {
                 try
                 {

@@ -235,7 +235,7 @@ public class EGS_SE_ServerSocket : EGS_ServerSocket
                 string gameServerIP = messageInfo[1];
 
                 if (EGS_Config.DEBUG_MODE > -1)
-                    egs_Log.Log("<color=purple>Game Server created and connected</color>: " + gameServerID + ". IP: " + gameServerIP + ".");
+                    egs_Log.Log("<color=purple>Game Server created and connected</color>: [ID: " + gameServerID + " - IP: " + gameServerIP + "].");
 
                 // Assign the created status.
                 EGS_ServerGamesManager.instance.gameServers[gameServerID].SetStatus(EGS_GameServerData.EGS_GameServerState.CREATED);
@@ -259,8 +259,8 @@ public class EGS_SE_ServerSocket : EGS_ServerSocket
                 EGS_MasterServerDelegates.onGameServerCreated?.Invoke(gameServerID);
                 break;
             default:
-                if (EGS_Config.DEBUG_MODE > -1)
-                    egs_Log.Log("<color=yellow>Undefined message type</color>: " + receivedMessage.messageType + ".");
+                // Call the onMessageReceive delegate.
+                EGS_MasterServerDelegates.onMessageReceive?.Invoke(receivedMessage);
                 break;
         }
     }
