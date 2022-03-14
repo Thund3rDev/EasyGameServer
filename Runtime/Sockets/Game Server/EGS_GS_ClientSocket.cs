@@ -90,6 +90,7 @@ public class EGS_GS_ClientSocket : EGS_ClientSocket
 
         // Local variables that are used in the cases below.
         string jsonMSG;
+        string gameServerIP;
 
         // Depending on the messageType, do different things.
         switch (receivedMessage.messageType)
@@ -116,12 +117,31 @@ public class EGS_GS_ClientSocket : EGS_ClientSocket
                 // Save as connected to the master server.
                 EGS_GameServer.instance.connectedToMasterServer = true;
 
-                // Change the server state.
-                EGS_GameServer.instance.gameServerState = EGS_GameServerData.EGS_GameServerState.WAITING_PLAYERS;
-                EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServer.instance.test_text.text = "Status: " + Enum.GetName(typeof(EGS_GameServerData.EGS_GameServerState), EGS_GameServer.instance.gameServerState); });
-
                 // Call the onConnectToMasterServer delegate.
                 EGS_GameServerDelegates.onConnectToMasterServer?.Invoke();
+
+                // Send a message to the master server.
+                messageToSend.messageType = "CREATED_GAME_SERVER";
+
+                // Construct the gameServerIP to be sent:
+                // TODO: Send as an object.
+                gameServerIP = EGS_Config.serverIP + ":" + EGS_GameServer.instance.gameServerPort;
+                messageToSend.messageContent = EGS_GameServer.instance.gameServerID + "#" + gameServerIP;
+                EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServer.instance.test_text.text += "\nIPADRESS " + EGS_Config.serverIP; });
+
+                // Convert message to JSON.
+                jsonMSG = messageToSend.ConvertMessage();
+
+                // Send data to server.
+                Send(handler, jsonMSG);
+                break;
+            case "RECEIVE_GAME_DATA":
+                // Receive the GameFoundData.
+                EGS_GameServer.instance.gameFoundData = JsonUtility.FromJson<EGS_GameFoundData>(receivedMessage.messageContent);
+
+                // Change the server state.
+                EGS_GameServer.instance.gameServerState = EGS_GameServerData.EGS_GameServerState.WAITING_PLAYERS;
+                EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServer.instance.test_text.text += "\nStatus: " + Enum.GetName(typeof(EGS_GameServerData.EGS_GameServerState), EGS_GameServer.instance.gameServerState); });
 
                 // Start listening for player connections and wait until it is started.
                 socketsController.StartListening();
@@ -131,12 +151,12 @@ public class EGS_GS_ClientSocket : EGS_ClientSocket
                 EGS_GameServerDelegates.onReadyToConnectPlayers?.Invoke();
 
                 // Send a message to the master server.
-                messageToSend.messageType = "CREATED_GAME_SERVER";
+                messageToSend.messageType = "READY_GAME_SERVER";
 
+                // Construct the gameServerIP to be sent:
                 // TODO: Send as an object.
-                string gameServerIP = EGS_Config.serverIP + ":" + EGS_GameServer.instance.gameServerPort;
+                gameServerIP = EGS_Config.serverIP + ":" + EGS_GameServer.instance.gameServerPort;
                 messageToSend.messageContent = EGS_GameServer.instance.gameServerID + "#" + gameServerIP;
-                EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServer.instance.test_text.text += "\nIPADRESS " + EGS_Config.serverIP; });
 
                 // Convert message to JSON.
                 jsonMSG = messageToSend.ConvertMessage();

@@ -72,18 +72,25 @@ public class EGS_GameServer : MonoBehaviour
     /// </summary>
     private void Start()
     {
-        ReadArguments();
-        ReadConfigData(); // TODO: Read Config Data from Master Server as a JSON Resource.
+        try
+        {
+            ReadArguments();
+            ReadConfigData(); // TODO: Read Config Data from Master Server as a JSON Resource.
 
-        // Change the server state.
-        gameServerState = EGS_GameServerData.EGS_GameServerState.CREATED;
-        EGS_Dispatcher.RunOnMainThread(() => { test_text.text = "Status: " + Enum.GetName(typeof(EGS_GameServerData.EGS_GameServerState), gameServerState); });
+            // Change the server state.
+            gameServerState = EGS_GameServerData.EGS_GameServerState.CREATED;
+            EGS_Dispatcher.RunOnMainThread(() => { test_text.text += "\nStatus: " + Enum.GetName(typeof(EGS_GameServerData.EGS_GameServerState), gameServerState); });
 
-        // Call the onGameServerCreated delegate.
-        EGS_GameServerDelegates.onGameServerCreated?.Invoke();
+            // Call the onGameServerCreated delegate.
+            EGS_GameServerDelegates.onGameServerCreated?.Invoke();
 
-        // Connect to the master server.
-        ConnectToMasterServer();
+            // Connect to the master server.
+            ConnectToMasterServer();
+        }
+        catch (Exception e) {
+            EGS_Dispatcher.RunOnMainThread(() => { test_text.text += "\nERROR: " + e.ToString(); });
+        }
+
     }
     #endregion
 
@@ -121,7 +128,6 @@ public class EGS_GameServer : MonoBehaviour
         EGS_Config.serverPort = int.Parse(realArguments[1]);
         gameServerID = int.Parse(realArguments[2]);
         gameServerPort = int.Parse(realArguments[3]);
-        gameFoundData = JsonUtility.FromJson<EGS_GameFoundData>(realArguments[4]);
     }
 
     /// <summary>

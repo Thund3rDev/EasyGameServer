@@ -158,19 +158,11 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
             case "GAME_FOUND":
                 // Obtain GameFoundData.
                 EGS_GameFoundData gameFoundData = JsonUtility.FromJson<EGS_GameFoundData>(receivedMessage.messageContent);
+                EGS_Client.instance.SetGameFoundData(gameFoundData);
 
-                foreach (EGS_User userToGame in gameFoundData.GetUsersToGame())
-                {
-                    // Save the player usernames.
-                    EGS_Client.instance.GetPlayerUsernames().Add(userToGame.GetIngameID(), userToGame.GetUsername());
-
-                    // Assign the client user ingame ID.
-                    if (userToGame.GetUserID() == EGS_Client.instance.GetUser().GetUserID())
-                    {
-                        EGS_Client.instance.GetUser().SetIngameID(userToGame.GetIngameID());
-                        break;
-                    }
-                }
+                // Assign the ingame user ID.
+                thisUser = gameFoundData.GetUsersToGame().Find(x => x.GetUserID() == EGS_Client.instance.GetUser().GetUserID());
+                EGS_Client.instance.GetUser().SetIngameID(thisUser.GetIngameID());
 
                 // Assign the room number.
                 EGS_Client.instance.GetUser().SetRoom(gameFoundData.GetRoom());

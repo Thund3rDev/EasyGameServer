@@ -52,6 +52,9 @@ public class EGS_MasterServerDelegates
     [Tooltip("Delegate to the OnGameServerCreated function")]
     public static Action<int> onGameServerCreated;
 
+    [Tooltip("Delegate to the OnGameServerReady function")]
+    public static Action<int> onGameServerReady;
+
     [Tooltip("Delegate to the OnGameServerClosed function")]
     public static Action<int> onGameServerClosed;
 

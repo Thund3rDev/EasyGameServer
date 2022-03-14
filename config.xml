@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <EasyGameServer>
 	<server>
-		<debug-mode>0</debug-mode>
+		<debug-mode>2</debug-mode>
 		<max-connections>10</max-connections>
 		<max-games>5</max-games>
 		<time-between-rtt>1000</time-between-rtt>
@@ -14,9 +14,6 @@
 		<server-ip>192.168.1.45</server-ip>
 		<base-port>21721</base-port>
 	</networking>
-	<client>
-		<username>MegaSalsero14</username>
-	</client>
 	<game>
 		<players-per-game>2</players-per-game>
 	</game>

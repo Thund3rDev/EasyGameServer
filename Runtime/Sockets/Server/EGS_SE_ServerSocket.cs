@@ -32,7 +32,7 @@ public class EGS_SE_ServerSocket : EGS_ServerSocket
     /// Base constructor.
     /// </summary>
     /// <param name="log">Reference to the log</param>
-    public EGS_SE_ServerSocket(EGS_Log log)
+    public EGS_SE_ServerSocket(EGS_Log log) : base()
     {
         this.egs_Log = log;
     }
@@ -71,6 +71,8 @@ public class EGS_SE_ServerSocket : EGS_ServerSocket
         EGS_User thisUser;
         int gameServerID;
         long rttPing;
+        string gameServerIP;
+        string[] messageInfo;
 
         // Depending on the messageType, do different things.
         switch (receivedMessage.messageType)
@@ -140,12 +142,20 @@ public class EGS_SE_ServerSocket : EGS_ServerSocket
                 break;
             case "QUEUE_JOIN":
                 // Get the user.
-                thisUser = connectedUsers[handler];
+                EGS_User storedUser = connectedUsers[handler];
+
+                // Get the received user.
+                thisUser = JsonUtility.FromJson<EGS_User>(receivedMessage.messageContent);
+
+                // Update the base parameters.
+                UpdateUserBaseParameters(thisUser, storedUser);
 
                 // Add the player to the queue.
                 EGS_ServerGamesManager.instance.searchingGame_Users.Enqueue(thisUser); // TODO: Encapsulate.
 
-                if (EGS_Config.DEBUG_MODE > 0)
+                if (EGS_Config.DEBUG_MODE > 2)
+                    egs_Log.Log("Searching game: " + thisUser.GetUsername() + ". User Data: " + receivedMessage.messageContent);
+                else if (EGS_Config.DEBUG_MODE > 0)
                     egs_Log.Log("Searching game: " + thisUser.GetUsername() + ".");
 
                 // Call the onUserJoinQueue delegate.
@@ -217,7 +227,7 @@ public class EGS_SE_ServerSocket : EGS_ServerSocket
                 break;
             case "CREATED_GAME_SERVER":
                 // Get the message info.
-                string[] messageInfo = receivedMessage.messageContent.Split('#');
+                messageInfo = receivedMessage.messageContent.Split('#');
 
                 // Get the gameServerID.
                 gameServerID = int.Parse(messageInfo[0]);
@@ -231,14 +241,41 @@ public class EGS_SE_ServerSocket : EGS_ServerSocket
                 CreateRTT(handler);
 
                 // Get the game server IP from the message.
-                // TODO: Maybe get it from the handler.
-                string gameServerIP = messageInfo[1];
+                gameServerIP = messageInfo[1];
 
                 if (EGS_Config.DEBUG_MODE > -1)
                     egs_Log.Log("<color=purple>Game Server created and connected</color>: [ID: " + gameServerID + " - IP: " + gameServerIP + "].");
 
-                // Assign the created status.
+                // Assign the created status. // TODO: Encapsulate.
                 EGS_ServerGamesManager.instance.gameServers[gameServerID].SetStatus(EGS_GameServerData.EGS_GameServerState.CREATED);
+
+                // Call the onGameServerCreated delegate.
+                EGS_MasterServerDelegates.onGameServerCreated?.Invoke(gameServerID);
+
+                // Send the game found data to the game server.
+                string gameFoundDataJson = JsonUtility.ToJson(EGS_ServerGamesManager.instance.gameServers[gameServerID].GetGameFoundData());
+
+                messageToSend.messageType = "RECEIVE_GAME_DATA";
+                messageToSend.messageContent = gameFoundDataJson;
+                jsonMSG = messageToSend.ConvertMessage();
+
+                Send(handler, jsonMSG);
+                break;
+            case "READY_GAME_SERVER":
+                // Get the message info.
+                messageInfo = receivedMessage.messageContent.Split('#');
+
+                // Get the gameServerID.
+                gameServerID = int.Parse(messageInfo[0]);
+
+                // Assign the created status. // TODO: Encapsulate.
+                EGS_ServerGamesManager.instance.gameServers[gameServerID].SetStatus(EGS_GameServerData.EGS_GameServerState.WAITING_PLAYERS);
+
+                // Get the game server IP from the message.
+                gameServerIP = messageInfo[1];
+
+                // Call the onGameServerReady delegate.
+                EGS_MasterServerDelegates.onGameServerReady?.Invoke(gameServerID);
 
                 // Send the game server IP to the players.
                 messageToSend.messageType = "CHANGE_TO_GAME_SERVER";
@@ -254,15 +291,21 @@ public class EGS_SE_ServerSocket : EGS_ServerSocket
                     if (EGS_Config.DEBUG_MODE > 1)
                         egs_Log.Log("SENT ORDER TO: " + user.GetUsername() + ".");
                 }
-
-                // Call the onGameServerCreated delegate.
-                EGS_MasterServerDelegates.onGameServerCreated?.Invoke(gameServerID);
                 break;
             default:
                 // Call the onMessageReceive delegate.
                 EGS_MasterServerDelegates.onMessageReceive?.Invoke(receivedMessage);
                 break;
         }
+    }
+
+    private void UpdateUserBaseParameters(EGS_User received, EGS_User stored)
+    {
+        received.SetUserID(stored.GetUserID());
+        received.SetUsername(stored.GetUsername());
+        received.SetSocket(stored.GetSocket());
+        received.SetRoom(stored.GetRoom());
+        received.SetIngameID(stored.GetIngameID());
     }
 
     #region Connect and disconnect methods

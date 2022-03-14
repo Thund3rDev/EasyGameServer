@@ -8,8 +8,10 @@ using UnityEngine;
 public class EGS_ServerManager : MonoBehaviour
 {
     #region Variables
+    [Header("Control")]
     [Tooltip("Bool that indicates if the server has started or not")]
     private bool serverStarted = false;
+
 
     [Header("References")]
     [Tooltip("Reference to the Log")]

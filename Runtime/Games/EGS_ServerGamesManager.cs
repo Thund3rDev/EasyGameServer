@@ -4,6 +4,7 @@ using System.Threading;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System;
+using System.Text.RegularExpressions;
 
 /// <summary>
 /// Class EGS_ServerGamesManager, that creates and manages the new games.
@@ -167,6 +168,7 @@ public class EGS_ServerGamesManager : MonoBehaviour
         LaunchGameServer(gameFoundData);
 
         // Log the information.
+        logString = logString.Substring(0, logString.Length - 2) + ".";
         egs_Log.Log(logString);
 
         // Return the room number.
@@ -237,11 +239,9 @@ public class EGS_ServerGamesManager : MonoBehaviour
             // Construct the arguments.
             int gameServerPort = EGS_Config.serverPort + gameServerID + 1;
             string arguments = EGS_Config.serverIP + "#" + EGS_Config.serverPort + "#" + gameServerID + "#" + gameServerPort;
-            string jsonString = JsonUtility.ToJson(gameFoundData);
-            arguments += "#" + jsonString;
 
             // Save the GameServer data.
-            gameServers[gameServerID] = new EGS_GameServerData(gameServerID, gameFoundData.GetRoom());
+            gameServers[gameServerID] = new EGS_GameServerData(gameServerID, gameFoundData);
 
             // Try to launch the GameServer.
             try

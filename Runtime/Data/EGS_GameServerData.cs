@@ -31,6 +31,9 @@ public class EGS_GameServerData
 
     [Tooltip("Room number")]
     private int room;
+
+    [Tooltip("Game Server Data")]
+    private EGS_GameFoundData gameFoundData;
     #endregion
 
     #region Constructors
@@ -40,10 +43,11 @@ public class EGS_GameServerData
     /// </summary>
     /// <param name="gameServerID_">Game Server ID</param>
     /// <param name="room_">Room number</param>
-    public EGS_GameServerData(int gameServerID_, int room_)
+    public EGS_GameServerData(int gameServerID_, EGS_GameFoundData gamefoundData_)
     {
         gameServerID = gameServerID_;
-        room = room_;
+        gameFoundData = gamefoundData_;
+        room = gamefoundData_.GetRoom();
         status = EGS_GameServerState.LAUNCH;
     }
     #endregion
@@ -96,5 +100,23 @@ public class EGS_GameServerData
     /// </summary>
     /// <param name="g">New room</param>
     public void SetRoom(int r) { room = r; }
+
+    /// <summary>
+    /// Getter for the game found data.
+    /// </summary>
+    /// <returns>Game found data</returns>
+    public EGS_GameFoundData GetGameFoundData()
+    {
+        return gameFoundData;
+    }
+
+    /// <summary>
+    /// Setter for the game found data.
+    /// </summary>
+    /// <param name="g">New game found data</param>
+    public void SetGameFoundData(EGS_GameFoundData g)
+    {
+        gameFoundData = g;
+    }
     #endregion
 }

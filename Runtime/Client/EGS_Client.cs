@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Xml;
@@ -36,8 +37,8 @@ public class EGS_Client : MonoBehaviour
 
 
     [Header("Game Data")]
-    [Tooltip("Dictionary of player usernames by their ingameID")]
-    private Dictionary<int, string> playerUsernames = new Dictionary<int, string>();
+    [Tooltip("Data about the Game Found")]
+    private EGS_GameFoundData gameFoundData = null;
     #endregion
 
     #region Unity Methods
@@ -55,8 +56,6 @@ public class EGS_Client : MonoBehaviour
         {
             Destroy(this.gameObject);
         }
-
-        user = new EGS_User();
     }
     #endregion
 
@@ -75,6 +74,10 @@ public class EGS_Client : MonoBehaviour
 
         // Establish the connection to the server.
         connectedToMasterServer = true;
+
+        // Create the user
+        user = new EGS_User();
+        EGS_ClientDelegates.onUserCreate?.Invoke(user);
 
         // Read server config data.
         ReadServerData();
@@ -125,7 +128,11 @@ public class EGS_Client : MonoBehaviour
     /// </summary>
     public void JoinQueue()
     {
-        SendMessage("QUEUE_JOIN", "");
+        // Convert user to JSON.
+        string userJson = JsonUtility.ToJson(user);
+
+        // Send the message.
+        SendMessage("QUEUE_JOIN", userJson);
     }
 
     /// <summary>
@@ -166,13 +173,6 @@ public class EGS_Client : MonoBehaviour
         // Get server port.
         node = doc.DocumentElement.SelectSingleNode("//networking/base-port");
         EGS_Config.serverPort = int.Parse(node.InnerText);
-
-        /// Client Data.
-        // TODO: Make possible different ways to get the username.
-        // TEST.
-        // Get player username.
-        node = doc.DocumentElement.SelectSingleNode("//client/username");
-        user.SetUsername(node.InnerText);
     }
     #endregion
 
@@ -214,21 +214,21 @@ public class EGS_Client : MonoBehaviour
     }
 
     /// <summary>
-    /// Getter for the player usernames dictionary.
+    /// Getter for the game found data.
     /// </summary>
-    /// <returns>Dictionary of player usernames</returns>
-    public Dictionary<int, string> GetPlayerUsernames()
+    /// <returns>Game found data</returns>
+    public EGS_GameFoundData GetGameFoundData()
     {
-        return playerUsernames;
+        return gameFoundData;
     }
 
     /// <summary>
-    /// Setter for the player usernames dictionary.
+    /// Setter for the game found data.
     /// </summary>
-    /// <param name="p">New dictionary of player usernames</param>
-    public void SetPlayerUsernames(Dictionary<int, string> p)
+    /// <param name="g">New game found data</param>
+    public void SetGameFoundData(EGS_GameFoundData g)
     {
-        playerUsernames = p;
+        gameFoundData = g;
     }
     #endregion
 }

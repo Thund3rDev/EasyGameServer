@@ -8,6 +8,9 @@ public static class EGS_ClientDelegates
     [Tooltip("Delegate to the OnMessageReceive function")]
     public static Action<EGS_Message> onMessageReceive;
 
+    [Tooltip("Delegate to the OnUserCreate function")]
+    public static Action<EGS_User> onUserCreate;
+
 
     [Header("Connect Delegates")]
     [Tooltip("Delegate to the OnConnect function")]

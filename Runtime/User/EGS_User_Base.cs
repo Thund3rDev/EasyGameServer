@@ -1,33 +1,34 @@
 using System.Net.Sockets;
 using UnityEngine;
+
 /// <summary>
-/// Class EGS_User, that contains the structure of an user in the server.
+/// Class EGS_User_Base, that contains the base structure of an user in the server.
 /// </summary>
 [System.Serializable]
-public class EGS_User
+public class EGS_User_Base
 {
     #region Variables
     [Tooltip("User ID")]
-    [SerializeField] private int userID;
+    [SerializeField] protected int userID;
 
     [Tooltip("Socket connected to the server")]
-    [SerializeField] private Socket socket;
+    [SerializeField] protected Socket socket;
 
     [Tooltip("User name")]
-    [SerializeField] private string username;
+    [SerializeField] protected string username;
 
     [Tooltip("Game room")]
-    [SerializeField] private int room;
+    [SerializeField] protected int room;
 
     [Tooltip("Ingame ID")]
-    [SerializeField] private int ingameID;
+    [SerializeField] protected int ingameID;
     #endregion
 
     #region Constructors
     /// <summary>
     /// Empty Constructor
     /// </summary>
-    public EGS_User()
+    public EGS_User_Base()
     {
         this.userID = -1;
         this.username = "";

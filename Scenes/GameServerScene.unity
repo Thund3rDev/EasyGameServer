@@ -504,6 +504,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   egs_type: 1
+  userClassAssemblyName: Assembly-CSharp
+  userClassName: User
 --- !u!4 &840397729
 Transform:
   m_ObjectHideFlags: 0

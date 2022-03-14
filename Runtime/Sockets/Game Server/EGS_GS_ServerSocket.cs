@@ -19,7 +19,7 @@ public class EGS_GS_ServerSocket : EGS_ServerSocket
     /// <summary>
     /// Base constructor.
     /// </summary>
-    public EGS_GS_ServerSocket(EGS_GS_Sockets socketsController_)
+    public EGS_GS_ServerSocket(EGS_GS_Sockets socketsController_) : base()
     {
         socketsController = socketsController_;
 
