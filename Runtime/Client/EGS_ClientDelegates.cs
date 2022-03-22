@@ -37,7 +37,7 @@ public static class EGS_ClientDelegates
     public static Action<EGS_GameFoundData> onGameFound;
 
     [Tooltip("Delegate to the OnGameStart function")]
-    public static Action<EGS_Message> onGameStart;
+    public static Action onGameStart;
 
     [Tooltip("Delegate to the OnGameEnd function")]
     public static Action<EGS_Message> onGameEnd;

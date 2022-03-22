@@ -39,6 +39,9 @@ public class EGS_Client : MonoBehaviour
     [Header("Game Data")]
     [Tooltip("Data about the Game Found")]
     private EGS_GameFoundData gameFoundData = null;
+
+    [Tooltip("Objet that stores all needed data about the game")]
+    private EGS_UpdateData gameData = null;
     #endregion
 
     #region Unity Methods
@@ -229,6 +232,24 @@ public class EGS_Client : MonoBehaviour
     public void SetGameFoundData(EGS_GameFoundData g)
     {
         gameFoundData = g;
+    }
+
+    /// <summary>
+    /// Getter for the game data.
+    /// </summary>
+    /// <returns>Game data</returns>
+    public EGS_UpdateData GetGameData()
+    {
+        return gameData;
+    }
+
+    /// <summary>
+    /// Setter for the game data.
+    /// </summary>
+    /// <param name="g">New game data</param>
+    public void SetGameData(EGS_UpdateData g)
+    {
+        gameData = g;
     }
     #endregion
 }

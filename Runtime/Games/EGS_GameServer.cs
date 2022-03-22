@@ -159,8 +159,13 @@ public class EGS_GameServer : MonoBehaviour
         EGS_Config.DISCONNECT_TIMEOUT = int.Parse(node.InnerText);
 
         /// Games Data.
+        // Get the number of players per game.
         node = doc.DocumentElement.SelectSingleNode("//game/players-per-game"); // TODO: Make MIN_PLAYERS and MAX_PLAYERS.
         EGS_Config.PLAYERS_PER_GAME = int.Parse(node.InnerText);
+
+        // Get the number of calculations per second.
+        node = doc.DocumentElement.SelectSingleNode("//game/calculations-per-second");
+        EGS_Config.CALCULATIONS_PER_SECOND = int.Parse(node.InnerText);
     }
 
     #region Getters and setters

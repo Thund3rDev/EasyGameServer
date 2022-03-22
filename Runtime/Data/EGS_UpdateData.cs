@@ -8,9 +8,11 @@ using UnityEngine;
 public class EGS_UpdateData
 {
     #region Variables
+    [Tooltip("List of Players data")]
     [SerializeField]
     private List<EGS_PlayerData> playersAtGame;
 
+    [Tooltip("Game room")]
     [SerializeField]
     private int room;
     #endregion

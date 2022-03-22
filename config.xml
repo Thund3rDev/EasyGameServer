@@ -16,5 +16,6 @@
 	</networking>
 	<game>
 		<players-per-game>2</players-per-game>
+		<calculations-per-second>60</calculations-per-second>
 	</game>
 </EasyGameServer>

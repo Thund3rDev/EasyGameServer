@@ -34,4 +34,7 @@ public struct EGS_Config
 
     [Tooltip("Number of players to start a game")]
     public static int PLAYERS_PER_GAME;
+
+    [Tooltip("Number of calculations per second by the game server for a game")]
+    public static int CALCULATIONS_PER_SECOND;
 }

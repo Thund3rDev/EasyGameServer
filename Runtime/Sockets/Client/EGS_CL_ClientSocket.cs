@@ -167,6 +167,16 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
                 // Assign the room number.
                 EGS_Client.instance.GetUser().SetRoom(gameFoundData.GetRoom());
 
+                // Create and assign the new game data.
+                EGS_UpdateData gameData = new EGS_UpdateData(gameFoundData.GetRoom());
+                foreach (EGS_User user in gameFoundData.GetUsersToGame())
+                {
+                    EGS_PlayerData playerData = new EGS_PlayerData(user.GetIngameID());
+                    gameData.GetPlayersAtGame().Add(playerData);
+                }
+                
+                EGS_Client.instance.SetGameData(gameData);
+
                 // Execute code on game found.
                 EGS_ClientDelegates.onGameFound?.Invoke(gameFoundData);
                 break;
@@ -226,9 +236,14 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
                 break;
             case "GAME_START":
                 // Call the onGameStart delegate.
-                EGS_ClientDelegates.onGameStart?.Invoke(receivedMessage);
+                EGS_ClientDelegates.onGameStart?.Invoke();
                 break;
             case "UPDATE":
+                // Save the Update Data.
+                Debug.Log(receivedMessage.messageContent);
+                EGS_UpdateData updateData = JsonUtility.FromJson<EGS_UpdateData>(receivedMessage.messageContent);
+                EGS_Client.instance.GetGameData().SetPlayersAtGame(updateData.GetPlayersAtGame());
+
                 // Call the onGameUpdate delegate.
                 EGS_ClientDelegates.onGameUpdate?.Invoke(receivedMessage);
                 break;

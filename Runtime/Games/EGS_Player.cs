@@ -21,8 +21,12 @@ public class EGS_Player : MonoBehaviour
 
 
     [Header("Physics, movement and control")]
-    [Tooltip("Player Speed")]
-    private float speed = 3f; // TODO: Distinguish between defaultSpeed and currentSpeed.
+    [Tooltip("Player default speed")]
+    [SerializeField]
+    private float defaultSpeed;
+
+    [Tooltip("Player current speed")]
+    private float currentSpeed;
 
     [Tooltip("Array of player inputs")]
     private bool[] inputs; // TODO: Use EGS_PlayerInputs and permit different type of inputs (bool, float, string...).
@@ -43,6 +47,8 @@ public class EGS_Player : MonoBehaviour
         {
             foreach (MonoBehaviour script in clientScriptsToDelete)
                 Destroy(script);
+
+            currentSpeed = defaultSpeed;
         }
         
     }
@@ -58,11 +64,11 @@ public class EGS_Player : MonoBehaviour
         // Calculate movement by inputs.
         Vector3 movement = new Vector3();
 
-        if (inputs[0])
-            movement.y += 1;
+        /*if (inputs[0])
+            movement.y += 1;*/
 
-        if (inputs[1])
-            movement.y -= 1;
+        /*if (inputs[1])
+            movement.y -= 1;*/
 
         if (inputs[2])
             movement.x -= 1;
@@ -71,7 +77,7 @@ public class EGS_Player : MonoBehaviour
             movement.x += 1;
 
         // Multiply movement by speed having in count the tick rate.
-        movement *= (speed * (TICK_RATE / 1000));
+        movement *= (currentSpeed * (TICK_RATE / 1000));
 
         // Calculate new position and move the player.
         this.transform.position += movement;

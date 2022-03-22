@@ -58,6 +58,14 @@ public static class EGS_GameServerDelegates
     public static Action<EGS_Player> onPlayerLeaveGame;
 
 
+    [Header("Game Delegates")]
+    [Tooltip("Delegate to the OnTick function")]
+    public static Action<EGS_UpdateData> onTick;
+
+    [Tooltip("Delegate to the OnProcessPlayer function")]
+    public static Action<EGS_Player, EGS_UpdateData, long> onProcessPlayer;
+
+
     [Header("Control Delegates")]
     [Tooltip("Delegate to the OnRTT function")]
     public static Action<long> onRTT;

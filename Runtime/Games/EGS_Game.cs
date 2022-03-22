@@ -12,9 +12,9 @@ public class EGS_Game
     #region Variables
     [Header("Fixed Variables")]
     [Tooltip("Frames per second, number of server calculations in a second")]
-    private readonly static int FPS = 60;
+    private readonly static int FPS = EGS_Config.CALCULATIONS_PER_SECOND;
     [Tooltip("Tick Rate, time between server calculations")]
-    private readonly static long TICK_RATE = 1000 / FPS;
+    private readonly static long TICK_RATE = 1000 / FPS; // 1000 ms -> 1 second.
 
 
     [Header("Control Variables")]
@@ -248,13 +248,14 @@ public class EGS_Game
 
             EGS_UpdateData updateData = new EGS_UpdateData(room);
 
-            // TODO: PERMIT MORE CALCULATIONS, OnTick()
+            // Call the OnTick delegate.
+            EGS_GameServerDelegates.onTick?.Invoke(updateData);
+
             // For each player, calculate its position and save its data to the Update Data.
             foreach (EGS_Player player in players)
             {
-                player.CalculatePosition(TICK_RATE);
-                EGS_PlayerData playerData = new EGS_PlayerData(player.GetIngameID(), player.GetUser().GetUsername(), player.transform.position);
-                updateData.GetPlayersAtGame().Add(playerData);
+                // Call the OnProcessPlayer delegate.
+                EGS_GameServerDelegates.onProcessPlayer?.Invoke(player, updateData, TICK_RATE);
             }
 
             // Save the message content and send it to the players.

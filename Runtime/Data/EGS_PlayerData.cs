@@ -10,9 +10,6 @@ public class EGS_PlayerData
     [Tooltip("Player's ingame ID")]
     [SerializeField] private int ingameID;
 
-    [Tooltip("Player's username")]
-    [SerializeField] private string username;
-
     [Tooltip("Player's position")]
     [SerializeField] private Vector3 position;
     #endregion
@@ -24,37 +21,24 @@ public class EGS_PlayerData
     public EGS_PlayerData()
     {
         this.ingameID = -1;
-        this.username = "";
-        this.position = new Vector3();
-    }
-
-    /// <summary>
-    /// Username Constructor
-    /// </summary>
-    public EGS_PlayerData(string username_)
-    {
-        this.ingameID = -1;
-        this.username = username_;
         this.position = new Vector3();
     }
 
     /// <summary>
     /// Base Constructor
     /// </summary>
-    public EGS_PlayerData(int ingameID_, string username_)
+    public EGS_PlayerData(int ingameID_)
     {
         this.ingameID = ingameID_;
-        this.username = username_;
         this.position = new Vector3();
     }
 
     /// <summary>
     /// Full Constructor
     /// </summary>
-    public EGS_PlayerData(int ingameID_, string username_, Vector3 position_)
+    public EGS_PlayerData(int ingameID_, Vector3 position_)
     {
         this.ingameID = ingameID_;
-        this.username = username_;
         this.position = position_;
     }
     #endregion
@@ -73,18 +57,6 @@ public class EGS_PlayerData
     public void SetIngameID(int i) { ingameID = i; }
 
     /// <summary>
-    /// Getter for the user name.
-    /// </summary>
-    /// <returns>User name</returns>
-    public string GetUsername() { return username; }
-
-    /// <summary>
-    /// Setter for the user name.
-    /// </summary>
-    /// <param name="u">New User name</param>
-    public void SetUsername(string u) { username = u; }
-
-    /// <summary>
     /// Getter for the position.
     /// </summary>
     /// <returns>Position</returns>
@@ -96,5 +68,4 @@ public class EGS_PlayerData
     /// <param name="p">New position</param>
     public void SetPosition(Vector3 p) { position = p; }
     #endregion
-
 }
