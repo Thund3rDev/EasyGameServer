@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// Class EGS_Player, that manages a player instance in the Game Server.
+/// Class EGS_Player, that manages a player instance in the Game Server. MODIFIABLE?.
 /// </summary>
 public class EGS_Player : MonoBehaviour
 {
@@ -19,17 +19,9 @@ public class EGS_Player : MonoBehaviour
     [Tooltip("Client Scripts to DELETE")]
     public List<MonoBehaviour> clientScriptsToDelete = null;
 
-
-    [Header("Physics, movement and control")]
-    [Tooltip("Player default speed")]
-    [SerializeField]
-    private float defaultSpeed;
-
-    [Tooltip("Player current speed")]
-    private float currentSpeed;
-
     [Tooltip("Array of player inputs")]
     private bool[] inputs; // TODO: Use EGS_PlayerInputs and permit different type of inputs (bool, float, string...).
+
     #endregion
 
     #region Unity Methods
@@ -47,41 +39,9 @@ public class EGS_Player : MonoBehaviour
         {
             foreach (MonoBehaviour script in clientScriptsToDelete)
                 Destroy(script);
-
-            currentSpeed = defaultSpeed;
         }
-        
     }
     #endregion
-
-    #region Class Methods
-    /// <summary>
-    /// Method CalculatePosition, that receives the TICK_RATE and calculates the player's position.
-    /// </summary>
-    /// <param name="TICK_RATE">Tick rate: Miliseconds between executions.</param>
-    public void CalculatePosition(float TICK_RATE)
-    {
-        // Calculate movement by inputs.
-        Vector3 movement = new Vector3();
-
-        /*if (inputs[0])
-            movement.y += 1;*/
-
-        /*if (inputs[1])
-            movement.y -= 1;*/
-
-        if (inputs[2])
-            movement.x -= 1;
-
-        if (inputs[3])
-            movement.x += 1;
-
-        // Multiply movement by speed having in count the tick rate.
-        movement *= (currentSpeed * (TICK_RATE / 1000));
-
-        // Calculate new position and move the player.
-        this.transform.position += movement;
-    }
 
     #region Getters and Setters
     /// <summary>
@@ -119,6 +79,5 @@ public class EGS_Player : MonoBehaviour
     /// </summary>
     /// <param name="i">New inputs</param>
     public void SetInputs(bool[] i) { inputs = i; }
-    #endregion
     #endregion
 }

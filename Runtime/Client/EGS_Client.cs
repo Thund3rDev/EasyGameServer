@@ -27,6 +27,9 @@ public class EGS_Client : MonoBehaviour
     [Tooltip("Controller for client socket")]
     public EGS_CL_Sockets clientSocketController = null;
 
+    [Tooltip("In Game Sender for the Player Data")]
+    private EGS_CL_InGameSender inGameSender = null;
+
 
     [Header("Client Data")]
     [Tooltip("Instance of the EGS User for this client")]
@@ -176,6 +179,11 @@ public class EGS_Client : MonoBehaviour
         // Get server port.
         node = doc.DocumentElement.SelectSingleNode("//networking/base-port");
         EGS_Config.serverPort = int.Parse(node.InnerText);
+
+        /// Game Data.
+        // Get the number of calculations per second.
+        node = doc.DocumentElement.SelectSingleNode("//game/calculations-per-second");
+        EGS_Config.CALCULATIONS_PER_SECOND = int.Parse(node.InnerText);
     }
     #endregion
 
@@ -214,6 +222,24 @@ public class EGS_Client : MonoBehaviour
     public void SetClientPing(long p)
     {
         clientPing = p;
+    }
+
+    /// <summary>
+    /// Getter for the in game sender.
+    /// </summary>
+    /// <returns>In game sender</returns>
+    public EGS_CL_InGameSender GetInGameSender()
+    {
+        return inGameSender;
+    }
+
+    /// <summary>
+    /// Setter for the in game sender.
+    /// </summary>
+    /// <param name="g">New in game sender</param>
+    public void SetInGameSender(EGS_CL_InGameSender igs)
+    {
+        inGameSender = igs;
     }
 
     /// <summary>

@@ -1,4 +1,5 @@
 using System;
+using System.Net.Sockets;
 using UnityEngine;
 
 public static class EGS_GameServerDelegates
@@ -9,7 +10,7 @@ public static class EGS_GameServerDelegates
     public static Action<EGS_Message> onServerMessageReceive;
 
     [Tooltip("Delegate to the OnClientMessageReceive function")]
-    public static Action<EGS_Message> onClientMessageReceive;
+    public static Action<EGS_Message, EGS_GS_ServerSocket, Socket> onClientMessageReceive;
 
 
     [Header("Game Server Control Delegates")]
@@ -52,7 +53,7 @@ public static class EGS_GameServerDelegates
 
     [Header("Player Delegates")]
     [Tooltip("Delegate to the OnPlayerSendInput function")]
-    public static Action<EGS_Player> onPlayerSendInput;
+    public static Action<EGS_Player, EGS_PlayerInputs> onPlayerSendInput;
 
     [Tooltip("Delegate to the OnPlayerLeaveGame function")]
     public static Action<EGS_Player> onPlayerLeaveGame;

@@ -70,6 +70,42 @@ public class EGS_GameManager : MonoBehaviour
                 EGS_GameServer.instance.thisGame.AddPlayer(player);
                 playersByID.Add(player.GetIngameID(), player);
             }
+
+            // Send the start game message and info.
+            EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServerDelegates.onGameStart(); });
+
+            // TODO: Send to the master server the info of the started game.
+
+            EGS_Message messageToSend = new EGS_Message();
+            messageToSend.messageType = "GAME_START";
+            messageToSend.messageContent = "";
+
+            // Get the start game positions.
+            EGS_UpdateData startUpdateData = new EGS_UpdateData(EGS_GameServer.instance.thisGame.GetRoom());
+
+            foreach (EGS_Player player in EGS_GameServer.instance.thisGame.GetPlayers())
+            {
+                EGS_PlayerData playerData = new EGS_PlayerData(player.GetIngameID(), player.transform.position);
+                startUpdateData.GetPlayersAtGame().Add(playerData);
+            }
+
+            messageToSend.messageContent = JsonUtility.ToJson(startUpdateData);
+
+            string playersString = "";
+            foreach (EGS_User user in EGS_GameServer.instance.gameFoundData.GetUsersToGame())
+            {
+                playersString += user.GetUsername() + ", ";
+            }
+
+            EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServer.instance.test_text.text += "\n" + EGS_GameServer.instance.thisGame.GetPlayers().Count + " | " + playersString; });
+            foreach (EGS_User user in EGS_GameServer.instance.gameFoundData.GetUsersToGame())
+            {
+                EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServer.instance.test_text.text += "\nSEND TO : " + user.GetUsername(); });
+                EGS_GameServer.instance.SendMessageToClient(user.GetSocket(), messageToSend);
+            }
+
+            // Call the onGameStart delegate.
+            EGS_GameServerDelegates.onGameStart?.Invoke();
         }
     }
     #endregion

@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Sockets;
+using System.Threading;
 using UnityEngine;
 
 /// <summary>
@@ -41,10 +42,10 @@ public class EGS_CL_Sockets
 
         // Connect to server.
         clientSocketHandler = new EGS_CL_ClientSocket(this);
-        clientSocketHandler.StartClient(remoteEP, socket_client);
+        //clientSocketHandler.StartClient(remoteEP, socket_client);
 
         // TODO: Value if Thread is necessary or not.
-        //new Thread(() => clientSocketHandler.StartClient(remoteEP, socket_client)).Start();
+        new Thread(() => clientSocketHandler.StartClient(remoteEP, socket_client)).Start();
     }
 
     /// <summary>

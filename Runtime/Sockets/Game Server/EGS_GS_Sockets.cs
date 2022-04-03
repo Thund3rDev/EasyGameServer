@@ -84,6 +84,29 @@ public class EGS_GS_Sockets
         clientSocketHandler.Send(socket_client, messageJson);
     }
 
+    public void SendMessageToClient(Socket socket, string type, string msg)
+    {
+        // Create new message.
+        EGS_Message thisMessage = new EGS_Message();
+        thisMessage.messageType = type;
+        thisMessage.messageContent = msg;
+
+        // Convert message to JSON .
+        string messageJson = thisMessage.ConvertMessage();
+
+        // Send the message.
+        serverSocketHandler.Send(socket, messageJson);
+    }
+
+    public void SendMessageToClient(Socket socket, EGS_Message messageToSend)
+    {
+        // Convert message to JSON .
+        string messageJson = messageToSend.ConvertMessage();
+
+        // Send the message.
+        serverSocketHandler.Send(socket, messageJson);
+    }
+
     /// <summary>
     /// Method Disconnect, to stop the client thread and disconnect from server.
     /// </summary>

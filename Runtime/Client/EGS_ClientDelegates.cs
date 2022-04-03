@@ -40,10 +40,13 @@ public static class EGS_ClientDelegates
     public static Action onGameStart;
 
     [Tooltip("Delegate to the OnGameEnd function")]
-    public static Action<EGS_Message> onGameEnd;
+    public static Action onGameEnd;
 
-    [Tooltip("Delegate to the onGameUpdate function")]
-    public static Action<EGS_Message> onGameUpdate;
+    [Tooltip("Delegate to the OnGameSenderTick function")]
+    public static Action onGameSenderTick;
+
+    [Tooltip("Delegate to the OnGameUpdate function")]
+    public static Action<EGS_UpdateData> onGameReceiveUpdate;
 
 
     [Header("Control Delegates")]

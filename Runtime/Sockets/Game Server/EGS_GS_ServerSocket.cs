@@ -129,9 +129,6 @@ public class EGS_GS_ServerSocket : EGS_ServerSocket
 
                             // Load the Game Scene.
                             LoadScene(EGS_GameServer.instance.thisGame.GetGameSceneName());
-
-                            // Put an event to execute on Game Scene Load.
-                            SceneManager.sceneLoaded += OnGameSceneLoad;
                         }
                     }
                 }
@@ -146,24 +143,19 @@ public class EGS_GS_ServerSocket : EGS_ServerSocket
 
                 DisconnectUser(thisUser);
                 break;
-            case "INPUT":
-                // TODO: Input object and delegate.
+            case "PLAYER_INPUT":
                 // Get the input data
-                // Inputs[0] = userName | Inputs[1-4] = directions.
-                string[] inputs = receivedMessage.messageContent.Split(',');
-
-                bool[] realInputs = new bool[4];
-                for (int i = 0; i < realInputs.Length; i++)
-                    realInputs[i] = bool.Parse(inputs[i + 1]);
+                EGS_PlayerInputs playerInputs = JsonUtility.FromJson<EGS_PlayerInputs>(receivedMessage.messageContent);
+                bool[] inputs = playerInputs.GetInputs();
 
                 // Get the player from its ingameID.
-                thisPlayer = EGS_GameManager.instance.GetPlayersByID()[int.Parse(inputs[0])];
+                thisPlayer = EGS_GameManager.instance.GetPlayersByID()[playerInputs.GetIngameID()];
 
                 // Assign its inputs.
-                thisPlayer.SetInputs(realInputs);
+                thisPlayer.SetInputs(inputs);
 
                 // Call the onPlayerSendInput delegate.
-                EGS_GameServerDelegates.onPlayerSendInput?.Invoke(thisPlayer);
+                EGS_GameServerDelegates.onPlayerSendInput?.Invoke(thisPlayer, playerInputs);
                 break;
             case "LEAVE_GAME":
                 // Get the player.
@@ -179,7 +171,7 @@ public class EGS_GS_ServerSocket : EGS_ServerSocket
                 break;
             default:
                 // Call the onClientMessageReceive delegate.
-                EGS_GameServerDelegates.onClientMessageReceive?.Invoke(receivedMessage);
+                EGS_GameServerDelegates.onClientMessageReceive?.Invoke(receivedMessage, this, handler);
                 break;
         }
     }
@@ -244,36 +236,6 @@ public class EGS_GS_ServerSocket : EGS_ServerSocket
         EGS_GameServerDelegates.onUserDisconnect?.Invoke(userToDisconnect);
     }
     #endregion
-
-    private void OnGameSceneLoad(Scene s, LoadSceneMode ls)
-    {
-        if (s.name.Equals(EGS_GameServer.instance.thisGame.GetGameSceneName()))
-            EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServerDelegates.onGameStart(); });
-
-        // TODO: Send to the master server the info of the started game.
-
-        EGS_Message messageToSend = new EGS_Message();
-        messageToSend.messageType = "GAME_START";
-        messageToSend.messageContent = "";
-
-        string jsonMSG = messageToSend.ConvertMessage();
-
-        string playersString = "";
-        foreach (EGS_User user in EGS_GameServer.instance.gameFoundData.GetUsersToGame())
-        {
-            playersString += user.GetUsername() + ", ";
-        }
-
-        EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServer.instance.test_text.text += "\n" + EGS_GameServer.instance.thisGame.GetPlayers().Count + " | " + playersString; });
-        foreach (EGS_User user in EGS_GameServer.instance.gameFoundData.GetUsersToGame())
-        {
-            EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServer.instance.test_text.text += "\nSEND TO : " + user.GetUsername(); });
-            Send(user.GetSocket(), jsonMSG);
-        }
-
-        // Call the onGameStart delegate.
-        EGS_GameServerDelegates.onGameStart?.Invoke();
-    }
 
     #region MainThreadFunctions
     /// <summary>

@@ -95,6 +95,7 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
         // Local variables that are used in the cases below.
         string jsonMSG;
         string userJson;
+        EGS_UpdateData updateData;
 
         // TODO: Maybe messageType (EGS only) as an enum?
         // Depending on the messageType, do different things.
@@ -168,14 +169,14 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
                 EGS_Client.instance.GetUser().SetRoom(gameFoundData.GetRoom());
 
                 // Create and assign the new game data.
-                EGS_UpdateData gameData = new EGS_UpdateData(gameFoundData.GetRoom());
+                updateData = new EGS_UpdateData(gameFoundData.GetRoom());
                 foreach (EGS_User user in gameFoundData.GetUsersToGame())
                 {
                     EGS_PlayerData playerData = new EGS_PlayerData(user.GetIngameID());
-                    gameData.GetPlayersAtGame().Add(playerData);
+                    updateData.GetPlayersAtGame().Add(playerData);
                 }
                 
-                EGS_Client.instance.SetGameData(gameData);
+                EGS_Client.instance.SetGameData(updateData);
 
                 // Execute code on game found.
                 EGS_ClientDelegates.onGameFound?.Invoke(gameFoundData);
@@ -235,17 +236,35 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
                 EGS_ClientDelegates.onJoinGameServer?.Invoke();
                 break;
             case "GAME_START":
+                Debug.Log(receivedMessage.messageContent);
+                // Save the Update Data.
+                updateData = JsonUtility.FromJson<EGS_UpdateData>(receivedMessage.messageContent);
+                EGS_Client.instance.SetGameData(updateData);
+
+                // Create and assign the In Game Sender.
+                EGS_CL_InGameSender thisInGameSender = new EGS_CL_InGameSender();
+                EGS_Client.instance.SetInGameSender(thisInGameSender);
+
+                // Start the In Game Sender.
+                EGS_Client.instance.GetInGameSender().StartGameLoop();
+
                 // Call the onGameStart delegate.
                 EGS_ClientDelegates.onGameStart?.Invoke();
                 break;
             case "UPDATE":
                 // Save the Update Data.
-                Debug.Log(receivedMessage.messageContent);
-                EGS_UpdateData updateData = JsonUtility.FromJson<EGS_UpdateData>(receivedMessage.messageContent);
+                updateData = JsonUtility.FromJson<EGS_UpdateData>(receivedMessage.messageContent);
                 EGS_Client.instance.GetGameData().SetPlayersAtGame(updateData.GetPlayersAtGame());
 
-                // Call the onGameUpdate delegate.
-                EGS_ClientDelegates.onGameUpdate?.Invoke(receivedMessage);
+                // Call the onGameReceiveUpdate delegate.
+                EGS_ClientDelegates.onGameReceiveUpdate?.Invoke(updateData);
+                break;
+            case "GAME_END":
+                // Stop the In Game Sender.
+                EGS_Client.instance.GetInGameSender().StopGameLoop();
+
+                // Call the onGameEnd delegate.
+                EGS_ClientDelegates.onGameEnd?.Invoke();
                 break;
             default:
                 // Call the onMessageReceive delegate.

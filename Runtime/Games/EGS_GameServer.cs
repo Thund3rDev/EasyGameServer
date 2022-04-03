@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Net.Sockets;
 using System.Xml;
 using UnityEngine;
 
@@ -95,6 +96,31 @@ public class EGS_GameServer : MonoBehaviour
     #endregion
 
     #region Class Methods
+    #region Public Methods
+    /// <summary>
+    /// Method SendMessage, that will send a message to the server
+    /// </summary>
+    /// <param name="type">String that contains the type of the message</param>
+    /// <param name="socket">Socket to send the message</param>
+    /// <param name="msg">String that contains the message itself</param>
+    public void SendMessageToClient(Socket socket, string type, string msg)
+    {
+        // Send the message by the socket controller.
+        gameServerSocketsController.SendMessageToClient(socket, type, msg);
+    }
+
+    /// <summary>
+    /// Method SendMessage, that will send a message to the server
+    /// </summary>
+    /// <param name="socket">Socket to send the message</param>
+    /// <param name="messageToSend">Message to send to the server</param>
+    public void SendMessageToClient(Socket socket, EGS_Message messageToSend)
+    {
+        // Send the message by the socket controller.
+        gameServerSocketsController.SendMessageToClient(socket, messageToSend);
+    }
+    #endregion
+
     #region Private Methods
     /// <summary>
     /// Method ConnectToMasterServer, that tries to connect to the server.
