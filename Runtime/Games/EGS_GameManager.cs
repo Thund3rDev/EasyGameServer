@@ -85,7 +85,7 @@ public class EGS_GameManager : MonoBehaviour
 
             foreach (EGS_Player player in EGS_GameServer.instance.thisGame.GetPlayers())
             {
-                EGS_PlayerData playerData = new EGS_PlayerData(player.GetIngameID(), player.transform.position);
+                EGS_PlayerData playerData = new EGS_PlayerData(player.GetIngameID(), player.transform.position, new Vector3());
                 startUpdateData.GetPlayersAtGame().Add(playerData);
             }
 

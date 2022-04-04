@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// Class EGS_Player, that manages a player instance in the Game Server. MODIFIABLE?.
+/// Class EGS_Player, that manages a player instance in the Game Server.
 /// </summary>
 public class EGS_Player : MonoBehaviour
 {
@@ -14,10 +14,10 @@ public class EGS_Player : MonoBehaviour
 
     [Header("Modifiable from Unity")]
     [Tooltip("Player's in game ID")]
-    public int ingameID;
+    [SerializeField] private int ingameID;
 
     [Tooltip("Client Scripts to DELETE")]
-    public List<MonoBehaviour> clientScriptsToDelete = null;
+    [SerializeField] private List<MonoBehaviour> clientScriptsToDelete = null;
 
     [Tooltip("Array of player inputs")]
     private bool[] inputs; // TODO: Use EGS_PlayerInputs and permit different type of inputs (bool, float, string...).

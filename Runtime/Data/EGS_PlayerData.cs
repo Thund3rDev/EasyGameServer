@@ -12,6 +12,9 @@ public class EGS_PlayerData
 
     [Tooltip("Player's position")]
     [SerializeField] private Vector3 position;
+
+    [Tooltip("Player's direction")]
+    [SerializeField] private Vector3 direction;
     #endregion
 
     #region Constructors
@@ -22,6 +25,7 @@ public class EGS_PlayerData
     {
         this.ingameID = -1;
         this.position = new Vector3();
+        this.direction = new Vector3();
     }
 
     /// <summary>
@@ -31,15 +35,17 @@ public class EGS_PlayerData
     {
         this.ingameID = ingameID_;
         this.position = new Vector3();
+        this.direction = new Vector3();
     }
 
     /// <summary>
     /// Full Constructor
     /// </summary>
-    public EGS_PlayerData(int ingameID_, Vector3 position_)
+    public EGS_PlayerData(int ingameID_, Vector3 position_, Vector3 direction_)
     {
         this.ingameID = ingameID_;
         this.position = position_;
+        this.direction = direction_;
     }
     #endregion
 
@@ -67,5 +73,17 @@ public class EGS_PlayerData
     /// </summary>
     /// <param name="p">New position</param>
     public void SetPosition(Vector3 p) { position = p; }
+
+    /// <summary>
+    /// Getter for the direction.
+    /// </summary>
+    /// <returns>Direction</returns>
+    public Vector3 GetDirection() { return direction; }
+
+    /// <summary>
+    /// Setter for the direction.
+    /// </summary>
+    /// <param name="d">New direction</param>
+    public void SetDirection(Vector3 d) { direction = d; }
     #endregion
 }
