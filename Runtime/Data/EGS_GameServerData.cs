@@ -12,10 +12,10 @@ public class EGS_GameServerData
     public enum EGS_GameServerState
     {
         INACTIVE,
-        LAUNCH,
         CREATED,
+        LAUNCHED,
         WAITING_PLAYERS,
-        STARTED,
+        STARTED_GAME,
         FINISHED
     }
 
@@ -48,7 +48,7 @@ public class EGS_GameServerData
         gameServerID = gameServerID_;
         gameFoundData = gamefoundData_;
         room = gamefoundData_.GetRoom();
-        status = EGS_GameServerState.LAUNCH;
+        status = EGS_GameServerState.LAUNCHED;
     }
     #endregion
 

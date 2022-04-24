@@ -17,6 +17,9 @@ public class EGS_GameServer : MonoBehaviour
     [Tooltip("Struct that contains the server data")]
     public EGS_Config serverData;
 
+    [Tooltip("Integer that indicates the number of current tries to connect to the server")]
+    private int currentConnectionTries;
+
 
     [Header("Networking")]
     [Tooltip("Port where the Game Server will be hosted")]
@@ -41,6 +44,9 @@ public class EGS_GameServer : MonoBehaviour
 
     [Tooltip("Game found data, that is received on parameters")]
     public EGS_GameFoundData gameFoundData; // TODO: Think if need to store.
+
+    [Tooltip("Data about the Game Ended")]
+    private EGS_GameEndData gameEndData = null;
 
     [Tooltip("Long that stores the time a RTT lasts since server ask and receive")]
     private long clientPing;
@@ -135,6 +141,33 @@ public class EGS_GameServer : MonoBehaviour
     }
 
     /// <summary>
+    /// Method TryConnectToServerAgain, that will try to connect to the server up to EGS_CONFIG.CONNECTION_TRIES.
+    /// </summary>
+    public void TryConnectToServerAgain()
+    {
+        // Substract one unit from current connection tries.
+        currentConnectionTries--;
+
+        // If there are still connection tries.
+        if (currentConnectionTries > 0)
+        {
+            // Connect to the server.
+            gameServerSocketsController.ConnectToMasterServer();
+        }
+        else
+        {
+            // Reset the connection tries value.
+            currentConnectionTries = EGS_Config.CONNECTION_TRIES;
+
+            // LOG.
+            //Debug.Log("[GAME SERVER] Coulnd't connect to the server.");
+
+            // Call the onCantConnectToServer delegate.
+            EGS_GameServerDelegates.onCantConnectToServer?.Invoke();
+        }
+    }
+
+    /// <summary>
     /// Method DisconnectFromMasterServer, that will stop sending messages and listening.
     /// </summary>
     private void DisconnectFromMasterServer()
@@ -211,6 +244,24 @@ public class EGS_GameServer : MonoBehaviour
     public void SetClientPing(long p)
     {
         clientPing = p;
+    }
+
+    /// <summary>
+    /// Getter for the game end data.
+    /// </summary>
+    /// <returns>Game end data</returns>
+    public EGS_GameEndData GetGameEndData()
+    {
+        return gameEndData;
+    }
+
+    /// <summary>
+    /// Setter for the game end data.
+    /// </summary>
+    /// <param name="g">New game end data</param>
+    public void SetGameEndData(EGS_GameEndData g)
+    {
+        gameEndData = g;
     }
     #endregion
     #endregion

@@ -23,6 +23,9 @@ public struct EGS_Config
     [Tooltip("Maximum number of games (game servers) that the server will have at the same time")]
     public static int MAX_GAMES;
 
+    [Tooltip("Maximum number of tries to connect to the server")]
+    public static int CONNECTION_TRIES;
+
     [Tooltip("Time in milliseconds to send a Round Trip Time")]
     public static int TIME_BETWEEN_RTTS;
 

@@ -15,6 +15,9 @@ public class EGS_CL_Sockets
 
     [Tooltip("Handler for the client socket")]
     public EGS_CL_ClientSocket clientSocketHandler;
+
+    [Tooltip("Thread that handles the connections")]
+    public Thread connectionsThread;
     #endregion
 
     #region Constructors
@@ -42,10 +45,8 @@ public class EGS_CL_Sockets
 
         // Connect to server.
         clientSocketHandler = new EGS_CL_ClientSocket(this);
-        //clientSocketHandler.StartClient(remoteEP, socket_client);
-
-        // TODO: Value if Thread is necessary or not.
-        new Thread(() => clientSocketHandler.StartClient(remoteEP, socket_client)).Start();
+        connectionsThread = new Thread(() => clientSocketHandler.StartClient(remoteEP, socket_client));
+        connectionsThread.Start();
     }
 
     /// <summary>

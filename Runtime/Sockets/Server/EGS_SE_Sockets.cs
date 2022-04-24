@@ -47,7 +47,7 @@ public class EGS_SE_Sockets
         serverSocketHandler.StartListening(localEP, socket_listener, EGS_Config.MAX_CONNECTIONS);
 
         if (EGS_Config.DEBUG_MODE > -1)
-            egs_Log.Log("<color=green>Easy Game Server</color> Listening at port <color=orange>" + EGS_Config.serverPort + "</color>.");
+            egs_Log.Log("<color=green>Easy Game Server</color> Listening at port <color=orange>" + EGS_Config.serverPort + "</color>. MAX_CONNECTIONS: " + EGS_Config.MAX_CONNECTIONS);
     }
     #endregion
 

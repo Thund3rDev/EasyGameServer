@@ -25,6 +25,12 @@ public static class EGS_GameServerDelegates
 
 
     [Header("Client Socket Delegates")]
+    [Tooltip("Delegate to the OnServerRefusesConnection function")]
+    public static Action onServerRefusesConnection;
+
+    [Tooltip("Delegate to the OnCantConnectToServer function")]
+    public static Action onCantConnectToServer;
+
     [Tooltip("Delegate to the OnConnectToMasterServer function")]
     public static Action onConnectToMasterServer;
 
@@ -42,6 +48,9 @@ public static class EGS_GameServerDelegates
     [Tooltip("Delegate to the OnUserDisconnect function")]
     public static Action<EGS_User> onUserDisconnect;
 
+    [Tooltip("Delegate to the OnUserDisconnectToMasterServer function")]
+    public static Action<EGS_User> onUserDisconnectToMasterServer;
+
 
     [Header("Moment Delegates")]
     [Tooltip("Delegate to the OnAllPlayersConnected function")]
@@ -49,6 +58,9 @@ public static class EGS_GameServerDelegates
 
     [Tooltip("Delegate to the OnGameStart function")]
     public static Action onGameStart;
+
+    [Tooltip("Delegate to the OnGameEnd function")]
+    public static Action<EGS_GameEndData> onGameEnd;
 
 
     [Header("Player Delegates")]

@@ -19,7 +19,7 @@ public class EGS_MasterServerDelegates
 
     [Header("User Control Delegates")]
     [Tooltip("Delegate to the OnUserJoinServer function")]
-    public static Action<EGS_User> onUserJoinServer;
+    public static Action<EGS_User, bool> onUserJoinServer;
 
     [Tooltip("Delegate to the OnUserRegister function")]
     public static Action<EGS_User> onUserRegister;
@@ -64,10 +64,10 @@ public class EGS_MasterServerDelegates
     public static Action<EGS_GameFoundData> onGameFound;
 
     [Tooltip("Delegate to the OnGameStart function")]
-    public static Action<int, EGS_Message> onGameStart;
+    public static Action<EGS_UpdateData> onGameStart;
 
     [Tooltip("Delegate to the OnGameEnd function")]
-    public static Action<int, EGS_Message> onGameEnd;
+    public static Action<EGS_GameEndData> onGameEnd;
 
 
     [Header("Control Delegates")]

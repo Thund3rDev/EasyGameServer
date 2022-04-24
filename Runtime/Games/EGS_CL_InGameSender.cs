@@ -2,6 +2,9 @@ using System;
 using System.Threading;
 using UnityEngine;
 
+/// <summary>
+/// Class EGS_CL_InGameSender, which manages the constant message sending to the Game Server.
+/// </summary>
 public class EGS_CL_InGameSender
 {
     #region Variables

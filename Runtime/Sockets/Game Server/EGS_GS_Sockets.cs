@@ -27,6 +27,9 @@ public class EGS_GS_Sockets
 
     [Tooltip("ManualResetEvent for when game server can handle player connections")]
     public ManualResetEvent startDone = new ManualResetEvent(false);
+
+    [Tooltip("Thread that handles the connections")]
+    public Thread connectionsThread;
     #endregion
 
     #region Constructors
@@ -51,7 +54,8 @@ public class EGS_GS_Sockets
 
         // Connect to server
         clientSocketHandler = new EGS_GS_ClientSocket(this);
-        new Thread(() => clientSocketHandler.StartClient(remoteEP, socket_client)).Start();
+        connectionsThread = new Thread(() => clientSocketHandler.StartClient(remoteEP, socket_client));
+        connectionsThread.Start();
     }
 
     /// <summary>
@@ -84,6 +88,15 @@ public class EGS_GS_Sockets
         clientSocketHandler.Send(socket_client, messageJson);
     }
 
+    public void SendMessageToMasterServer(EGS_Message messageToSend)
+    {
+        // Convert message to JSON .
+        string messageJson = messageToSend.ConvertMessage();
+
+        // Send the message.
+        clientSocketHandler.Send(socket_client, messageJson);
+    }   
+
     public void SendMessageToClient(Socket socket, string type, string msg)
     {
         // Create new message.
@@ -114,6 +127,15 @@ public class EGS_GS_Sockets
     {
         // Close the socket.
         CloseSocket();
+    }
+
+    /// <summary>
+    /// Method GetPlayersConnected, to know how many players are connected to the Game Server.
+    /// </summary>
+    /// <returns>Number of players connected to the Game Server</returns>
+    public int GetPlayersConnected()
+    {
+        return serverSocketHandler.GetConnectedUsers().Count;
     }
     #endregion
 
@@ -171,12 +193,21 @@ public class EGS_GS_Sockets
     /// <summary>
     /// Method CloseSocket, to close the client socket.
     /// </summary>
-    private void CloseSocket()
+    public void CloseSocket()
     {
         socket_client.Shutdown(SocketShutdown.Both);
         socket_client.Close();
 
-        Debug.Log("[CLIENT] Closed socket.");
+        // TODO: Log on the Game Server.
+        //Debug.Log("[GameServer] Closed socket.");
+    }
+
+    /// <summary>
+    /// Method StopListening, to close the server socket and stop listening to connections.
+    /// </summary>
+    public void StopListening()
+    {
+        socket_server.Close();
     }
     #endregion
     #endregion

@@ -116,14 +116,33 @@ public class EGS_Game
     /// <summary>
     /// Method FinishGame, that ends the game loop and sends the game results to the server.
     /// </summary>
-    public void FinishGame()
+    public void FinishGame(List<int> playerIDsOrdered)
     {
+        // If game is not running, do nothing.
+        if (!gameRunning)
+            return;
+
         // Stop the game loop for that game.
         StopGameLoop();
 
-        // TODO: Think on what has to be sent to the clients and to the master server.
+        // Create a message indicating that game has finished.
+        EGS_Message messageToSend = new EGS_Message();
+        messageToSend.messageType = "GAME_END";
 
-        // TODO: Tell the master server that the game finished and what were the results.
+        EGS_GameEndData gameEndData = new EGS_GameEndData(EGS_GameServer.instance.gameServerID, room, playerIDsOrdered);
+        messageToSend.messageContent = JsonUtility.ToJson(gameEndData);
+
+        // Call the OnEndGame delegate.
+        EGS_GameServerDelegates.onGameEnd?.Invoke(gameEndData);
+
+        // Show the EndGame Info.
+        EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServerEndController.instance.ShowEndGameInfo(); });
+
+        // Send the message to the players.
+        Broadcast(messageToSend);
+
+        // Also send the message to the Master Server.
+        EGS_GameServer.instance.gameServerSocketsController.SendMessageToMasterServer(messageToSend);
     }
 
     /// <summary>
@@ -139,14 +158,14 @@ public class EGS_Game
             // TODO: Tell the master server that the player left the game.
 
             if (players.Count == 0)
-                FinishGame();
+                FinishGame(new List<int>());
         }
     }
 
     /// <summary>
     /// Method StartGameLoop, that starts the game loop on a thread.
     /// </summary>
-    public void StartGameLoop()
+    private void StartGameLoop()
     {
         try
         {
@@ -167,7 +186,7 @@ public class EGS_Game
     /// <summary>
     /// Method StopGameLoop, that stops the game loop.
     /// </summary>
-    public void StopGameLoop()
+    private void StopGameLoop()
     {
         // Save that the game is no longer running.
         gameRunning = false;

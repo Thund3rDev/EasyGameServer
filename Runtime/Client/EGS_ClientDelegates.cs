@@ -13,6 +13,12 @@ public static class EGS_ClientDelegates
 
 
     [Header("Connect Delegates")]
+    [Tooltip("Delegate to the OnServerRefusesConnection function")]
+    public static Action onServerRefusesConnection;
+
+    [Tooltip("Delegate to the OnCantConnectToServer function")]
+    public static Action onCantConnectToServer;
+
     [Tooltip("Delegate to the OnConnect function")]
     public static Action<EGS_Control.EGS_Type> onConnect;
 
@@ -31,6 +37,15 @@ public static class EGS_ClientDelegates
     [Tooltip("Delegate to the OnChangeFromMasterToGameServer function")]
     public static Action<string, int> onChangeFromMasterToGameServer;
 
+    [Tooltip("Delegate to the OnPrepareToChangeFromGameToMasterServer function")]
+    public static Action<string, int> onPrepareToChangeFromGameToMasterServer;
+
+    [Tooltip("Delegate to the OnChangeFromGameToMasterServer function")]
+    public static Action<string, int> onChangeFromGameToMasterServer;
+
+    [Tooltip("Delegate to the OnReturnToMasterServer function")]
+    public static Action<EGS_User> onReturnToMasterServer;
+
 
     [Header("Moment Delegates")]
     [Tooltip("Delegate to the OnGameFound function")]
@@ -40,7 +55,7 @@ public static class EGS_ClientDelegates
     public static Action onGameStart;
 
     [Tooltip("Delegate to the OnGameEnd function")]
-    public static Action onGameEnd;
+    public static Action<EGS_GameEndData> onGameEnd;
 
     [Tooltip("Delegate to the OnGameSenderTick function")]
     public static Action onGameSenderTick;

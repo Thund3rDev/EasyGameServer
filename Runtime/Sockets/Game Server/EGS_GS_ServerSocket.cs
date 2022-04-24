@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using UnityEngine;
@@ -169,6 +170,22 @@ public class EGS_GS_ServerSocket : EGS_ServerSocket
                 // Call the onPlayerLeaveGame delegate.
                 EGS_GameServerDelegates.onPlayerLeaveGame?.Invoke(thisPlayer);
                 break;
+            case "RETURN_TO_MASTER_SERVER":
+                // Get the user.
+                thisUser = connectedUsers[handler];
+
+                // Disconnect the user from the server.
+                DisconnectUserToMasterServer(thisUser, handler);
+
+                // Echo the disconnection back to the client.
+                messageToSend.messageType = "DISCONNECT_TO_MASTER_SERVER";
+                jsonMSG = messageToSend.ConvertMessage();
+
+                Send(handler, jsonMSG);
+
+                // Call the onUserDisconnectToMasterServer delegate.
+                EGS_GameServerDelegates.onUserDisconnectToMasterServer?.Invoke(thisUser);
+                break;
             default:
                 // Call the onClientMessageReceive delegate.
                 EGS_GameServerDelegates.onClientMessageReceive?.Invoke(receivedMessage, this, handler);
@@ -199,10 +216,31 @@ public class EGS_GS_ServerSocket : EGS_ServerSocket
     public override void OnClientDisconnected(Socket client_socket)
     {
         // TODO: Make this work.
+        /*if (EGS_Config.DEBUG_MODE > 2)
+            egs_Log.Log("<color=blue>Closed connection</color>. IP: " + client_socket.RemoteEndPoint + ".");*/
     }
     #endregion
 
     #region User Management Methods
+    /// <summary>
+    /// Method DisconnectUserToMasterServer, that disconnect an user's client so it can connect to the master server.
+    /// </summary>
+    /// <param name="userToDisconnect">User who disconnects for the game</param>
+    /// <param name="client_socket">Socket that handles the client connection</param>
+    private void DisconnectUserToMasterServer(EGS_User userToDisconnect, Socket client_socket)
+    {
+        // Disconnect the client.
+        DisconnectClient(client_socket);
+
+        // Update the players still connected value for the end controller.
+        EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServerEndController.instance.UpdateNumOfPlayersConnected(socketsController); });
+
+        // TODO: Log working.
+        /*// Display data on the console.
+        if (EGS_Config.DEBUG_MODE > -1)
+            egs_Log.Log("<color=purple>Disconnected To Connect to the Game Server</color>: UserID: " + userToDisconnect.GetUserID() + " - Username: " + userToDisconnect.GetUsername() + " - IP: " + client_socket.RemoteEndPoint + ".");*/
+    }
+
     /// <summary>
     /// Method ConnectUser, that connects an user to the server.
     /// </summary>
@@ -245,6 +283,13 @@ public class EGS_GS_ServerSocket : EGS_ServerSocket
     private void LoadScene(string sceneName)
     {
         EGS_Dispatcher.RunOnMainThread(() => { SceneManager.LoadScene(sceneName); });
+    }
+    #endregion
+
+    #region Getters and Setters
+    public Dictionary <Socket, EGS_User> GetConnectedUsers()
+    {
+        return connectedUsers;
     }
     #endregion
     #endregion

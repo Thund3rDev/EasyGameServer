@@ -5,6 +5,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System;
 using System.Text.RegularExpressions;
+using System.Net.Sockets;
 
 /// <summary>
 /// Class EGS_ServerGamesManager, that creates and manages the new games.
@@ -178,15 +179,28 @@ public class EGS_ServerGamesManager : MonoBehaviour
     /// <summary>
     /// Method FinishedGame, executed when a game ends.
     /// </summary>
-    /// <param name="room">Room number of that game</param>
-    public void FinishedGame(int room)
+    /// <param name="roomID">Room number of that game</param>
+    /// <param name="gameServerID">ID of the Game Server which managed that game</param>
+    /// <param name="handler">Socket of the Game Server</param>
+    public void FinishedGame(int roomID, int gameServerID, Socket handler)
     {
-        // TODO: Make this work.
         // Remove the room number for players.
-        /*foreach (EGS_Player p in gameCD.Game.GetPlayers())
-            p.SetRoom(-1);*/
+        foreach (EGS_User user in usersInRooms[roomID])
+        {
+            user.SetRoom(-1);
+        }
 
-        egs_Log.Log("Stopped and closed game with room " + room);
+        usersInRooms.Remove(roomID);
+
+        // Update the GameServer status.
+        gameServers[gameServerID].SetStatus(EGS_GameServerData.EGS_GameServerState.INACTIVE);
+
+        // Display data on the console.
+        if (EGS_Config.DEBUG_MODE > -1)
+            egs_Log.Log("<color=blue>Disconnected Game Server</color>: ID: " + gameServerID + " - Room: " + roomID + ".");
+
+        // Call the onGameServerClosed delegate.
+        EGS_MasterServerDelegates.onGameServerClosed?.Invoke(gameServerID);
     }
 
     /// <summary>

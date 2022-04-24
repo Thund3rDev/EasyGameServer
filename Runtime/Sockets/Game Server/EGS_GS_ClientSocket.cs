@@ -1,8 +1,5 @@
 using System;
-using System.Net;
 using System.Net.Sockets;
-using System.Text;
-using System.Threading;
 using UnityEngine;
 
 /// <summary>
@@ -38,7 +35,25 @@ public class EGS_GS_ClientSocket : EGS_ClientSocket
         {
             base.ConnectCallback(ar);
         }
-        catch(Exception e)
+        catch (SocketException se)
+        {
+            // If SocketException error code is SocketError.ConnectionRefused.
+            if (se.ErrorCode == 10061) // 10061 = SocketError.ConnectionRefused.
+            {
+                if (EGS_Config.DEBUG_MODE > 1)
+                    Debug.LogWarning("[GAME SERVER] Server refused the connection."); // LOG.
+
+                // Interrupt the connectionsThread.
+                socketsController.connectionsThread.Interrupt();
+
+                // Try to connect to the server again.
+                EGS_GameServer.instance.TryConnectToServerAgain();
+
+                // Call the onServerRefusesConnection delegate.
+                EGS_GameServerDelegates.onServerRefusesConnection?.Invoke();
+            }
+        }
+        catch (Exception e)
         {
             Debug.LogError("[Game Server] " + e.ToString());
         }
@@ -163,6 +178,16 @@ public class EGS_GS_ClientSocket : EGS_ClientSocket
 
                 // Send data to server.
                 Send(handler, jsonMSG);
+                break;
+            case "DISCONNECT_AND_CLOSE_GAMESERVER":
+                // Close the socket to disconnect from the server.
+                socketsController.CloseSocket();
+
+                // Save as disconnected from the master server.
+                EGS_GameServer.instance.connectedToMasterServer = false;
+
+                // Trigger the UpdateDisconnected on the Game Server End Controller.
+                EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServerEndController.instance.UpdateDisconnectedFromMasterServer(); });
                 break;
             case "MASTER_SERVER_CLOSE_GAME_SERVER":
                 // Save as disconnected from the master server.

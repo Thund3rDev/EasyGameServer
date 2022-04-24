@@ -13,16 +13,18 @@ public class EGS_Client : MonoBehaviour
     [Header("General Variables")]
     [Tooltip("Singleton")]
     public static EGS_Client instance;
-
-    [Tooltip("Struct that contains the server data")]
-    public static EGS_Config serverData;
-
+  
 
     [Header("Networking")]
-    [Tooltip("Bool that indicates if client is connnected to the master server")]
+    [Tooltip("Bool that indicates if client is connectingToServer")]
+    public bool connectingToServer = false;
+    [Tooltip("Bool that indicates if client is connected to the master server")]
     public bool connectedToMasterServer = false;
-    [Tooltip("Bool that indicates if client is connnected to the game server")]
+    [Tooltip("Bool that indicates if client is connected to the game server")]
     public bool connectedToGameServer = false;
+
+    [Tooltip("Integer that indicates the number of current tries to connect to the server")]
+    private int currentConnectionTries;
 
     [Tooltip("Controller for client socket")]
     public EGS_CL_Sockets clientSocketController = null;
@@ -43,8 +45,11 @@ public class EGS_Client : MonoBehaviour
     [Tooltip("Data about the Game Found")]
     private EGS_GameFoundData gameFoundData = null;
 
-    [Tooltip("Objet that stores all needed data about the game")]
+    [Tooltip("Object that stores all needed data about the game")]
     private EGS_UpdateData gameData = null;
+
+    [Tooltip("Data about the Game Ended")]
+    private EGS_GameEndData gameEndData = null;
     #endregion
 
     #region Unity Methods
@@ -75,23 +80,58 @@ public class EGS_Client : MonoBehaviour
         if (connectedToMasterServer)
         {
             Debug.LogWarning("Client already connected.");
+
+            // Check if client is already connecting to the server.
+            if (connectingToServer)
+            {
+                Debug.LogWarning("Client already connecting.");
+            }
             return;
         }
 
-        // Establish the connection to the server.
-        connectedToMasterServer = true;
-
-        // Create the user
+        // Establish that is currently connecting to the server.
+        connectingToServer = true;
+        
+        // Create the user.
         user = new EGS_User();
         EGS_ClientDelegates.onUserCreate?.Invoke(user);
 
         // Read server config data.
         ReadServerData();
 
-        // Create client socket manager
+        // Assign the current connection tries.
+        currentConnectionTries = EGS_Config.CONNECTION_TRIES;
+
+        // Create client socket manager.
         clientSocketController = new EGS_CL_Sockets();
-        // Connect to the server
+        // Connect to the server.
         clientSocketController.ConnectToServer();
+    }
+
+    /// <summary>
+    /// Method TryConnectToServerAgain, that will try to connect to the server up to EGS_CONFIG.CONNECTION_TRIES.
+    /// </summary>
+    public void TryConnectToServerAgain()
+    {
+        // Substract one unit from current connection tries.
+        currentConnectionTries--;
+
+        // If there are still connection tries.
+        if (currentConnectionTries > 0)
+        {
+            // Connect to the server.
+            clientSocketController.ConnectToServer();
+        }
+        else
+        {
+            // Reset the connection tries value.
+            currentConnectionTries = EGS_Config.CONNECTION_TRIES;
+
+            Debug.LogError("[CLIENT] Coulnd't connect to the server.");
+
+            // Call the onCantConnectToServer delegate.
+            EGS_ClientDelegates.onCantConnectToServer?.Invoke();
+        }
     }
 
     /// <summary>
@@ -104,7 +144,6 @@ public class EGS_Client : MonoBehaviour
             return;
 
         // Disconnect from server.
-        connectedToMasterServer = false;
         clientSocketController.DisconnectFromServer();
     }
 
@@ -167,6 +206,10 @@ public class EGS_Client : MonoBehaviour
         XmlNode node;
 
         /// Server Data.
+        // Get debug mode.
+        node = doc.DocumentElement.SelectSingleNode("//server/debug-mode");
+        EGS_Config.DEBUG_MODE = int.Parse(node.InnerText);
+
         // Get time between round trip times.
         node = doc.DocumentElement.SelectSingleNode("//server/time-between-rtt");
         EGS_Config.TIME_BETWEEN_RTTS = int.Parse(node.InnerText);
@@ -179,6 +222,10 @@ public class EGS_Client : MonoBehaviour
         // Get server port.
         node = doc.DocumentElement.SelectSingleNode("//networking/base-port");
         EGS_Config.serverPort = int.Parse(node.InnerText);
+
+        // Get connection tries.
+        node = doc.DocumentElement.SelectSingleNode("//networking/connection-tries");
+        EGS_Config.CONNECTION_TRIES = int.Parse(node.InnerText);
 
         /// Game Data.
         // Get the number of calculations per second.
@@ -276,6 +323,24 @@ public class EGS_Client : MonoBehaviour
     public void SetGameData(EGS_UpdateData g)
     {
         gameData = g;
+    }
+
+    /// <summary>
+    /// Getter for the game end data.
+    /// </summary>
+    /// <returns>Game end data</returns>
+    public EGS_GameEndData GetGameEndData()
+    {
+        return gameEndData;
+    }
+
+    /// <summary>
+    /// Setter for the game end data.
+    /// </summary>
+    /// <param name="g">New game end data</param>
+    public void SetGameEndData(EGS_GameEndData g)
+    {
+        gameEndData = g;
     }
     #endregion
 }

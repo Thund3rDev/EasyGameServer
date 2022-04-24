@@ -209,9 +209,6 @@ public class EGS_ServerSocket
         {
             connectedUsers.Add(client_socket, userToConnect);
         }
-
-        // Call the onUserJoinServer delegate.
-        //EGS_MasterServerDelegates.onUserJoinServer?.Invoke(thisUser);
     }
 
     /// <summary>

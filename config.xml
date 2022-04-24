@@ -13,6 +13,7 @@
 	<networking>
 		<server-ip>192.168.1.45</server-ip>
 		<base-port>21721</base-port>
+		<connection-tries>3</connection-tries>
 	</networking>
 	<game>
 		<players-per-game>2</players-per-game>

@@ -42,6 +42,24 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
         {
             base.ConnectCallback(ar);
         }
+        catch (SocketException se)
+        {
+            // If SocketException error code is SocketError.ConnectionRefused.
+            if (se.ErrorCode == 10061) // 10061 = SocketError.ConnectionRefused.
+            {
+                if (EGS_Config.DEBUG_MODE > 1)
+                    Debug.LogWarning("[CLIENT] Server refused the connection.");
+
+                // Interrupt the connectionsThread.
+                socketsController.connectionsThread.Interrupt();
+
+                // Try to connect to the server again.
+                EGS_Client.instance.TryConnectToServerAgain();
+
+                // Call the onServerRefusesConnection delegate.
+                EGS_ClientDelegates.onServerRefusesConnection?.Invoke();
+            }
+        }
         catch (Exception e)
         {
             Debug.LogError("[CLIENT] " + e.ToString());
@@ -96,6 +114,7 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
         string jsonMSG;
         string userJson;
         EGS_UpdateData updateData;
+        EGS_User thisUser;
 
         // TODO: Maybe messageType (EGS only) as an enum?
         // Depending on the messageType, do different things.
@@ -122,12 +141,13 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
             case "CONNECT_TO_MASTER_SERVER":
                 // Save as connected to the master server.
                 EGS_Client.instance.connectedToMasterServer = true;
+                EGS_Client.instance.connectingToServer = false;
 
                 // Call the onConnect delegate with type MasterServer.
                 EGS_ClientDelegates.onConnect?.Invoke(EGS_Control.EGS_Type.MasterServer);
 
                 // Get the user instance.
-                EGS_User thisUser = EGS_Client.instance.GetUser();
+                thisUser = EGS_Client.instance.GetUser();
 
                 // Convert user to JSON.
                 userJson = JsonUtility.ToJson(thisUser);
@@ -260,11 +280,48 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
                 EGS_ClientDelegates.onGameReceiveUpdate?.Invoke(updateData);
                 break;
             case "GAME_END":
+                // Get the Game End Data and save it.
+                EGS_GameEndData gameEndData = JsonUtility.FromJson<EGS_GameEndData>(receivedMessage.messageContent);
+                EGS_Client.instance.SetGameEndData(gameEndData);
+
                 // Stop the In Game Sender.
                 EGS_Client.instance.GetInGameSender().StopGameLoop();
 
                 // Call the onGameEnd delegate.
-                EGS_ClientDelegates.onGameEnd?.Invoke();
+                EGS_ClientDelegates.onGameEnd?.Invoke(gameEndData);
+
+                // Call the onPrepareToChangeFromGameToMasterServer delegate.
+                EGS_ClientDelegates.onPrepareToChangeFromGameToMasterServer?.Invoke(EGS_Config.serverIP, EGS_Config.serverPort);
+
+                // Disconnect from the Game Server and return to the MasterServer.
+                messageToSend.messageType = "RETURN_TO_MASTER_SERVER";
+
+                // Convert message to JSON.
+                jsonMSG = messageToSend.ConvertMessage();
+
+                // Send data to server.
+                Send(handler, jsonMSG);
+                break;
+            case "DISCONNECT_TO_MASTER_SERVER":
+                // Close the socket to disconnect from the server.
+                socketsController.CloseSocket();
+
+                // Save as disconnected from the master server.
+                EGS_Client.instance.connectedToGameServer = false;
+
+                // Call the onChangeFromMasterToGameServer delegate.
+                EGS_ClientDelegates.onChangeFromGameToMasterServer?.Invoke(EGS_Config.serverIP, EGS_Config.serverPort);
+
+                // Try to connect to Game Server.
+                socketsController.ConnectToServer();
+                break;
+            case "RETURN_TO_MASTER_SERVER":
+                // Get and update User Data.
+                thisUser = JsonUtility.FromJson<EGS_User>(receivedMessage.messageContent);
+                EGS_Client.instance.SetUser(thisUser);
+
+                // Call the onReturnToMasterServer delegate.
+                EGS_ClientDelegates.onReturnToMasterServer?.Invoke(thisUser);
                 break;
             default:
                 // Call the onMessageReceive delegate.

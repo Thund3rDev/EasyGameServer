@@ -53,9 +53,9 @@ public class EGS_ClientSocket
             // Receive the response from the remote device.  
             Receive(socket_client);
         }
-        catch (ThreadAbortException)
+        catch (ThreadInterruptedException)
         {
-            // TODO: Control this exception.
+            Debug.LogWarning("Interruped connections thread.");
         }
         catch (Exception e)
         {
