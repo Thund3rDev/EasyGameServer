@@ -204,10 +204,10 @@ public class EGS_ServerGamesManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Method QuitPlayerFromGame, that disconnects a player from a game. 
+    /// Method QuitUserFromGame, that disconnects an user from a game. 
     /// </summary>
     /// <param name="leftUser">Player's user</param>
-    public void QuitPlayerFromGame(EGS_User leftUser)
+    public void QuitUserFromGame(EGS_User leftUser)
     {
         // TODO: Make this work. Think on a EGS_PlayerToGame for the parameter.
         int room = leftUser.GetRoom();
@@ -215,8 +215,7 @@ public class EGS_ServerGamesManager : MonoBehaviour
         egs_Log.Log("Player " + leftUser.GetUsername() + " left the game on room " + room + ".");
 
         leftUser.SetRoom(-1);
-
-        //leftPlayer.SetIngameID(-1);
+        leftUser.SetIngameID(-1);
     }
     #endregion
 

@@ -37,6 +37,9 @@ public static class EGS_ClientDelegates
     [Tooltip("Delegate to the OnChangeFromMasterToGameServer function")]
     public static Action<string, int> onChangeFromMasterToGameServer;
 
+    [Tooltip("Delegate to the OnLeaveGame function")]
+    public static Action onLeaveGame;
+
     [Tooltip("Delegate to the OnPrepareToChangeFromGameToMasterServer function")]
     public static Action<string, int> onPrepareToChangeFromGameToMasterServer;
 
@@ -62,6 +65,9 @@ public static class EGS_ClientDelegates
 
     [Tooltip("Delegate to the OnGameUpdate function")]
     public static Action<EGS_UpdateData> onGameReceiveUpdate;
+
+    [Tooltip("Delegate to the OnAnotherPlayerLeaveGame function")]
+    public static Action<EGS_PlayerData> onAnotherPlayerLeaveGame;
 
 
     [Header("Control Delegates")]

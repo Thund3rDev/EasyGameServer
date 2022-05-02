@@ -166,12 +166,22 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
                 EGS_User updatedUser = JsonUtility.FromJson<EGS_User>(receivedMessage.messageContent);
                 EGS_Client.instance.SetUser(updatedUser);
 
+                // Save User ID if first time.
+                EGS_Dispatcher.RunOnMainThread(() =>
+                {
+                    if (!PlayerPrefs.HasKey("userID"))
+                        PlayerPrefs.SetInt("userID", updatedUser.GetUserID());
+                });
+
                 // Call the onJoinMasterServer delegate.
                 EGS_ClientDelegates.onJoinMasterServer?.Invoke(updatedUser);
                 break;
             case "DISCONNECT":
                 // Close the socket to disconnect from the server.
                 socketsController.CloseSocket();
+
+                // Change the connected to Master Server value.
+                EGS_Client.instance.connectedToMasterServer = false;
 
                 // Call the onDisconnect delegate.
                 EGS_ClientDelegates.onDisconnect?.Invoke();
@@ -279,10 +289,25 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
                 // Call the onGameReceiveUpdate delegate.
                 EGS_ClientDelegates.onGameReceiveUpdate?.Invoke(updateData);
                 break;
+            case "PLAYER_LEAVE_GAME":
+                // Get the Player ID from the message.
+                int playerID = int.Parse(receivedMessage.messageContent);
+
+                // Get the Player Data and remove from GameData.
+                EGS_PlayerData thisPlayerData = EGS_Client.instance.GetGameData().GetPlayersAtGame()[playerID];
+                EGS_Client.instance.GetGameData().GetPlayersAtGame().Remove(thisPlayerData);
+
+                // Call the onAnotherPlayerLeaveGame delegate.
+                EGS_ClientDelegates.onAnotherPlayerLeaveGame?.Invoke(thisPlayerData);
+
+                EGS_Dispatcher.RunOnMainThread(() => { Debug.Log("Player left Game: " + playerID); });
+                break;
             case "GAME_END":
                 // Get the Game End Data and save it.
                 EGS_GameEndData gameEndData = JsonUtility.FromJson<EGS_GameEndData>(receivedMessage.messageContent);
                 EGS_Client.instance.SetGameEndData(gameEndData);
+
+                EGS_Dispatcher.RunOnMainThread(() => { Debug.Log("gameEndData.GetEndedAsDisconnection(): " + gameEndData.GetEndedAsDisconnection()); });
 
                 // Stop the In Game Sender.
                 EGS_Client.instance.GetInGameSender().StopGameLoop();
@@ -311,6 +336,16 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
 
                 // Call the onChangeFromMasterToGameServer delegate.
                 EGS_ClientDelegates.onChangeFromGameToMasterServer?.Invoke(EGS_Config.serverIP, EGS_Config.serverPort);
+
+                // Check if user left the game.
+                bool userLeftGame = bool.Parse(receivedMessage.messageContent);
+                EGS_Client.instance.GetUser().SetLeftGame(userLeftGame);
+
+                if (userLeftGame)
+                {
+                    // Call the onLeaveGame delegate.
+                    EGS_ClientDelegates.onLeaveGame?.Invoke();
+                }
 
                 // Try to connect to Game Server.
                 socketsController.ConnectToServer();

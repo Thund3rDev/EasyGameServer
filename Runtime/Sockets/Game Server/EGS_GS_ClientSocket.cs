@@ -44,7 +44,7 @@ public class EGS_GS_ClientSocket : EGS_ClientSocket
                     Debug.LogWarning("[GAME SERVER] Server refused the connection."); // LOG.
 
                 // Interrupt the connectionsThread.
-                socketsController.connectionsThread.Interrupt();
+                socketsController.clientConnectionsThread.Interrupt();
 
                 // Try to connect to the server again.
                 EGS_GameServer.instance.TryConnectToServerAgain();
@@ -181,7 +181,7 @@ public class EGS_GS_ClientSocket : EGS_ClientSocket
                 break;
             case "DISCONNECT_AND_CLOSE_GAMESERVER":
                 // Close the socket to disconnect from the server.
-                socketsController.CloseSocket();
+                socketsController.CloseClientSocket();
 
                 // Save as disconnected from the master server.
                 EGS_GameServer.instance.connectedToMasterServer = false;

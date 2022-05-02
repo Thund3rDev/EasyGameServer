@@ -55,6 +55,9 @@ public class EGS_Game
 
     [Tooltip("Copy of the list of players to don't touch the original")]
     private List<EGS_Player> playersCopy = new List<EGS_Player>();
+
+    [Tooltip("Stack that registers the order of players when they leave so they are the last in the game")]
+    private Stack<int> playerIDsOrderStack;
     #endregion
 
     #region Constructors
@@ -70,6 +73,7 @@ public class EGS_Game
         room = room_;
         gameSceneName = gameSceneName_;
         startGame_Lock = new Mutex();
+        playerIDsOrderStack = new Stack<int>();
     }
     #endregion
 
@@ -116,7 +120,7 @@ public class EGS_Game
     /// <summary>
     /// Method FinishGame, that ends the game loop and sends the game results to the server.
     /// </summary>
-    public void FinishGame(List<int> playerIDsOrdered)
+    public void FinishGame(List<int> playerIDsOrdered, bool endedAsDisconnection)
     {
         // If game is not running, do nothing.
         if (!gameRunning)
@@ -129,7 +133,7 @@ public class EGS_Game
         EGS_Message messageToSend = new EGS_Message();
         messageToSend.messageType = "GAME_END";
 
-        EGS_GameEndData gameEndData = new EGS_GameEndData(EGS_GameServer.instance.gameServerID, room, playerIDsOrdered);
+        EGS_GameEndData gameEndData = new EGS_GameEndData(EGS_GameServer.instance.gameServerID, room, playerIDsOrdered, endedAsDisconnection);
         messageToSend.messageContent = JsonUtility.ToJson(gameEndData);
 
         // Call the OnEndGame delegate.
@@ -154,11 +158,34 @@ public class EGS_Game
         lock (players)
         {
             players.Remove(leftPlayer);
+            leftPlayer.GetUser().SetLeftGame(true);
+            playerIDsOrderStack.Push(leftPlayer.GetIngameID());
 
-            // TODO: Tell the master server that the player left the game.
+            // Remove the player from the GameManager.
+            EGS_GameManager.instance.GetPlayersByID().Remove(leftPlayer.GetIngameID());
+            EGS_GameManager.instance.GetPlayersInGame().Remove(leftPlayer);
 
-            if (players.Count == 0)
-                FinishGame(new List<int>());
+            // Tell the master server that the player left the game.
+            string userJson = JsonUtility.ToJson(leftPlayer.GetUser());
+            EGS_GameServer.instance.gameServerSocketsController.SendMessageToMasterServer("USER_LEAVE_GAME", userJson);
+
+            // Tell the players that a player left the game.
+            EGS_Message playerLeftMessage = new EGS_Message("PLAYER_LEAVE_GAME", leftPlayer.GetIngameID().ToString());
+            Broadcast(playerLeftMessage);
+
+            // Check if only one player remains.
+            if (players.Count == 1)
+            {
+                List<int> playerIDsOrdered = new List<int>();
+                playerIDsOrdered.Add(players[0].GetIngameID()); // Winner.
+
+                for (int i = 0; i < playerIDsOrderStack.Count; i++)
+                {
+                    playerIDsOrdered.Add(playerIDsOrderStack.Pop());
+                }
+
+                FinishGame(playerIDsOrdered, true);
+            }
         }
     }
 
@@ -223,20 +250,32 @@ public class EGS_Game
             playersCopy = new List<EGS_Player>(players);
         }
 
-        foreach (EGS_Player p in playersCopy)
+        foreach (EGS_Player player in playersCopy)
         {
             try
             {
                 // Try to send the message to the player.
                 gameLoopLock.WaitOne();
-                socketController.Send(p.GetUser().GetSocket(), message.ConvertMessage());
+                socketController.Send(player.GetUser().GetSocket(), message.ConvertMessage());
             }
             catch (SocketException)
             {
                 // If fails with a SocketException, player closed the socket on his side, disconnect and remove it.
-                socketController.DisconnectClient(p.GetUser().GetSocket());
-                players.Remove(p);
-                Debug.Log("Disconnected player " + p.GetUser().GetUsername() + " from game at room: " + room);
+                // Get the user.
+                EGS_User userToDisconnect = player.GetUser();
+
+                // Remove the player from the game.
+                QuitPlayerFromGame(player);
+
+                // Disconnect the user from the server.
+                socketController.DisconnectUserBySocketException(userToDisconnect);
+
+                // Call the onPlayerLeaveGame delegate.
+                EGS_GameServerDelegates.onPlayerLeaveGame?.Invoke(player);
+
+                // Log.
+                /*if (EGS_Config.DEBUG_MODE > -1)
+                    egs_Log.Log("<color=blue>Disconnected by timeout [CLIENT]</color>: UserID: " + userToDisconnect.GetUserID() + " - Username: " + userToDisconnect.GetUsername() + " - IP: " + userToDisconnect.GetIPAddress() + ".");*/
             }
             catch (Exception e)
             {

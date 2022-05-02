@@ -97,7 +97,18 @@ public class EGS_GameServer : MonoBehaviour
         catch (Exception e) {
             EGS_Dispatcher.RunOnMainThread(() => { test_text.text += "\nERROR: " + e.ToString(); });
         }
+    }
 
+    /// <summary>
+    /// Method OnApplicationQuit, called to free resources when closing the application.
+    /// </summary>
+    private void OnApplicationQuit()
+    {
+        // If already created the sockets controller, interrupt the threads and close the sockets.
+        if (gameServerSocketsController != null)
+        {
+            gameServerSocketsController.CloseSocketsOnApplicationQuit();
+        }
     }
     #endregion
 

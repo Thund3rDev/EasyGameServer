@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
+using System.Timers;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -74,6 +75,7 @@ public class EGS_GS_ServerSocket : EGS_ServerSocket
         EGS_User thisUser;
         EGS_Player thisPlayer;
         long rttPing;
+        string leavingGameString;
 
         // Depending on the messageType, do different things.
         switch (receivedMessage.messageType)
@@ -98,6 +100,7 @@ public class EGS_GS_ServerSocket : EGS_ServerSocket
                     // Get the received user
                     thisUser = JsonUtility.FromJson<EGS_User>(receivedMessage.messageContent);
                     thisUser.SetSocket(handler);
+                    thisUser.SetIPAddress(handler.RemoteEndPoint.ToString());
 
                     // If the user is on the list to play this game.
                     if (allUsers.ContainsKey(thisUser.GetUserID()))
@@ -108,7 +111,7 @@ public class EGS_GS_ServerSocket : EGS_ServerSocket
                         ConnectUser(thisUser, handler);
 
                         // Put a heartbeat for the client socket.
-                        CreateRTT(handler);
+                        CreateRTT(handler, EGS_Control.EGS_Type.Client);
 
                         // Echo the data back to the client.
                         messageToSend.messageType = "JOIN_GAME_SERVER";
@@ -138,12 +141,6 @@ public class EGS_GS_ServerSocket : EGS_ServerSocket
                     EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServer.instance.test_text.text += "\nEXCEPTION: " + e.ToString(); });
                 }
                 break;
-            case "DISCONNECT_USER":
-                // Get the received user
-                thisUser = JsonUtility.FromJson<EGS_User>(receivedMessage.messageContent);
-
-                DisconnectUser(thisUser);
-                break;
             case "PLAYER_INPUT":
                 // Get the input data
                 EGS_PlayerInputs playerInputs = JsonUtility.FromJson<EGS_PlayerInputs>(receivedMessage.messageContent);
@@ -159,13 +156,27 @@ public class EGS_GS_ServerSocket : EGS_ServerSocket
                 EGS_GameServerDelegates.onPlayerSendInput?.Invoke(thisPlayer, playerInputs);
                 break;
             case "LEAVE_GAME":
+                // Get the user.
+                thisUser = connectedUsers[handler];
+
                 // Get the player.
                 int playerID = int.Parse(receivedMessage.messageContent);
                 thisPlayer = EGS_GameManager.instance.GetPlayersByID()[playerID];
 
                 // Remove the player from the game.
-                EGS_GameManager.instance.GetPlayersByID().Remove(playerID);
                 EGS_GameServer.instance.thisGame.QuitPlayerFromGame(thisPlayer);
+
+                // Disconnect the user from the server.
+                DisconnectUser(thisUser);
+
+                // Echo the disconnection back to the client.
+                messageToSend.messageType = "DISCONNECT_TO_MASTER_SERVER";
+
+                leavingGameString = bool.TrueString;
+                messageToSend.messageContent = leavingGameString;
+                jsonMSG = messageToSend.ConvertMessage();
+
+                Send(handler, jsonMSG);
 
                 // Call the onPlayerLeaveGame delegate.
                 EGS_GameServerDelegates.onPlayerLeaveGame?.Invoke(thisPlayer);
@@ -179,6 +190,9 @@ public class EGS_GS_ServerSocket : EGS_ServerSocket
 
                 // Echo the disconnection back to the client.
                 messageToSend.messageType = "DISCONNECT_TO_MASTER_SERVER";
+
+                leavingGameString = bool.FalseString;
+                messageToSend.messageContent = leavingGameString;
                 jsonMSG = messageToSend.ConvertMessage();
 
                 Send(handler, jsonMSG);
@@ -213,11 +227,25 @@ public class EGS_GS_ServerSocket : EGS_ServerSocket
     /// Method OnClientDisconnected, that manages a disconnection.
     /// </summary>
     /// <param name="client_socket">Client socket disconnected from the server</param>
-    public override void OnClientDisconnected(Socket client_socket)
+    /// <param name="clientType">Type of the client</param>
+    public override void OnClientDisconnected(Socket client_socket, EGS_Control.EGS_Type clientType)
     {
-        // TODO: Make this work.
+        string disconnectedIP = "";
+
+        if (clientType.Equals(EGS_Control.EGS_Type.Client))
+        {
+            EGS_User userToDisconnect = connectedUsers[client_socket];
+            disconnectedIP = userToDisconnect.GetIPAddress();
+
+            lock (connectedUsers)
+            {
+                connectedUsers.Remove(client_socket);
+            }
+        }
+
+        // LOG.
         /*if (EGS_Config.DEBUG_MODE > 2)
-            egs_Log.Log("<color=blue>Closed connection</color>. IP: " + client_socket.RemoteEndPoint + ".");*/
+            egs_Log.Log("<color=blue>Closed connection</color>. IP: " + disconnectedIP + ".");*/
     }
     #endregion
 
@@ -230,7 +258,7 @@ public class EGS_GS_ServerSocket : EGS_ServerSocket
     private void DisconnectUserToMasterServer(EGS_User userToDisconnect, Socket client_socket)
     {
         // Disconnect the client.
-        DisconnectClient(client_socket);
+        DisconnectClient(client_socket, EGS_Control.EGS_Type.Client);
 
         // Update the players still connected value for the end controller.
         EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServerEndController.instance.UpdateNumOfPlayersConnected(socketsController); });
@@ -266,12 +294,60 @@ public class EGS_GS_ServerSocket : EGS_ServerSocket
     {
         base.DisconnectUser(userToDisconnect);
 
+        // Update the players still connected value for the end controller.
+        EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServerEndController.instance.UpdateNumOfPlayersConnected(socketsController); });
+
         // Display data on the console. // LOG.
         //if (EGS_Config.DEBUG_MODE > -1)
-            //egs_Log.Log("<color=purple>Disconnected User</color>: UserID: " + userToDisconnect.GetUserID() + " - Username: " + userToDisconnect.GetUsername() + " - IP: " + userToDisconnect.GetSocket().RemoteEndPoint + ".");
+        //egs_Log.Log("<color=purple>Disconnected User</color>: UserID: " + userToDisconnect.GetUserID() + " - Username: " + userToDisconnect.GetUsername() + " - IP: " + userToDisconnect.GetSocket().RemoteEndPoint + ".");
 
         // Call the onUserDisconnect delegate.
         EGS_GameServerDelegates.onUserDisconnect?.Invoke(userToDisconnect);
+    }
+
+    /// <summary>
+    /// Method DisconnectUserBySocketException, called when GameServer can't message a client.
+    /// </summary>
+    /// <param name="userToDisconnect">User to disconnect</param>
+    public void DisconnectUserBySocketException(EGS_User userToDisconnect)
+    {
+        DisconnectUser(userToDisconnect);
+    }
+
+    /// <summary>
+    /// Method DisconnectClientByTimeout, to disconnect a client when the timer was completed.
+    /// </summary>
+    /// <param name="sender">Object needed by the timer</param>
+    /// <param name="e">ElapsedEventArgs needed by the timer</param>
+    /// <param name="client_socket">Socket that handles the client</param>
+    /// <param name="clientType">Type of the client</param>
+    public override void DisconnectClientByTimeout(object sender, ElapsedEventArgs e, Socket client_socket, EGS_Control.EGS_Type clientType)
+    {
+        /*if (clientType.Equals(EGS_Control.EGS_Type.Client))
+        {
+            // Get the user.
+            EGS_User userToDisconnect = connectedUsers[client_socket];
+            EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServerEndController.instance.test_text.text += "\nDisconnectClientByTimeout: " + userToDisconnect.GetUsername(); });
+
+            // Get the player.
+            EGS_Player playerToDisconnect = EGS_GameManager.instance.GetPlayersByID()[userToDisconnect.GetIngameID()];
+            EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServerEndController.instance.test_text.text += "\nplayerToDisconnect: " + playerToDisconnect.GetIngameID(); });
+
+            // Remove the player from the game.
+            EGS_GameServer.instance.thisGame.QuitPlayerFromGame(playerToDisconnect);
+
+            EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServerEndController.instance.test_text.text += "\nBeforeDisconnectUser: "; });
+            // Disconnect the user from the server.
+            DisconnectUser(userToDisconnect);
+            EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServerEndController.instance.test_text.text += "\nAfterDisconnectUser: "; });
+
+            // Call the onPlayerLeaveGame delegate.
+            EGS_GameServerDelegates.onPlayerLeaveGame?.Invoke(playerToDisconnect);
+
+            // Log.
+            /*if (EGS_Config.DEBUG_MODE > -1)
+                egs_Log.Log("<color=blue>Disconnected by timeout [CLIENT]</color>: UserID: " + userToDisconnect.GetUserID() + " - Username: " + userToDisconnect.GetUsername() + " - IP: " + userToDisconnect.GetIPAddress() + ".");
+        }*/
     }
     #endregion
 

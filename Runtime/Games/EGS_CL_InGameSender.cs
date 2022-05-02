@@ -94,4 +94,18 @@ public class EGS_CL_InGameSender
         EGS_ClientDelegates.onGameSenderTick?.Invoke();
     }
     #endregion
+
+    #region Getters and Setters
+    /// <summary>
+    /// Getter for the GameRunning bool.
+    /// </summary>
+    /// <returns>Game Running value</returns>
+    public bool IsGameRunning() { return gameRunning; }
+
+    /// <summary>
+    /// Setter for the GameRunning bool.
+    /// </summary>
+    /// <param name="gameRunning">New Game Running value</param>
+    public void SetGameRunning(bool gameRunning_) { this.gameRunning = gameRunning_; }
+    #endregion
 }

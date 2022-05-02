@@ -163,13 +163,15 @@ public class EGS_ServerSocket
     /// <param name="ar">IAsyncResult</param>
     protected virtual void SendCallback(IAsyncResult ar)
     {
-        try
-        {
-            // Retrieve the socket from the state object.  
-            Socket handler = (Socket)ar.AsyncState;
+        // Retrieve the socket from the state object.  
+        Socket handler = (Socket)ar.AsyncState;
 
-            // Complete sending the data to the remote device.  
-            int bytesSent = handler.EndSend(ar);
+        // Complete sending the data to the remote device.  
+        int bytesSent = handler.EndSend(ar);
+
+        /*try
+        {
+            
 
         }
         catch (SocketException)
@@ -179,7 +181,7 @@ public class EGS_ServerSocket
         catch (Exception)
         {
             // TODO: Control this Exception.
-        }
+        }*/
     }
 
     /// <summary>
@@ -217,17 +219,8 @@ public class EGS_ServerSocket
     /// <param name="userToDisconnect">User to disconnect from the server</param>
     protected virtual void DisconnectUser(EGS_User userToDisconnect)
     {
-        // Get the socket.
-        userToDisconnect.SetSocket(allUsers[userToDisconnect.GetUserID()].GetSocket());
-
-        // Disconnect it from server.
-        lock (connectedUsers)
-        {
-            connectedUsers.Remove(userToDisconnect.GetSocket());
-        }
-
         // Disconnect the client.
-        DisconnectClient(userToDisconnect.GetSocket());
+        DisconnectClient(userToDisconnect.GetSocket(), EGS_Control.EGS_Type.Client);
     }
     #endregion
 
@@ -246,7 +239,8 @@ public class EGS_ServerSocket
     /// Method OnClientDisconnected, that manages a disconnection.
     /// </summary>
     /// <param name="client_socket">Client socket disconnected from the server</param>
-    public virtual void OnClientDisconnected(Socket client_socket)
+    /// <param name="clientType">Type of the client</param>
+    public virtual void OnClientDisconnected(Socket client_socket, EGS_Control.EGS_Type clientType)
     {
 
     }
@@ -256,9 +250,10 @@ public class EGS_ServerSocket
     /// Method DisconnectClient, that disconnect a client from the server.
     /// </summary>
     /// <param name="client_socket">Socket that handles the client</param>
-    public void DisconnectClient(Socket client_socket)
+    /// <param name="clientType">Type of the client</param>
+    public void DisconnectClient(Socket client_socket, EGS_Control.EGS_Type clientType)
     {
-        OnClientDisconnected(client_socket);
+        OnClientDisconnected(client_socket, clientType);
         StopRTT(client_socket);
     }
 
@@ -266,10 +261,14 @@ public class EGS_ServerSocket
     /// Method CreateRTT, that puts a round trip time to check if clients are still connected.
     /// </summary>
     /// <param name="client_socket">Socket that handles the client</param>
-    protected virtual void CreateRTT(Socket client_socket)
+    /// <param name="clientType">Type of the client</param>
+    protected virtual void CreateRTT(Socket client_socket, EGS_Control.EGS_Type clientType)
     {
-        EGS_RoundTripTime thisRoundTripTime = new EGS_RoundTripTime(this, client_socket);
-        roundTripTimes.Add(client_socket, thisRoundTripTime);
+        EGS_RoundTripTime thisRoundTripTime = new EGS_RoundTripTime(this, client_socket, clientType);
+        lock (roundTripTimes)
+        {
+            roundTripTimes.Add(client_socket, thisRoundTripTime);
+        }
     }
 
     /// <summary>
@@ -291,14 +290,11 @@ public class EGS_ServerSocket
     /// <param name="sender">Object needed by the timer</param>
     /// <param name="e">ElapsedEventArgs needed by the timer</param>
     /// <param name="client_socket">Socket that handles the client</param>
-    public virtual void DisconnectClientByTimeout(object sender, ElapsedEventArgs e, Socket client_socket)
+    /// <param name="clientType">Type of the client</param>
+    public virtual void DisconnectClientByTimeout(object sender, ElapsedEventArgs e, Socket client_socket, EGS_Control.EGS_Type clientType)
     {
         // Disconnect the client socket.
-        EGS_User userToDisconnect = connectedUsers[client_socket];
-        DisconnectClient(client_socket);
-
-        // Remove the user from the connectedUsers dictionary.
-        connectedUsers.Remove(client_socket);
+        DisconnectClient(client_socket, clientType);
     }
     #endregion
 

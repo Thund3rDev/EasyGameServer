@@ -15,6 +15,9 @@ public class EGS_GameEndData
 
     [Tooltip("Room number")]
     [SerializeField] private int room;
+
+    [Tooltip("Bool that indicates if the game endedAsDisconnection")]
+    [SerializeField] private bool endedAsDisconnection;
     #endregion
 
     #region Constructors
@@ -26,6 +29,7 @@ public class EGS_GameEndData
         this.gameServerID = -1;
         this.room = -1;
         this.playerIDsOrderList = new List<int>();
+        this.endedAsDisconnection = false;
     }
 
     /// <summary>
@@ -36,16 +40,18 @@ public class EGS_GameEndData
         this.gameServerID = gameServerID_;
         this.room = -1;
         this.playerIDsOrderList = new List<int>();
+        this.endedAsDisconnection = false;
     }
 
     /// <summary>
     /// Full Constructor
     /// </summary>
-    public EGS_GameEndData(int gameServerID_, int room_, List<int> userIDsOrderList_)
+    public EGS_GameEndData(int gameServerID_, int room_, List<int> userIDsOrderList_, bool endedAsDisconnection_)
     {
         this.gameServerID = gameServerID_;
         this.room = room_;
         this.playerIDsOrderList = new List<int>(userIDsOrderList_);
+        this.endedAsDisconnection = endedAsDisconnection_;
     }
     #endregion
 
@@ -85,5 +91,17 @@ public class EGS_GameEndData
     /// </summary>
     /// <param name="room_">New room number</param>
     public void SetRoom(int room_) { room = room_; }
+
+    /// <summary>
+    /// Getter for the endedAsDisconnection bool.
+    /// </summary>
+    /// <returns>Bool that indicates if the game ended as disconnection</returns>
+    public bool GetEndedAsDisconnection() { return endedAsDisconnection; }
+
+    /// <summary>
+    /// Setter for the endedAsDisconnection bool.
+    /// </summary>
+    /// <param name="endedAsDisconnection_">New endedAsDisconnection value</param>
+    public void SetEndedAsDisconnection(bool endedAsDisconnection_) { endedAsDisconnection = endedAsDisconnection_; }
     #endregion
 }

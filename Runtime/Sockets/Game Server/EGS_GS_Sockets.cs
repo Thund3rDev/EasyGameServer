@@ -1,3 +1,4 @@
+using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -28,8 +29,11 @@ public class EGS_GS_Sockets
     [Tooltip("ManualResetEvent for when game server can handle player connections")]
     public ManualResetEvent startDone = new ManualResetEvent(false);
 
-    [Tooltip("Thread that handles the connections")]
-    public Thread connectionsThread;
+    [Tooltip("Thread that handles the client connections")]
+    public Thread clientConnectionsThread;
+
+    [Tooltip("Thread that handles the server connections")]
+    public Thread serverConnectionsThread;
     #endregion
 
     #region Constructors
@@ -49,13 +53,13 @@ public class EGS_GS_Sockets
     /// </summary>
     public void ConnectToMasterServer()
     {
-        // Create socket and get EndPoint
+        // Create socket and get EndPoint.
         EndPoint remoteEP = CreateSocket(EGS_Config.serverIP, EGS_Config.serverPort);
 
-        // Connect to server
+        // Connect to server.
         clientSocketHandler = new EGS_GS_ClientSocket(this);
-        connectionsThread = new Thread(() => clientSocketHandler.StartClient(remoteEP, socket_client));
-        connectionsThread.Start();
+        clientConnectionsThread = new Thread(() => clientSocketHandler.StartClient(remoteEP, socket_client));
+        clientConnectionsThread.Start();
     }
 
     /// <summary>
@@ -68,7 +72,8 @@ public class EGS_GS_Sockets
 
         // Connect to server.
         serverSocketHandler = new EGS_GS_ServerSocket(this);
-        new Thread(() => serverSocketHandler.StartListening(localEP, socket_server, EGS_Config.PLAYERS_PER_GAME)).Start();
+        serverConnectionsThread = new Thread(() => serverSocketHandler.StartListening(localEP, socket_server, EGS_Config.PLAYERS_PER_GAME));
+        serverConnectionsThread.Start();
 
         // Create the Game.
         CreateGame();
@@ -126,7 +131,7 @@ public class EGS_GS_Sockets
     public void Disconnect()
     {
         // Close the socket.
-        CloseSocket();
+        CloseClientSocket();
     }
 
     /// <summary>
@@ -191,15 +196,53 @@ public class EGS_GS_Sockets
     }
 
     /// <summary>
-    /// Method CloseSocket, to close the client socket.
+    /// Method CloseClientSocket, to close the client socket.
     /// </summary>
-    public void CloseSocket()
+    public void CloseClientSocket()
     {
         socket_client.Shutdown(SocketShutdown.Both);
         socket_client.Close();
 
-        // TODO: Log on the Game Server.
-        //Debug.Log("[GameServer] Closed socket.");
+        // Log on the Game Server.
+        //Debug.Log("[GameServer] Closed client socket.");
+    }
+
+    /// <summary>
+    /// Method CloseServerSocket, to close the client socket.
+    /// </summary>
+    public void CloseServerSocket()
+    {
+        socket_server.Shutdown(SocketShutdown.Both);
+        socket_server.Close();
+
+        // Log on the Game Server.
+        //Debug.Log("[GameServer] Closed server socket.");
+    }
+
+    /// <summary>
+    /// Method CloseSocketOnApplicationQuit, to close the client socket when closing the application.
+    /// </summary>
+    public void CloseSocketsOnApplicationQuit()
+    {
+        try
+        {
+            clientConnectionsThread.Interrupt();
+            serverConnectionsThread.Interrupt();
+
+            if (socket_client.Connected)
+                CloseClientSocket();
+
+            if (socket_server.Connected)
+                CloseServerSocket();
+        }
+        catch (SocketException se)
+        {
+            Debug.LogError("[GAME_SERVER] SocketException: " + se.ToString());
+        }
+        catch (ObjectDisposedException ode)
+        {
+            Debug.LogError("[GAME_SERVER] ObjectDisposedException: " + ode.ToString());
+        }
     }
 
     /// <summary>

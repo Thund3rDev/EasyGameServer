@@ -29,6 +29,9 @@ public class EGS_GameServerData
     [Tooltip("Game Server ID")]
     private int gameServerID;
 
+    [Tooltip("Game Server IP Address")]
+    private string ipAddress;
+
     [Tooltip("Room number")]
     private int room;
 
@@ -45,10 +48,11 @@ public class EGS_GameServerData
     /// <param name="room_">Room number</param>
     public EGS_GameServerData(int gameServerID_, EGS_GameFoundData gamefoundData_)
     {
-        gameServerID = gameServerID_;
-        gameFoundData = gamefoundData_;
-        room = gamefoundData_.GetRoom();
-        status = EGS_GameServerState.LAUNCHED;
+        this.gameServerID = gameServerID_;
+        this.gameFoundData = gamefoundData_;
+        this.room = gamefoundData_.GetRoom();
+        this.status = EGS_GameServerState.LAUNCHED;
+        this.ipAddress = "";
     }
     #endregion
 
@@ -88,6 +92,18 @@ public class EGS_GameServerData
     /// </summary>
     /// <param name="g">New GameServer ID</param>
     public void SetGameServerID(int g) { gameServerID = g; }
+
+    /// <summary>
+    /// Getter for the GameServer IP Address.
+    /// </summary>
+    /// <returns>GameServer IP Address</returns>
+    public string GetIPAddress() { return ipAddress; }
+
+    /// <summary>
+    /// Setter for the GameServer IP Address.
+    /// </summary>
+    /// <param name="u">New GameServer IP Address</param>
+    public void SetIPAddress(string i) { ipAddress = i; }
 
     /// <summary>
     /// Getter for the room.

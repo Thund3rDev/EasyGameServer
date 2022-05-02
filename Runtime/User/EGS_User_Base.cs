@@ -14,6 +14,9 @@ public class EGS_User_Base
     [Tooltip("Socket connected to the server")]
     [SerializeField] protected Socket socket;
 
+    [Tooltip("User IP Address")]
+    [SerializeField] protected string ipAddress;
+
     [Tooltip("User name")]
     [SerializeField] protected string username;
 
@@ -22,6 +25,9 @@ public class EGS_User_Base
 
     [Tooltip("Ingame ID")]
     [SerializeField] protected int ingameID;
+
+    [Tooltip("Bool indicating if user left its game")]
+    [SerializeField] protected bool leftGame;
     #endregion
 
     #region Constructors
@@ -31,9 +37,11 @@ public class EGS_User_Base
     public EGS_User_Base()
     {
         this.userID = -1;
+        this.ipAddress = "";
         this.username = "";
         this.room = -1;
         this.ingameID = -1;
+        this.leftGame = false;
     }
     #endregion
 
@@ -61,6 +69,18 @@ public class EGS_User_Base
     /// </summary>
     /// <param name="s">New user socket</param>
     public void SetSocket(Socket s) { socket = s; }
+
+    /// <summary>
+    /// Getter for the user IP Address.
+    /// </summary>
+    /// <returns>User IP Address</returns>
+    public string GetIPAddress() { return ipAddress; }
+
+    /// <summary>
+    /// Setter for the user IP Address.
+    /// </summary>
+    /// <param name="u">New User IP Address</param>
+    public void SetIPAddress(string i) { ipAddress = i; }
 
     /// <summary>
     /// Getter for the user name.
@@ -97,6 +117,18 @@ public class EGS_User_Base
     /// </summary>
     /// <param name="i">New ingame ID</param>
     public void SetIngameID(int i) { ingameID = i; }
+
+    /// <summary>
+    /// Getter for the left game bool.
+    /// </summary>
+    /// <returns>Bool indicating if user left game</returns>
+    public bool DidLeaveGame() { return leftGame; }
+
+    /// <summary>
+    /// Setter for the nleft game bool.
+    /// </summary>
+    /// <param name="l">New bool indicating if user left game</param>
+    public void SetLeftGame(bool l) { leftGame = l; }
     #endregion
 
 }

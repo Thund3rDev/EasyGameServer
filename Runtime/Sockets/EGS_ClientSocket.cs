@@ -101,12 +101,15 @@ public class EGS_ClientSocket
             StateObject state = new StateObject();
             state.workSocket = client;
 
-            // Begin receiving the data from the remote device.  
-            client.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
+            if (client.Connected)
+            {
+                // Begin receiving the data from the remote device.  
+                client.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
                 new AsyncCallback(ReceiveCallback), state);
 
-            // Wait until the receive is done.
-            receiveDone.WaitOne();
+                // Wait until the receive is done.
+                receiveDone.WaitOne();
+            }
         }
         catch (Exception e)
         {

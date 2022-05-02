@@ -22,7 +22,7 @@ public class EGS_GameManager : MonoBehaviour
 
     [Header("References")]
     [Tooltip("Client Game Manager Script to destroy")]
-    [SerializeField] private MonoBehaviour gameManager = null;
+    [SerializeField] private MonoBehaviour gameManager = null; // TODO: List of scripts to delete.
     #endregion
 
     #region Unity Methods

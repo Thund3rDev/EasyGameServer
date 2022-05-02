@@ -68,6 +68,20 @@ public class EGS_Client : MonoBehaviour
             Destroy(this.gameObject);
         }
     }
+
+    /// <summary>
+    /// Method OnApplicationQuit, called to free resources when closing the application.
+    /// </summary>
+    private void OnApplicationQuit()
+    {
+        // If the in game sender is running.
+        if (inGameSender != null && inGameSender.IsGameRunning())
+            inGameSender.StopGameLoop();
+
+        // If already created the client socket controller, close the socket.
+        if (clientSocketController != null)
+            clientSocketController.CloseSocketOnApplicationQuit();
+    }
     #endregion
 
     #region Class Methods
@@ -94,6 +108,14 @@ public class EGS_Client : MonoBehaviour
         
         // Create the user.
         user = new EGS_User();
+
+        // Get the stored user ID.
+        EGS_Dispatcher.RunOnMainThread(() =>
+        {
+            if (PlayerPrefs.HasKey("userID"))
+                user.SetUserID(PlayerPrefs.GetInt("userID"));
+        });
+
         EGS_ClientDelegates.onUserCreate?.Invoke(user);
 
         // Read server config data.
@@ -132,6 +154,11 @@ public class EGS_Client : MonoBehaviour
             // Call the onCantConnectToServer delegate.
             EGS_ClientDelegates.onCantConnectToServer?.Invoke();
         }
+    }
+
+    public void LeaveGame()
+    {
+        clientSocketController.SendMessage("LEAVE_GAME", user.GetIngameID().ToString());
     }
 
     /// <summary>

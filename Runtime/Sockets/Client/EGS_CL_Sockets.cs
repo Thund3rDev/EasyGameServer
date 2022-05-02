@@ -1,3 +1,4 @@
+using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -119,6 +120,28 @@ public class EGS_CL_Sockets
         socket_client.Close();
 
         Debug.Log("[CLIENT] Closed socket.");
+    }
+
+    /// <summary>
+    /// Method CloseSocketOnApplicationQuit, to close the client socket when closing the application.
+    /// </summary>
+    public void CloseSocketOnApplicationQuit()
+    {
+        try
+        {
+            connectionsThread.Interrupt();
+
+            if (socket_client.Connected)
+                CloseSocket();
+        }
+        catch (SocketException se)
+        {
+            Debug.LogError("SocketException: " + se.ToString());
+        }
+        catch (ObjectDisposedException ode)
+        {
+            Debug.LogError("ObjectDisposedException: " + ode.ToString());
+        }
     }
     #endregion
 

@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics;
 using System.Net.Sockets;
 using System.Threading;
@@ -22,6 +23,12 @@ public class EGS_RoundTripTime
     [Tooltip("Bool that indicates if it is stilLConnected")]
     private bool stillConnected;
 
+    [Tooltip("Mutex to don't let change the value of stillConnected in the middle of the execution")]
+    private Mutex connectedMutex = new Mutex();
+
+    [Tooltip("Type of the client for the RTT")]
+    private EGS_Control.EGS_Type clientType;
+
 
     [Header("References")]
     [Tooltip("Reference to the servert socket controller")]
@@ -42,11 +49,13 @@ public class EGS_RoundTripTime
     /// </summary>
     /// <param name="socketController_">Reference to the server socket controller</param>
     /// <param name="client_socket_">Reference to the client socket assigned</param>
-    public EGS_RoundTripTime(EGS_ServerSocket socketController_, Socket client_socket_)
+    /// <param name="clientType_">Type of client</param>
+    public EGS_RoundTripTime(EGS_ServerSocket socketController_, Socket client_socket_, EGS_Control.EGS_Type clientType_)
     {
         // Assign references.
         socketController = socketController_;
         client_socket = client_socket_;
+        clientType = clientType_;
 
         // Initialize variables.
         roundTripTimeStopwatch = new Stopwatch();
@@ -77,9 +86,12 @@ public class EGS_RoundTripTime
     /// </summary>
     public void StopRTT()
     {
-        stillConnected = false;
         timeoutTimer.Stop();
         timeoutTimer.Close();
+
+        connectedMutex.WaitOne();
+        stillConnected = false;
+        connectedMutex.ReleaseMutex();
     }
     #endregion
 
@@ -90,7 +102,7 @@ public class EGS_RoundTripTime
     private void StartTimeoutTimer() {
         timeoutTimer = new System.Timers.Timer(EGS_Config.DISCONNECT_TIMEOUT);
         timeoutTimer.Start();
-        timeoutTimer.Elapsed += (sender, e) => socketController.DisconnectClientByTimeout(sender, e, client_socket);
+        timeoutTimer.Elapsed += (sender, e) => socketController.DisconnectClientByTimeout(sender, e, client_socket, clientType);
     }
 
     /// <summary>
@@ -108,12 +120,16 @@ public class EGS_RoundTripTime
     {
         while (stillConnected)
         {
+            connectedMutex.WaitOne();
+
+            // Checking that still connected to be sure it didn't change before the mutex.
+            if (!stillConnected)
+                return;
+
             EGS_Message msg = new EGS_Message();
             msg.messageType = "RTT";
             msg.messageContent = lastRTTMilliseconds.ToString();
             string jsonMSG = msg.ConvertMessage();
-            
-            roundTripTimeStopwatch.Start();
 
             try
             {
@@ -121,10 +137,18 @@ public class EGS_RoundTripTime
                     socketController.Send(client_socket, jsonMSG);
                 // TODO: BUG: If this fails, client_socket loses its RemoteEndPoint.
             }
-            catch (SocketException)
+            finally
             {
-                // TODO: Control this exception.
+                connectedMutex.ReleaseMutex();
             }
+            /*catch (SocketException se)
+            {
+                
+                // TODO: Control this exception.
+            }*/
+
+            if (!roundTripTimeStopwatch.IsRunning)
+                roundTripTimeStopwatch.Start();
 
             Thread.Sleep(EGS_Config.TIME_BETWEEN_RTTS);
         }
