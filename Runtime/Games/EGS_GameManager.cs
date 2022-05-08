@@ -53,8 +53,10 @@ public class EGS_GameManager : MonoBehaviour
         }
         else
         {
-            // Destroy the client game manager GameObject.
+            // Destroy the client game manager GameObject. // TODO: Not needed, client game manager should check with EGS_Type.
             Destroy(gameManager.gameObject);
+
+            // For each player in the game.
             foreach (EGS_Player player in playersInGame)
             {
                 // Assign User info.
@@ -71,15 +73,6 @@ public class EGS_GameManager : MonoBehaviour
                 playersByID.Add(player.GetIngameID(), player);
             }
 
-            // Send the start game message and info.
-            EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServerDelegates.onGameStart(); });
-
-            // TODO: Send to the master server the info of the started game.
-
-            EGS_Message messageToSend = new EGS_Message();
-            messageToSend.messageType = "GAME_START";
-            messageToSend.messageContent = "";
-
             // Get the start game positions.
             EGS_UpdateData startUpdateData = new EGS_UpdateData(EGS_GameServer.instance.thisGame.GetRoom());
 
@@ -89,8 +82,11 @@ public class EGS_GameManager : MonoBehaviour
                 startUpdateData.GetPlayersAtGame().Add(playerData);
             }
 
-            messageToSend.messageContent = JsonUtility.ToJson(startUpdateData);
+            // Create the message to send to the players and master server.
+            string gameStartMessageContent = JsonUtility.ToJson(startUpdateData);
+            EGS_Message messageToSend = new EGS_Message("GAME_START", gameStartMessageContent);
 
+            // Log the players connected on GameStart.
             string playersString = "";
             foreach (EGS_User user in EGS_GameServer.instance.gameFoundData.GetUsersToGame())
             {
@@ -98,11 +94,15 @@ public class EGS_GameManager : MonoBehaviour
             }
 
             EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServer.instance.test_text.text += "\n" + EGS_GameServer.instance.thisGame.GetPlayers().Count + " | " + playersString; });
+
+            // For each user / player, send the game start message.
             foreach (EGS_User user in EGS_GameServer.instance.gameFoundData.GetUsersToGame())
             {
                 EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServer.instance.test_text.text += "\nSEND TO : " + user.GetUsername(); });
                 EGS_GameServer.instance.SendMessageToClient(user.GetSocket(), messageToSend);
             }
+
+            // TODO: Send to the master server the info of the started game.
 
             // Call the onGameStart delegate.
             EGS_GameServerDelegates.onGameStart?.Invoke();

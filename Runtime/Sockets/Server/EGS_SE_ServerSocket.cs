@@ -23,21 +23,13 @@ public class EGS_SE_ServerSocket : EGS_ServerSocket
     [Header("Game Servers")]
     [Tooltip("Dictionary that stores the CURRENTLY CONNECTED game servers by their socket")]
     protected Dictionary<Socket, EGS_GameServerData> connectedGameServers = new Dictionary<Socket, EGS_GameServerData>();
-
-    [Header("References")]
-    [Tooltip("Reference to the Log")]
-    private EGS_Log egs_Log = null;
     #endregion
 
     #region Constructors
     /// <summary>
     /// Base constructor.
     /// </summary>
-    /// <param name="log">Reference to the log</param>
-    public EGS_SE_ServerSocket(EGS_Log log) : base()
-    {
-        this.egs_Log = log;
-    }
+    public EGS_SE_ServerSocket() : base() {}
     #endregion
 
     #region Class Methods
@@ -57,13 +49,12 @@ public class EGS_SE_ServerSocket : EGS_ServerSocket
         }
         catch (Exception e)
         {
-            egs_Log.LogError("Error parsing receivedMessage from JSON: " + e.StackTrace);
+            EGS_Log.instance.LogError("Error parsing receivedMessage from JSON: " + e.StackTrace, EGS_Control.EGS_DebugLevel.Minimal);
             throw e;
         }
 
-        if (EGS_Config.DEBUG_MODE > 2)
-            egs_Log.Log("Read " + content.Length + " bytes from socket - " + handler.RemoteEndPoint +
-            " - Message type: " + receivedMessage.messageType);
+        EGS_Log.instance.Log("Read " + content.Length + " bytes from socket - " + handler.RemoteEndPoint +
+        " - Message type: " + receivedMessage.GetMessageType(), EGS_Control.EGS_DebugLevel.Complete);
 
         // Message to send back.
         EGS_Message messageToSend = new EGS_Message();
@@ -77,15 +68,14 @@ public class EGS_SE_ServerSocket : EGS_ServerSocket
         string[] messageInfo;
 
         // Depending on the messageType, do different things.
-        switch (receivedMessage.messageType)
+        switch (receivedMessage.GetMessageType())
         {
             case "RTT_RESPONSE_CLIENT":
                 // Get the needed data.
                 rttPing = roundTripTimes[handler].ReceiveRTT();
                 thisUser = connectedUsers[handler];
 
-                if (EGS_Config.DEBUG_MODE > 2)
-                    egs_Log.Log("<color=blue>Round Trip Time (Client):</color> " + thisUser.GetUsername() + " (" + rttPing + " ms).");
+                EGS_Log.instance.Log("<color=#a52a2aff>Round Trip Time (Client):</color> " + thisUser.GetUsername() + " (" + rttPing + " ms).", EGS_Control.EGS_DebugLevel.Complete);
 
                 // Call the onClientRTT delegate with UserID and the rtt ping in milliseconds.
                 EGS_MasterServerDelegates.onClientRTT?.Invoke(thisUser.GetUserID(), rttPing);
@@ -93,17 +83,16 @@ public class EGS_SE_ServerSocket : EGS_ServerSocket
             case "RTT_RESPONSE_GAME_SERVER":
                 // Get the needed data.
                 rttPing = roundTripTimes[handler].ReceiveRTT();
-                gameServerID = int.Parse(receivedMessage.messageContent);
+                gameServerID = int.Parse(receivedMessage.GetMessageContent());
 
-                if (EGS_Config.DEBUG_MODE > 2)
-                    egs_Log.Log("<color=blue>Round Trip Time (Game Server)</color> ID: " + receivedMessage.messageContent + " (" + rttPing + " ms).");
+                EGS_Log.instance.Log("<color=#a52a2aff>Round Trip Time (Game Server)</color> ID: " + receivedMessage.GetMessageContent() + " (" + rttPing + " ms).", EGS_Control.EGS_DebugLevel.Complete);
 
                 // Call the onGameServerRTT delegate with GameServerID and the rtt ping in milliseconds.
                 EGS_MasterServerDelegates.onGameServerRTT?.Invoke(gameServerID, rttPing);
                 break;
             case "USER_JOIN_SERVER":
                 // Get the received user.
-                thisUser = JsonUtility.FromJson<EGS_User>(receivedMessage.messageContent);
+                thisUser = JsonUtility.FromJson<EGS_User>(receivedMessage.GetMessageContent());
                 thisUser.SetSocket(handler);
                 thisUser.SetIPAddress(handler.RemoteEndPoint.ToString());
 
@@ -128,38 +117,27 @@ public class EGS_SE_ServerSocket : EGS_ServerSocket
                 if (returning)
                 {
                     // Display data on the console.
-                    if (EGS_Config.DEBUG_MODE > -1 && !thisUser.DidLeaveGame())
-                        egs_Log.Log("<color=purple>Returning player from Game Server</color>: UserID: " + thisUser.GetUserID() + " - Username: " + thisUser.GetUsername() + " - IP: " + thisUser.GetIPAddress() + " - Room: " + thisUser.GetRoom() + ".");
+                    EGS_Log.instance.Log("<color=purple>Returning player from Game Server</color>: UserID: " + thisUser.GetUserID() + " - Username: " + thisUser.GetUsername() + " - IP: " + thisUser.GetIPAddress() + " - Room: " + thisUser.GetRoom() + ".", EGS_Control.EGS_DebugLevel.Minimal);
 
                     // Reset the user values.
                     thisUser.SetIngameID(-1);
                     thisUser.SetRoom(-1);
+                    thisUser.SetLeftGame(false);
 
                     // Establish the message to RETURN.
-                    messageToSend.messageType = "RETURN_TO_MASTER_SERVER";
+                    messageToSend.SetMessageType("RETURN_TO_MASTER_SERVER");
                 }
                 else
                 {
                     // Establish the message to JOIN.
-                    messageToSend.messageType = "JOIN_MASTER_SERVER";
-                }
-
-                // Check if the user left its last game.
-                if (thisUser.DidLeaveGame())
-                {
-                    // Reset the value.
-                    thisUser.SetLeftGame(false);
-
-                    // Display data on the console.
-                    if (EGS_Config.DEBUG_MODE > -1)
-                        egs_Log.Log("<color=purple>Player left game</color>: UserID: " + thisUser.GetUserID() + " - Username: " + thisUser.GetUsername() + " - IP: " + thisUser.GetIPAddress() + " - Room: " + thisUser.GetRoom() + ".");
+                    messageToSend.SetMessageType("JOIN_MASTER_SERVER");
                 }
 
                 // Connect the user.
                 ConnectUser(thisUser, handler);
 
                 // Echo the data back to the client.
-                messageToSend.messageContent = JsonUtility.ToJson(thisUser);
+                messageToSend.SetMessageContent(JsonUtility.ToJson(thisUser));
                 jsonMSG = messageToSend.ConvertMessage();
 
                 Send(handler, jsonMSG);
@@ -175,7 +153,7 @@ public class EGS_SE_ServerSocket : EGS_ServerSocket
                 DisconnectUser(thisUser);
 
                 // Echo the disconnection back to the client.
-                messageToSend.messageType = "DISCONNECT";
+                messageToSend.SetMessageType("DISCONNECT");
                 jsonMSG = messageToSend.ConvertMessage();
 
                 Send(handler, jsonMSG);
@@ -188,7 +166,7 @@ public class EGS_SE_ServerSocket : EGS_ServerSocket
                 EGS_User storedUser = connectedUsers[handler];
 
                 // Get the received user.
-                thisUser = JsonUtility.FromJson<EGS_User>(receivedMessage.messageContent);
+                thisUser = JsonUtility.FromJson<EGS_User>(receivedMessage.GetMessageContent());
 
                 // Update the base parameters.
                 UpdateUserBaseParameters(thisUser, storedUser);
@@ -196,10 +174,7 @@ public class EGS_SE_ServerSocket : EGS_ServerSocket
                 // Add the player to the queue.
                 EGS_ServerGamesManager.instance.searchingGame_Users.Enqueue(thisUser); // TODO: Encapsulate.
 
-                if (EGS_Config.DEBUG_MODE > 2)
-                    egs_Log.Log("Searching game: " + thisUser.GetUsername() + ". User Data: " + receivedMessage.messageContent);
-                else if (EGS_Config.DEBUG_MODE > 0)
-                    egs_Log.Log("Searching game: " + thisUser.GetUsername() + ".");
+                EGS_Log.instance.Log("<color=#00ffffff>Searching game: </color>" + thisUser.GetUsername() + "<color=#00ffffff>.</color>", EGS_Control.EGS_DebugLevel.Extended);
 
                 // Call the onUserJoinQueue delegate.
                 EGS_MasterServerDelegates.onUserJoinQueue?.Invoke(thisUser);
@@ -235,8 +210,8 @@ public class EGS_SE_ServerSocket : EGS_ServerSocket
 
                 if (isUserInQueue)
                 {
-                    if (EGS_Config.DEBUG_MODE > 0)
-                        egs_Log.Log("Leave Queue: " + thisUser.GetUsername() + ".");
+                    // Log.
+                    EGS_Log.instance.Log("<color=#00ffffff>Leave Queue: </color>" + thisUser.GetUsername() + "<color=#00ffffff>.</color>", EGS_Control.EGS_DebugLevel.Extended);
 
                     // Call the onUserLeaveQueue delegate.
                     EGS_MasterServerDelegates.onUserLeaveQueue?.Invoke(thisUser);
@@ -250,7 +225,7 @@ public class EGS_SE_ServerSocket : EGS_ServerSocket
                 DisconnectUserToGame(thisUser, handler);
 
                 // Echo the disconnection back to the client.
-                messageToSend.messageType = "DISCONNECT_TO_GAME";
+                messageToSend.SetMessageType("DISCONNECT_TO_GAME");
                 jsonMSG = messageToSend.ConvertMessage();
 
                 Send(handler, jsonMSG);
@@ -260,9 +235,9 @@ public class EGS_SE_ServerSocket : EGS_ServerSocket
                 break;
             case "USER_LEAVE_GAME":
                 // Get the user from the GameServer.
-                thisUser = JsonUtility.FromJson<EGS_User>(receivedMessage.messageContent);
+                thisUser = JsonUtility.FromJson<EGS_User>(receivedMessage.GetMessageContent());
 
-                egs_Log.Log("User left: " + thisUser.GetUsername());
+                EGS_Log.instance.Log("<color=#00ffffff>User left game: </color>" + thisUser.GetUsername(), EGS_Control.EGS_DebugLevel.Minimal);
 
                 // Assign the new user.
                 allUsers[thisUser.GetUserID()] = thisUser;
@@ -277,7 +252,7 @@ public class EGS_SE_ServerSocket : EGS_ServerSocket
                 break;
             case "CREATED_GAME_SERVER":
                 // Get the message info.
-                messageInfo = receivedMessage.messageContent.Split('#');
+                messageInfo = receivedMessage.GetMessageContent().Split('#');
 
                 // Get the gameServerID.
                 gameServerID = int.Parse(messageInfo[0]);
@@ -292,8 +267,7 @@ public class EGS_SE_ServerSocket : EGS_ServerSocket
                 // Get the game server IP from the message.
                 gameServerIP = messageInfo[1];
 
-                if (EGS_Config.DEBUG_MODE > -1)
-                    egs_Log.Log("<color=purple>Game Server created and connected</color>: [ID: " + gameServerID + " - IP: " + gameServerIP + "].");
+                EGS_Log.instance.Log("<color=blue>Game Server created and connected</color>: [ID: " + gameServerID + " - IP: " + gameServerIP + "].", EGS_Control.EGS_DebugLevel.Useful);
 
                 // Assign the created status. // TODO: Encapsulate.
                 EGS_ServerGamesManager.instance.gameServers[gameServerID].SetStatus(EGS_GameServerData.EGS_GameServerState.WAITING_PLAYERS);
@@ -304,15 +278,15 @@ public class EGS_SE_ServerSocket : EGS_ServerSocket
                 // Send the game found data to the game server.
                 string gameFoundDataJson = JsonUtility.ToJson(EGS_ServerGamesManager.instance.gameServers[gameServerID].GetGameFoundData());
 
-                messageToSend.messageType = "RECEIVE_GAME_DATA";
-                messageToSend.messageContent = gameFoundDataJson;
+                messageToSend.SetMessageType("RECEIVE_GAME_DATA");
+                messageToSend.SetMessageContent(gameFoundDataJson);
                 jsonMSG = messageToSend.ConvertMessage();
 
                 Send(handler, jsonMSG);
                 break;
             case "READY_GAME_SERVER":
                 // Get the message info.
-                messageInfo = receivedMessage.messageContent.Split('#');
+                messageInfo = receivedMessage.GetMessageContent().Split('#');
 
                 // Get the gameServerID.
                 gameServerID = int.Parse(messageInfo[0]);
@@ -327,8 +301,8 @@ public class EGS_SE_ServerSocket : EGS_ServerSocket
                 EGS_MasterServerDelegates.onGameServerReady?.Invoke(gameServerID);
 
                 // Send the game server IP to the players.
-                messageToSend.messageType = "CHANGE_TO_GAME_SERVER";
-                messageToSend.messageContent = gameServerIP;
+                messageToSend.SetMessageType("CHANGE_TO_GAME_SERVER");
+                messageToSend.SetMessageContent(gameServerIP);
                 jsonMSG = messageToSend.ConvertMessage();
 
                 int roomID = EGS_ServerGamesManager.instance.gameServers[gameServerID].GetRoom();
@@ -336,20 +310,18 @@ public class EGS_SE_ServerSocket : EGS_ServerSocket
                 foreach (EGS_User user in EGS_ServerGamesManager.instance.usersInRooms[roomID])
                 {
                     Send(user.GetSocket(), jsonMSG);
-
-                    if (EGS_Config.DEBUG_MODE > 1)
-                        egs_Log.Log("SENT ORDER TO: " + user.GetUsername() + ".");
+                    EGS_Log.instance.Log("<color=#00ffffff>Sent order to change to the game server to: </color>" + user.GetUsername() + "<color=#00ffffff>.</color>", EGS_Control.EGS_DebugLevel.Extended);
                 }
                 break;
             case "GAME_END":
                 // TODO: Save the information and tell the Game Server to close.
                 // Get the Game End Information.
-                EGS_GameEndData gameEndData = JsonUtility.FromJson<EGS_GameEndData>(receivedMessage.messageContent);
+                EGS_GameEndData gameEndData = JsonUtility.FromJson<EGS_GameEndData>(receivedMessage.GetMessageContent());
                 gameServerID = gameEndData.GetGameServerID();
                 roomID = gameEndData.GetRoom();
 
                 // Log the information.
-                if (EGS_Config.DEBUG_MODE > 0)
+                if (EGS_Config.DEBUG_MODE_CONSOLE > 0)
                 {
                     List<EGS_User> playersFromFinishedGame = EGS_ServerGamesManager.instance.usersInRooms[roomID];
                     List<int> playerIDsOrdered = gameEndData.GetPlayerIDsOrderList();
@@ -363,7 +335,7 @@ public class EGS_SE_ServerSocket : EGS_ServerSocket
                     
                     playersString = playersString.Substring(0, playersString.Length - 2) + ".";
 
-                    egs_Log.Log("Game finished for room " + roomID + " on GameServer " + gameServerID + ". Players: " + playersString);
+                    EGS_Log.instance.Log("<color=#00ffffff>Game finished for room </color>" + roomID + "<color=#00ffffff> on GameServer </color>" + gameServerID + "<color=#00ffffff>. Players: </color>" + playersString, EGS_Control.EGS_DebugLevel.Minimal);
                 }
 
                 // Update the GameServer status.
@@ -376,7 +348,7 @@ public class EGS_SE_ServerSocket : EGS_ServerSocket
                 FinishAndDisconnectGameServer(roomID, gameServerID, handler);
 
                 // Tell the Game Server to close.
-                messageToSend.messageType = "DISCONNECT_AND_CLOSE_GAMESERVER";
+                messageToSend.SetMessageType("DISCONNECT_AND_CLOSE_GAMESERVER");
                 jsonMSG = messageToSend.ConvertMessage();
 
                 Send(handler, jsonMSG);
@@ -404,12 +376,10 @@ public class EGS_SE_ServerSocket : EGS_ServerSocket
     /// <param name="client_socket">Socket connected to the client</param>
     protected override void OnNewConnection(Socket client_socket)
     {
-        if (EGS_Config.DEBUG_MODE > 2)
-            egs_Log.Log("<color=blue>New connection</color>. IP: " + client_socket.RemoteEndPoint + ".");
+        EGS_Log.instance.Log("<color=#ff00ffff>New connection</color>. IP: " + client_socket.RemoteEndPoint + ".", EGS_Control.EGS_DebugLevel.Complete);
 
         // Ask client for user data.
-        EGS_Message msg = new EGS_Message();
-        msg.messageType = "CONNECT_TO_MASTER_SERVER";
+        EGS_Message msg = new EGS_Message("CONNECT_TO_MASTER_SERVER", "");
         string jsonMSG = msg.ConvertMessage();
 
         Send(client_socket, jsonMSG);
@@ -445,8 +415,7 @@ public class EGS_SE_ServerSocket : EGS_ServerSocket
             }
         }
 
-        if (EGS_Config.DEBUG_MODE > 2)
-            egs_Log.Log("<color=blue>Closed connection</color>. IP: " + disconnectedIP + ".");
+        EGS_Log.instance.Log("<color=#ff00ffff>Closed connection</color>. IP: " + disconnectedIP + ".", EGS_Control.EGS_DebugLevel.Complete);
     }
     #endregion
 
@@ -462,8 +431,7 @@ public class EGS_SE_ServerSocket : EGS_ServerSocket
         DisconnectClient(client_socket, EGS_Control.EGS_Type.Client);
 
         // Display data on the console.
-        if (EGS_Config.DEBUG_MODE > -1)
-            egs_Log.Log("<color=purple>Disconnected To Connect to the Game Server</color>: UserID: " + userToDisconnect.GetUserID() + " - Username: " + userToDisconnect.GetUsername() + " - IP: " + userToDisconnect.GetIPAddress() + ".");
+        EGS_Log.instance.Log("<color=purple>Change connection to Game Server</color>: UserID: " + userToDisconnect.GetUserID() + " - Username: " + userToDisconnect.GetUsername() + " - IP: " + userToDisconnect.GetIPAddress() + ".", EGS_Control.EGS_DebugLevel.Minimal);
     }
 
     /// <summary>
@@ -476,8 +444,7 @@ public class EGS_SE_ServerSocket : EGS_ServerSocket
         base.ConnectUser(userToConnect, client_socket);
 
         // Display data on the console.
-        if (EGS_Config.DEBUG_MODE > -1)
-            egs_Log.Log("<color=purple>Connected User</color>: UserID: " + userToConnect.GetUserID() + " - Username: " + userToConnect.GetUsername() + " - IP: " + userToConnect.GetIPAddress() + ".");
+        EGS_Log.instance.Log("<color=purple>Connected User</color>: UserID: " + userToConnect.GetUserID() + " - Username: " + userToConnect.GetUsername() + " - IP: " + userToConnect.GetIPAddress() + ".", EGS_Control.EGS_DebugLevel.Minimal);
 
         // Call the onUserConnect delegate.
         EGS_MasterServerDelegates.onUserConnect?.Invoke(userToConnect);
@@ -492,8 +459,7 @@ public class EGS_SE_ServerSocket : EGS_ServerSocket
         base.DisconnectUser(userToDisconnect);
 
         // Display data on the console.
-        if (EGS_Config.DEBUG_MODE > -1)
-            egs_Log.Log("<color=purple>Disconnected User</color>: UserID: " + userToDisconnect.GetUserID() + " - Username: " + userToDisconnect.GetUsername() + " - IP: " + userToDisconnect.GetIPAddress() + ".");
+        EGS_Log.instance.Log("<color=purple>Disconnected User</color>: UserID: " + userToDisconnect.GetUserID() + " - Username: " + userToDisconnect.GetUsername() + " - IP: " + userToDisconnect.GetIPAddress() + ".", EGS_Control.EGS_DebugLevel.Minimal);
 
         // Call the onUserDisconnect delegate.
         EGS_MasterServerDelegates.onUserDisconnect?.Invoke(userToDisconnect);
@@ -511,14 +477,12 @@ public class EGS_SE_ServerSocket : EGS_ServerSocket
         if (clientType.Equals(EGS_Control.EGS_Type.Client))
         {
             EGS_User userToDisconnect = connectedUsers[client_socket];
-            if (EGS_Config.DEBUG_MODE > -1)
-                egs_Log.Log("<color=blue>Disconnected by timeout [CLIENT]</color>: UserID: " + userToDisconnect.GetUserID() + " - Username: " + userToDisconnect.GetUsername() + " - IP: " + userToDisconnect.GetIPAddress() + ".");
+            EGS_Log.instance.Log("<color=purple>Disconnected by timeout [CLIENT]</color>: UserID: " + userToDisconnect.GetUserID() + " - Username: " + userToDisconnect.GetUsername() + " - IP: " + userToDisconnect.GetIPAddress() + ".", EGS_Control.EGS_DebugLevel.Minimal);
         }
         else if (clientType.Equals(EGS_Control.EGS_Type.GameServer))
         {
             EGS_GameServerData gameServer = connectedGameServers[client_socket];
-            if (EGS_Config.DEBUG_MODE > -1)
-                egs_Log.Log("<color=blue>Disconnected by timeout [GAME_SERVER]</color>: GameServerID: " + gameServer.GetGameServerID() + " - IP: " + gameServer.GetIPAddress() + ".");
+            EGS_Log.instance.Log("<color=purple>Disconnected by timeout [GAME_SERVER]</color>: GameServerID: " + gameServer.GetGameServerID() + " - IP: " + gameServer.GetIPAddress() + ".", EGS_Control.EGS_DebugLevel.Minimal);
         }
 
         base.DisconnectClientByTimeout(sender, e, client_socket, clientType);
@@ -548,8 +512,7 @@ public class EGS_SE_ServerSocket : EGS_ServerSocket
         }
         catch (Exception e)
         {
-            if (EGS_Config.DEBUG_MODE > -1)
-                egs_Log.LogError(e.ToString());
+            EGS_Log.instance.LogError(e.ToString(), EGS_Control.EGS_DebugLevel.Minimal);
         }
         finally
         {
@@ -566,8 +529,7 @@ public class EGS_SE_ServerSocket : EGS_ServerSocket
         EGS_MasterServerDelegates.onUserRegister?.Invoke(userToRegister);
 
         // Display data on the console.
-        if (EGS_Config.DEBUG_MODE > -1)
-            egs_Log.Log("<color=purple>Registered User</color>: UserID: " + userToRegister.GetUserID() + " - Username: " + userToRegister.GetUsername() + ".");
+        EGS_Log.instance.Log("<color=purple>Registered User</color>: UserID: " + userToRegister.GetUserID() + " - Username: " + userToRegister.GetUsername() + ".", EGS_Control.EGS_DebugLevel.Minimal);
     }
 
     /// <summary>
@@ -595,15 +557,11 @@ public class EGS_SE_ServerSocket : EGS_ServerSocket
         }
 
         // Send message to user.
-        EGS_Message msg = new EGS_Message();
-        msg.messageType = "DELETE_USER";
-        msg.messageContent = JsonUtility.ToJson(userToDelete);
-
+        EGS_Message msg = new EGS_Message("DELETE_USER", JsonUtility.ToJson(userToDelete));
         Send(userToDelete.GetSocket(), msg.ConvertMessage());
 
         // Display data on the console.
-        if (EGS_Config.DEBUG_MODE > -1)
-            egs_Log.Log("<color=purple>Deleted User</color>: UserID: " + userToDelete.GetUserID() + " - Username: " + userToDelete.GetUsername());
+        EGS_Log.instance.Log("<color=purple>Deleted User</color>: UserID: " + userToDelete.GetUserID() + " - Username: " + userToDelete.GetUsername(), EGS_Control.EGS_DebugLevel.Minimal);
 
         // Call the onUserDelete delegate.
         EGS_MasterServerDelegates.onUserDelete?.Invoke(userToDelete);

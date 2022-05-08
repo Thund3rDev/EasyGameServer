@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <EasyGameServer>
 	<server>
-		<debug-mode>2</debug-mode>
+		<debug-mode-console>1</debug-mode-console>
+		<debug-mode-file>2</debug-mode-file>
 		<max-connections>10</max-connections>
 		<max-games>5</max-games>
 		<time-between-rtt>1000</time-between-rtt>

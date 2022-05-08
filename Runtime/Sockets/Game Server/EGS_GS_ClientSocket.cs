@@ -40,7 +40,7 @@ public class EGS_GS_ClientSocket : EGS_ClientSocket
             // If SocketException error code is SocketError.ConnectionRefused.
             if (se.ErrorCode == 10061) // 10061 = SocketError.ConnectionRefused.
             {
-                if (EGS_Config.DEBUG_MODE > 1)
+                if (EGS_Config.DEBUG_MODE_CONSOLE >= EGS_Control.EGS_DebugLevel.Extended)
                     Debug.LogWarning("[GAME SERVER] Server refused the connection."); // LOG.
 
                 // Interrupt the connectionsThread.
@@ -55,6 +55,7 @@ public class EGS_GS_ClientSocket : EGS_ClientSocket
         }
         catch (Exception e)
         {
+            // LOG.
             Debug.LogError("[Game Server] " + e.ToString());
         }
     }
@@ -71,6 +72,7 @@ public class EGS_GS_ClientSocket : EGS_ClientSocket
         }
         catch (Exception e)
         {
+            // LOG.
             Debug.LogError("[Game Server] " + e.ToString());
         }
     }
@@ -92,13 +94,15 @@ public class EGS_GS_ClientSocket : EGS_ClientSocket
         }
         catch (Exception e)
         {
+            // LOG.
             Debug.LogWarning("ERORR, CONTENT: " + content);
             throw e;
         }
 
-        if (EGS_Config.DEBUG_MODE > 2)
+        // LOG.
+        if (EGS_Config.DEBUG_MODE_CONSOLE >= EGS_Control.EGS_DebugLevel.Complete)
             Debug.Log("Read " + content.Length + " bytes from socket - " + handler.RemoteEndPoint +
-            " - Message type: " + receivedMessage.messageType);
+            " - Message type: " + receivedMessage.GetMessageType());
 
         // Message to send back.
         EGS_Message messageToSend = new EGS_Message();
@@ -108,19 +112,19 @@ public class EGS_GS_ClientSocket : EGS_ClientSocket
         string gameServerIP;
 
         // Depending on the messageType, do different things.
-        switch (receivedMessage.messageType)
+        switch (receivedMessage.GetMessageType())
         {
             case "RTT":
                 // Save the client ping.
-                long lastRTTMilliseconds = long.Parse(receivedMessage.messageContent);
+                long lastRTTMilliseconds = long.Parse(receivedMessage.GetMessageContent());
                 EGS_GameServer.instance.SetClientPing(lastRTTMilliseconds);
 
                 // Call the onRTT delegate.
                 EGS_GameServerDelegates.onRTT?.Invoke(lastRTTMilliseconds);
 
                 // Prepare the message to send.
-                messageToSend.messageType = "RTT_RESPONSE_GAME_SERVER";
-                messageToSend.messageContent = EGS_GameServer.instance.gameServerID.ToString();
+                messageToSend.SetMessageType("RTT_RESPONSE_GAME_SERVER");
+                messageToSend.SetMessageContent(EGS_GameServer.instance.gameServerID.ToString());
 
                 // Convert message to JSON.
                 jsonMSG = messageToSend.ConvertMessage();
@@ -136,12 +140,12 @@ public class EGS_GS_ClientSocket : EGS_ClientSocket
                 EGS_GameServerDelegates.onConnectToMasterServer?.Invoke();
 
                 // Send a message to the master server.
-                messageToSend.messageType = "CREATED_GAME_SERVER";
+                messageToSend.SetMessageType("CREATED_GAME_SERVER");
 
                 // Construct the gameServerIP to be sent:
                 // TODO: Send as an object.
                 gameServerIP = EGS_Config.serverIP + ":" + EGS_GameServer.instance.gameServerPort;
-                messageToSend.messageContent = EGS_GameServer.instance.gameServerID + "#" + gameServerIP;
+                messageToSend.SetMessageContent(EGS_GameServer.instance.gameServerID + "#" + gameServerIP);
                 EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServer.instance.test_text.text += "\nIPADRESS " + EGS_Config.serverIP; });
 
                 // Convert message to JSON.
@@ -152,7 +156,7 @@ public class EGS_GS_ClientSocket : EGS_ClientSocket
                 break;
             case "RECEIVE_GAME_DATA":
                 // Receive the GameFoundData.
-                EGS_GameServer.instance.gameFoundData = JsonUtility.FromJson<EGS_GameFoundData>(receivedMessage.messageContent);
+                EGS_GameServer.instance.gameFoundData = JsonUtility.FromJson<EGS_GameFoundData>(receivedMessage.GetMessageContent());
 
                 // Change the server state.
                 EGS_GameServer.instance.gameServerState = EGS_GameServerData.EGS_GameServerState.WAITING_PLAYERS;
@@ -165,13 +169,13 @@ public class EGS_GS_ClientSocket : EGS_ClientSocket
                 // Call the onReadyToConnectPlayers delegate.
                 EGS_GameServerDelegates.onReadyToConnectPlayers?.Invoke();
 
-                // Send a message to the master server.
-                messageToSend.messageType = "READY_GAME_SERVER";
-
-                // Construct the gameServerIP to be sent:
-                // TODO: Send as an object.
+                // Construct the gameServerIP to be sent.
                 gameServerIP = EGS_Config.serverIP + ":" + EGS_GameServer.instance.gameServerPort;
-                messageToSend.messageContent = EGS_GameServer.instance.gameServerID + "#" + gameServerIP;
+
+                // Send a message to the master server.
+                // TODO: Send as an object.
+                messageToSend.SetMessageType("READY_GAME_SERVER");
+                messageToSend.SetMessageContent(EGS_GameServer.instance.gameServerID + "#" + gameServerIP);
 
                 // Convert message to JSON.
                 jsonMSG = messageToSend.ConvertMessage();

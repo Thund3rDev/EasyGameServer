@@ -6,19 +6,29 @@ using UnityEngine;
 public class EGS_Message
 {
     #region Variables
-    // Type of the message. Examples: login, user, connect, findGame...
-    public string messageType;
-    // Content of the message.
-    public string messageContent;
+    [Header("Message")]
+    [Tooltip("Type of the message")]
+    [SerializeField]
+    private string messageType;
+
+    [Tooltip("Content of the message")]
+    [SerializeField]
+    private string messageContent;
     #endregion
 
     #region Constructors
     /// <summary>
     /// Empty Constructor.
     /// </summary>
-    public EGS_Message()
-    {
+    public EGS_Message() {}
 
+    /// <summary>
+    /// Type only Constructor.
+    /// </summary>
+    /// <param name="messageType">Type of the message</param>
+    public EGS_Message(string messageType)
+    {
+        this.messageType = messageType;
     }
 
     /// <summary>
@@ -34,11 +44,40 @@ public class EGS_Message
     #endregion
 
     #region Class Methods
-
-    // Method ConvertMessage, that makes the json serialization and adds the "End of Message" code.
+    /// <summary>
+    /// Method ConvertMessage, that makes the json serialization and adds the "End of Message" code.
+    /// </summary>
+    /// <returns></returns>
     public string ConvertMessage()
     {
         return JsonUtility.ToJson(this) + "<EOM>";
     }
+    #endregion
+
+    #region Getters and Setters
+    /// <summary>
+    /// Getter for the Message Type.
+    /// </summary>
+    /// <returns>Type of the message</returns>
+    public string GetMessageType() { return messageType; }
+
+    /// <summary>
+    /// Setter for the Message Type.
+    /// </summary>
+    /// <param name="messageType">New type of the message</param>
+    public void SetMessageType(string messageType) { this.messageType = messageType; }
+
+    /// <summary>
+    /// Getter for the Message Content.
+    /// </summary>
+    /// <returns>Content of the message</returns>
+    public string GetMessageContent() { return messageContent; }
+
+    /// <summary>
+    /// Setter for the Message Content.
+    /// </summary>
+    /// <param name="messageContent">New content of the message</param>
+    public void SetMessageContent(string messageContent) { this.messageContent = messageContent; }
+
     #endregion
 }

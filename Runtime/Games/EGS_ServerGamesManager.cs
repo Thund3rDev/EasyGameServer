@@ -37,11 +37,6 @@ public class EGS_ServerGamesManager : MonoBehaviour
     [Header("Sync")]
     [Tooltip("Mutex that controls concurrency for create and delete games")]
     public Mutex gamesLock = new Mutex();
-
-
-    [Header("References")]
-    [Tooltip("Reference to the log")]
-    [SerializeField] private EGS_Log egs_Log;
     #endregion
 
     #region Unity Methods
@@ -125,12 +120,11 @@ public class EGS_ServerGamesManager : MonoBehaviour
             usersInRooms.Add(room, usersForThisGame);
 
             // Update the game found data room.
-            //gameFoundData.SetRoom(room);
+            //gameFoundData.SetRoom(room); // TODO: ¿Por qué está comentado?
 
             // Message for the players.
-            EGS_Message msg = new EGS_Message();
-            msg.messageType = "GAME_FOUND";
-            msg.messageContent = JsonUtility.ToJson(gameFoundData);
+            string gameFoundMessageContent = JsonUtility.ToJson(gameFoundData);
+            EGS_Message msg = new EGS_Message("GAME_FOUND", gameFoundMessageContent);
 
             string jsonMSG = msg.ConvertMessage();
 
@@ -156,7 +150,7 @@ public class EGS_ServerGamesManager : MonoBehaviour
         int room = Interlocked.Increment(ref nextRoom);
         gameFoundData.SetRoom(room);
 
-        string logString = "Created game with room " + room + ". Players: ";
+        string logString = "<color=#00ffffff>Created game with room </color>" + room + "<color=#00ffffff>. Players: </color>";
 
         // Assign the room number to the players.
         foreach (EGS_User userToGame in gameFoundData.GetUsersToGame())
@@ -170,7 +164,7 @@ public class EGS_ServerGamesManager : MonoBehaviour
 
         // Log the information.
         logString = logString.Substring(0, logString.Length - 2) + ".";
-        egs_Log.Log(logString);
+        EGS_Log.instance.Log(logString, EGS_Control.EGS_DebugLevel.Minimal);
 
         // Return the room number.
         return room;
@@ -196,8 +190,7 @@ public class EGS_ServerGamesManager : MonoBehaviour
         gameServers[gameServerID].SetStatus(EGS_GameServerData.EGS_GameServerState.INACTIVE);
 
         // Display data on the console.
-        if (EGS_Config.DEBUG_MODE > -1)
-            egs_Log.Log("<color=blue>Disconnected Game Server</color>: ID: " + gameServerID + " - Room: " + roomID + ".");
+        EGS_Log.instance.Log("<color=blue>Disconnected Game Server</color>: ID: " + gameServerID + " - Room: " + roomID + ".", EGS_Control.EGS_DebugLevel.Useful);
 
         // Call the onGameServerClosed delegate.
         EGS_MasterServerDelegates.onGameServerClosed?.Invoke(gameServerID);
@@ -209,11 +202,13 @@ public class EGS_ServerGamesManager : MonoBehaviour
     /// <param name="leftUser">Player's user</param>
     public void QuitUserFromGame(EGS_User leftUser)
     {
-        // TODO: Make this work. Think on a EGS_PlayerToGame for the parameter.
+        // Get the game room.
         int room = leftUser.GetRoom();
 
-        egs_Log.Log("Player " + leftUser.GetUsername() + " left the game on room " + room + ".");
+        // Log into the server.
+        EGS_Log.instance.Log("<color=#00ffffff>Player</color> " + leftUser.GetUsername() + "<color=#00ffffff> left the game on room </color>" + room + "<color=#00ffffff>.</color>", EGS_Control.EGS_DebugLevel.Minimal);
 
+        // Update the left user values.
         leftUser.SetRoom(-1);
         leftUser.SetIngameID(-1);
     }
@@ -264,11 +259,11 @@ public class EGS_ServerGamesManager : MonoBehaviour
                 gameServers[gameServerID].GetProcess().StartInfo.Arguments = arguments;
                 gameServers[gameServerID].GetProcess().Start();
 
-                egs_Log.Log("Launched Game Server with parameters: " + arguments);
+                EGS_Log.instance.Log("<color=blue>Launched Game Server with parameters: </color>" + arguments, EGS_Control.EGS_DebugLevel.Extended);
             }
             catch (Exception e)
             {
-                egs_Log.LogError(e.ToString());
+                EGS_Log.instance.LogError(e.ToString(), EGS_Control.EGS_DebugLevel.Minimal);
             }
         }
         //TODO: There is NO server available.

@@ -129,18 +129,18 @@ public class EGS_Game
         // Stop the game loop for that game.
         StopGameLoop();
 
-        // Create a message indicating that game has finished.
-        EGS_Message messageToSend = new EGS_Message();
-        messageToSend.messageType = "GAME_END";
-
+        // Create and get the Game end data.
         EGS_GameEndData gameEndData = new EGS_GameEndData(EGS_GameServer.instance.gameServerID, room, playerIDsOrdered, endedAsDisconnection);
-        messageToSend.messageContent = JsonUtility.ToJson(gameEndData);
+        string gameEndMessageContent = JsonUtility.ToJson(gameEndData);
 
         // Call the OnEndGame delegate.
         EGS_GameServerDelegates.onGameEnd?.Invoke(gameEndData);
 
         // Show the EndGame Info.
         EGS_Dispatcher.RunOnMainThread(() => { EGS_GameServerEndController.instance.ShowEndGameInfo(); });
+
+        // Create a message indicating that game has finished.
+        EGS_Message messageToSend = new EGS_Message("GAME_END", gameEndMessageContent);
 
         // Send the message to the players.
         Broadcast(messageToSend);
@@ -274,8 +274,8 @@ public class EGS_Game
                 EGS_GameServerDelegates.onPlayerLeaveGame?.Invoke(player);
 
                 // Log.
-                /*if (EGS_Config.DEBUG_MODE > -1)
-                    egs_Log.Log("<color=blue>Disconnected by timeout [CLIENT]</color>: UserID: " + userToDisconnect.GetUserID() + " - Username: " + userToDisconnect.GetUsername() + " - IP: " + userToDisconnect.GetIPAddress() + ".");*/
+                /*if (EGS_Config.DEBUG_MODE_CONSOLE > -1)
+                    EGS_Log.instance.Log("<color=blue>Disconnected by timeout [CLIENT]</color>: UserID: " + userToDisconnect.GetUserID() + " - Username: " + userToDisconnect.GetUsername() + " - IP: " + userToDisconnect.GetIPAddress() + ".");*/
             }
             catch (Exception e)
             {
@@ -300,10 +300,7 @@ public class EGS_Game
 
         try
         {
-            // Create the message to be sent to the players.
-            EGS_Message msg = new EGS_Message();
-            msg.messageType = "UPDATE";
-
+            // Create a new Update Data.
             EGS_UpdateData updateData = new EGS_UpdateData(room);
 
             // Call the OnTick delegate.
@@ -316,8 +313,11 @@ public class EGS_Game
                 EGS_GameServerDelegates.onProcessPlayer?.Invoke(player, updateData, TICK_RATE);
             }
 
-            // Save the message content and send it to the players.
-            msg.messageContent = JsonUtility.ToJson(updateData);
+            // Get the message content.
+            string updateDataMessageContent = JsonUtility.ToJson(updateData);
+
+            // Create the message and sent it to the players.
+            EGS_Message msg = new EGS_Message("UPDATE", updateDataMessageContent);
 
             Broadcast(msg);
         }

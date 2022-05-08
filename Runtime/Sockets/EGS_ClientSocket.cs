@@ -55,10 +55,12 @@ public class EGS_ClientSocket
         }
         catch (ThreadInterruptedException)
         {
+            // Log.
             Debug.LogWarning("Interruped connections thread.");
         }
         catch (Exception e)
         {
+            // Log.
             Debug.LogError("[CLIENT] " + e.ToString());
         }
     }
@@ -77,6 +79,7 @@ public class EGS_ClientSocket
             // Complete the connection.  
             client.EndConnect(ar);
 
+            // LOG.
             Debug.Log("[CLIENT] Socket connected to " +
                 client.RemoteEndPoint.ToString());
 
@@ -113,6 +116,7 @@ public class EGS_ClientSocket
         }
         catch (Exception e)
         {
+            // LOG.
             Debug.LogError("[CLIENT] " + e.ToString());
         }
     }
@@ -140,7 +144,7 @@ public class EGS_ClientSocket
                 }
                 catch (ObjectDisposedException)
                 {
-                    // TODO: Control this exception.
+                    // LOG. Object already disposed...
                 }
             }
 
@@ -178,12 +182,14 @@ public class EGS_ClientSocket
                 }
             }
         }
-        catch (ThreadAbortException)
+        catch (ThreadInterruptedException)
         {
+            // LOG.
             // TODO: Control this exception.
         }
         catch (Exception e)
         {
+            // LOG.
             Debug.LogError("[CLIENT] " + e.ToString());
         }
     }
@@ -221,14 +227,17 @@ public class EGS_ClientSocket
 
             // Complete sending the data to the remote device.  
             int bytesSent = client.EndSend(ar);
-            if (EGS_Config.DEBUG_MODE > 2)
+            if (EGS_Config.DEBUG_MODE_CONSOLE >= EGS_Control.EGS_DebugLevel.Complete)
                 Debug.Log("[CLIENT] Sent " + bytesSent + " bytes to server.");
+
+            // LOG.
 
             // Signal that all bytes have been sent.  
             sendDone.Set();
         }
         catch (Exception e)
         {
+            // LOG.
             Debug.LogError("[CLIENT] " + e.ToString());
         }
     }

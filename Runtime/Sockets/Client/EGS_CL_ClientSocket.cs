@@ -47,7 +47,7 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
             // If SocketException error code is SocketError.ConnectionRefused.
             if (se.ErrorCode == 10061) // 10061 = SocketError.ConnectionRefused.
             {
-                if (EGS_Config.DEBUG_MODE > 1)
+                if (EGS_Config.DEBUG_MODE_CONSOLE >= EGS_Control.EGS_DebugLevel.Extended)
                     Debug.LogWarning("[CLIENT] Server refused the connection.");
 
                 // Interrupt the connectionsThread.
@@ -103,9 +103,9 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
             throw e;
         }
 
-        if (EGS_Config.DEBUG_MODE > 2)
+        if (EGS_Config.DEBUG_MODE_CONSOLE >= EGS_Control.EGS_DebugLevel.Complete)
             Debug.Log("Read " + content.Length + " bytes from socket - " + handler.RemoteEndPoint +
-            " - Message type: " + receivedMessage.messageType);
+            " - Message type: " + receivedMessage.GetMessageType());
 
         // Message to send back.
         EGS_Message messageToSend = new EGS_Message();
@@ -118,19 +118,19 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
 
         // TODO: Maybe messageType (EGS only) as an enum?
         // Depending on the messageType, do different things.
-        switch (receivedMessage.messageType)
+        switch (receivedMessage.GetMessageType())
         {
             case "RTT":
                 // Save the client ping.
-                long lastRTTMilliseconds = long.Parse(receivedMessage.messageContent);
+                long lastRTTMilliseconds = long.Parse(receivedMessage.GetMessageContent());
                 EGS_Client.instance.SetClientPing(lastRTTMilliseconds);
 
                 // Call the onRTT delegate.
                 EGS_ClientDelegates.onRTT?.Invoke(lastRTTMilliseconds);
 
                 // Prepare the message to send.
-                messageToSend.messageType = "RTT_RESPONSE_CLIENT";
-                messageToSend.messageContent = EGS_Client.instance.GetUser().GetUserID().ToString();
+                messageToSend.SetMessageType("RTT_RESPONSE_CLIENT");
+                messageToSend.SetMessageContent(EGS_Client.instance.GetUser().GetUserID().ToString());
 
                 // Convert message to JSON.
                 jsonMSG = messageToSend.ConvertMessage();
@@ -152,8 +152,9 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
                 // Convert user to JSON.
                 userJson = JsonUtility.ToJson(thisUser);
 
-                messageToSend.messageType = "USER_JOIN_SERVER";
-                messageToSend.messageContent = userJson;
+                // Construct the message.
+                messageToSend.SetMessageType("USER_JOIN_SERVER");
+                messageToSend.SetMessageContent(userJson);
 
                 // Convert message to JSON.
                 jsonMSG = messageToSend.ConvertMessage();
@@ -163,15 +164,8 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
                 break;
             case "JOIN_MASTER_SERVER":
                 // Get and update User Data.
-                EGS_User updatedUser = JsonUtility.FromJson<EGS_User>(receivedMessage.messageContent);
+                EGS_User updatedUser = JsonUtility.FromJson<EGS_User>(receivedMessage.GetMessageContent());
                 EGS_Client.instance.SetUser(updatedUser);
-
-                // Save User ID if first time.
-                EGS_Dispatcher.RunOnMainThread(() =>
-                {
-                    if (!PlayerPrefs.HasKey("userID"))
-                        PlayerPrefs.SetInt("userID", updatedUser.GetUserID());
-                });
 
                 // Call the onJoinMasterServer delegate.
                 EGS_ClientDelegates.onJoinMasterServer?.Invoke(updatedUser);
@@ -188,7 +182,7 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
                 break;
             case "GAME_FOUND":
                 // Obtain GameFoundData.
-                EGS_GameFoundData gameFoundData = JsonUtility.FromJson<EGS_GameFoundData>(receivedMessage.messageContent);
+                EGS_GameFoundData gameFoundData = JsonUtility.FromJson<EGS_GameFoundData>(receivedMessage.GetMessageContent());
                 EGS_Client.instance.SetGameFoundData(gameFoundData);
 
                 // Assign the ingame user ID.
@@ -213,7 +207,7 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
                 break;
             case "CHANGE_TO_GAME_SERVER":
                 // Save the Game Server connection data (IP and port).
-                string[] ep = receivedMessage.messageContent.Split(':');
+                string[] ep = receivedMessage.GetMessageContent().Split(':');
                 gameServerIP = ep[0];
                 gameServerPort = int.Parse(ep[1]);
 
@@ -221,7 +215,7 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
                 EGS_ClientDelegates.onPrepareToChangeFromMasterToGameServer?.Invoke(gameServerIP, gameServerPort);
 
                 // Tell the server that the client received the information so can connect to the game server.
-                messageToSend.messageType = "DISCONNECT_TO_GAME";
+                messageToSend.SetMessageType("DISCONNECT_TO_GAME");
 
                 // Convert message to JSON.
                 jsonMSG = messageToSend.ConvertMessage();
@@ -252,8 +246,9 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
                 // Convert user to JSON.
                 userJson = JsonUtility.ToJson(EGS_Client.instance.GetUser());
 
-                messageToSend.messageType = "JOIN_GAME_SERVER";
-                messageToSend.messageContent = userJson;
+                // Construct the message.
+                messageToSend.SetMessageType("JOIN_GAME_SERVER");
+                messageToSend.SetMessageContent(userJson);
 
                 // Convert message to JSON.
                 jsonMSG = messageToSend.ConvertMessage();
@@ -266,9 +261,8 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
                 EGS_ClientDelegates.onJoinGameServer?.Invoke();
                 break;
             case "GAME_START":
-                Debug.Log(receivedMessage.messageContent);
                 // Save the Update Data.
-                updateData = JsonUtility.FromJson<EGS_UpdateData>(receivedMessage.messageContent);
+                updateData = JsonUtility.FromJson<EGS_UpdateData>(receivedMessage.GetMessageContent());
                 EGS_Client.instance.SetGameData(updateData);
 
                 // Create and assign the In Game Sender.
@@ -283,7 +277,7 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
                 break;
             case "UPDATE":
                 // Save the Update Data.
-                updateData = JsonUtility.FromJson<EGS_UpdateData>(receivedMessage.messageContent);
+                updateData = JsonUtility.FromJson<EGS_UpdateData>(receivedMessage.GetMessageContent());
                 EGS_Client.instance.GetGameData().SetPlayersAtGame(updateData.GetPlayersAtGame());
 
                 // Call the onGameReceiveUpdate delegate.
@@ -291,7 +285,7 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
                 break;
             case "PLAYER_LEAVE_GAME":
                 // Get the Player ID from the message.
-                int playerID = int.Parse(receivedMessage.messageContent);
+                int playerID = int.Parse(receivedMessage.GetMessageContent());
 
                 // Get the Player Data and remove from GameData.
                 EGS_PlayerData thisPlayerData = EGS_Client.instance.GetGameData().GetPlayersAtGame()[playerID];
@@ -304,7 +298,7 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
                 break;
             case "GAME_END":
                 // Get the Game End Data and save it.
-                EGS_GameEndData gameEndData = JsonUtility.FromJson<EGS_GameEndData>(receivedMessage.messageContent);
+                EGS_GameEndData gameEndData = JsonUtility.FromJson<EGS_GameEndData>(receivedMessage.GetMessageContent());
                 EGS_Client.instance.SetGameEndData(gameEndData);
 
                 EGS_Dispatcher.RunOnMainThread(() => { Debug.Log("gameEndData.GetEndedAsDisconnection(): " + gameEndData.GetEndedAsDisconnection()); });
@@ -319,7 +313,7 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
                 EGS_ClientDelegates.onPrepareToChangeFromGameToMasterServer?.Invoke(EGS_Config.serverIP, EGS_Config.serverPort);
 
                 // Disconnect from the Game Server and return to the MasterServer.
-                messageToSend.messageType = "RETURN_TO_MASTER_SERVER";
+                messageToSend.SetMessageType("RETURN_TO_MASTER_SERVER");
 
                 // Convert message to JSON.
                 jsonMSG = messageToSend.ConvertMessage();
@@ -338,7 +332,7 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
                 EGS_ClientDelegates.onChangeFromGameToMasterServer?.Invoke(EGS_Config.serverIP, EGS_Config.serverPort);
 
                 // Check if user left the game.
-                bool userLeftGame = bool.Parse(receivedMessage.messageContent);
+                bool userLeftGame = bool.Parse(receivedMessage.GetMessageContent());
                 EGS_Client.instance.GetUser().SetLeftGame(userLeftGame);
 
                 if (userLeftGame)
@@ -352,7 +346,7 @@ public class EGS_CL_ClientSocket : EGS_ClientSocket
                 break;
             case "RETURN_TO_MASTER_SERVER":
                 // Get and update User Data.
-                thisUser = JsonUtility.FromJson<EGS_User>(receivedMessage.messageContent);
+                thisUser = JsonUtility.FromJson<EGS_User>(receivedMessage.GetMessageContent());
                 EGS_Client.instance.SetUser(thisUser);
 
                 // Call the onReturnToMasterServer delegate.

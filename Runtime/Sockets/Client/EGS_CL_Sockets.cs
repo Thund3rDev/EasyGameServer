@@ -79,11 +79,9 @@ public class EGS_CL_Sockets
     public void SendMessage(string type, string msg)
     {
         // Create new message.
-        EGS_Message thisMessage = new EGS_Message();
-        thisMessage.messageType = type;
-        thisMessage.messageContent = msg;
+        EGS_Message thisMessage = new EGS_Message(type, msg);
 
-        // Convert message to JSON .
+        // Convert message to JSON.
         string messageJson = thisMessage.ConvertMessage();
 
         // Send the message.
@@ -96,7 +94,7 @@ public class EGS_CL_Sockets
     /// <param name="messageToSend">Message type</param>
     public void SendMessage(EGS_Message messageToSend)
     {
-        // Convert message to JSON .
+        // Convert message to JSON.
         string messageJson = messageToSend.ConvertMessage();
 
         // Send the message.
@@ -136,11 +134,11 @@ public class EGS_CL_Sockets
         }
         catch (SocketException se)
         {
-            Debug.LogError("SocketException: " + se.ToString());
+            Debug.LogError("[CLIENT] SocketException: " + se.ToString());
         }
         catch (ObjectDisposedException ode)
         {
-            Debug.LogError("ObjectDisposedException: " + ode.ToString());
+            Debug.LogError("[CLIENT] ObjectDisposedException: " + ode.ToString());
         }
     }
     #endregion

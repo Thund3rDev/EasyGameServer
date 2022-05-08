@@ -217,8 +217,11 @@ public class EGS_GameServer : MonoBehaviour
 
         /// Server Data.
         // Get debug mode.
-        node = doc.DocumentElement.SelectSingleNode("//server/debug-mode");
-        EGS_Config.DEBUG_MODE = int.Parse(node.InnerText);
+        node = doc.DocumentElement.SelectSingleNode("//server/debug-mode-console");
+        EGS_Config.DEBUG_MODE_CONSOLE = (EGS_Control.EGS_DebugLevel)int.Parse(node.InnerText);
+
+        node = doc.DocumentElement.SelectSingleNode("//server/debug-mode-file");
+        EGS_Config.DEBUG_MODE_FILE = (EGS_Control.EGS_DebugLevel)int.Parse(node.InnerText);
 
         // Get time between round trip times.
         node = doc.DocumentElement.SelectSingleNode("//server/time-between-rtt");

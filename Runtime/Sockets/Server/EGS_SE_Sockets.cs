@@ -14,22 +14,13 @@ public class EGS_SE_Sockets
 
     [Tooltip("Handler for the server socket")]
     private EGS_SE_ServerSocket serverSocketHandler;
-
-
-    [Header("References")]
-    [Tooltip("Reference to the Log")]
-    private EGS_Log egs_Log = null;
     #endregion
 
     #region Constructors
     /// <summary>
-    /// Main constructor that assigns the log.
+    /// Empty constructor.
     /// </summary>
-    /// <param name="log_">Log instance</param>
-    public EGS_SE_Sockets(EGS_Log log_)
-    {
-        egs_Log = log_;
-    }
+    public EGS_SE_Sockets() {}
     #endregion
 
     #region Class Methods
@@ -43,11 +34,10 @@ public class EGS_SE_Sockets
         EndPoint localEP = CreateSocket();
 
         // Connect to server.
-        serverSocketHandler = new EGS_SE_ServerSocket(egs_Log);
+        serverSocketHandler = new EGS_SE_ServerSocket();
         serverSocketHandler.StartListening(localEP, socket_listener, EGS_Config.MAX_CONNECTIONS);
 
-        if (EGS_Config.DEBUG_MODE > -1)
-            egs_Log.Log("<color=green>Easy Game Server</color> Listening at port <color=orange>" + EGS_Config.serverPort + "</color>.");
+        EGS_Log.instance.Log("<color=green>Easy Game Server</color> Listening at port <color=orange>" + EGS_Config.serverPort + "</color>.", EGS_Control.EGS_DebugLevel.Minimal);
     }
     #endregion
 
@@ -80,7 +70,7 @@ public class EGS_SE_Sockets
     public void StopListening()
     {
         socket_listener.Close();
-        egs_Log.Log("<color=green>Easy Game Server</color> stopped listening connections.");
+        EGS_Log.instance.Log("<color=green>Easy Game Server</color> stopped listening connections.", EGS_Control.EGS_DebugLevel.Minimal);
     }
     #endregion
 }

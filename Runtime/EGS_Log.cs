@@ -6,13 +6,18 @@ using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
-/// Class EGS_Log, that manages the EGS log.
+/// Class EGS_Log, that manages the Easy Game Server log.
 /// </summary>
 public class EGS_Log : MonoBehaviour
 {
     #region Variables
+    [Header("General Variables")]
+    [Tooltip("Singleton")]
+    public static EGS_Log instance;
+
     [Tooltip("DateTime to print log times")]
     private DateTime localTime;
+
 
     [Header("UI")]
     [Tooltip("Text where the log writes")]
@@ -29,9 +34,14 @@ public class EGS_Log : MonoBehaviour
     [Tooltip("Counter to update the scrollbar")]
     private int scrollbarUpdateCounter = 0;
 
+    [Tooltip("Bool that indicates if autoscroll is enabled")]
+    private bool autoscroll = true;
+
+
     [Header("IO")]
     [Tooltip("StreamWriter to write log")]
     private StreamWriter streamWriter;
+
 
     [Header("Concurrency")]
     [Tooltip("Lock object")]
@@ -39,18 +49,42 @@ public class EGS_Log : MonoBehaviour
     #endregion
 
     #region Unity Methods
+    /// <summary>
+    /// Method Awake, executed on script load.
+    /// </summary>
+    private void Awake()
+    {
+        // Create the singleton instance.
+        if (instance == null)
+        {
+            instance = this;
+            DontDestroyOnLoad(this.gameObject);
+        }
+        else
+        {
+            Destroy(this.gameObject);
+        }
+    }
+
+    /// <summary>
+    /// Method Update, that is called once per frame.
+    /// </summary>
     private void Update()
     {
-        if (scrollbarMustUpdate)
+        // If autoscroll is enabled, check if scrollbar must update.
+        if (autoscroll)
         {
-            if (scrollbarUpdateCounter > 2)
+            if (scrollbarMustUpdate)
             {
-                scrolbar.value = 0;
-                scrollbarMustUpdate = false;
-                scrollbarUpdateCounter = 0;
+                if (scrollbarUpdateCounter > 2)
+                {
+                    scrolbar.value = 0;
+                    scrollbarMustUpdate = false;
+                    scrollbarUpdateCounter = 0;
+                }
+                else
+                    scrollbarUpdateCounter++;
             }
-            else
-                scrollbarUpdateCounter++;
         }
     }
     #endregion
@@ -72,13 +106,16 @@ public class EGS_Log : MonoBehaviour
 
         // Erase all text that could been in the log.
         text_log.text = "";
+
+        // Log that server started.
+        Log("Started <color=green>EasyGameServer</color> with version <color=orange>" + EGS_Config.version + "</color>.", EGS_Control.EGS_DebugLevel.Minimal);
     }
 
     /// <summary>
     /// Method Log, that adds the given string to the log.
     /// </summary>
     /// <param name="logString">String to add to the log</param>
-    public void Log(string logString)
+    public void Log(string logString, EGS_Control.EGS_DebugLevel debugLevel)
     {
         // Format the string to log.
         string stringToLog = "[" + GetCurrentDateTime() + "] " + logString;
@@ -93,22 +130,30 @@ public class EGS_Log : MonoBehaviour
         // Log the string.
         lock (logLock)
         {
-            EGS_Dispatcher.RunOnMainThread(() => { 
-                Debug.Log(stringToLog);
-                text_log.text += stringToLog + "\n";
-            });
-            streamWriter.WriteLine(nonRichStringToLog);
+            // To the server console.
+            if (EGS_Config.DEBUG_MODE_CONSOLE >= debugLevel)
+            {
+                EGS_Dispatcher.RunOnMainThread(() => { 
+                    Debug.Log(stringToLog);
+                    text_log.text += stringToLog + "\n";
+                });
+            }
+
+            // To the file.
+            if (EGS_Config.DEBUG_MODE_FILE >= debugLevel)
+                streamWriter.WriteLine(nonRichStringToLog);
         }
 
         // Update the scrollbar.
-        scrollbarMustUpdate = true;
+        if (EGS_Config.DEBUG_MODE_CONSOLE >= debugLevel)
+            scrollbarMustUpdate = true;
     }
 
     /// <summary>
     /// Method LogWarning, that formats the given string to yellow as a warning.
     /// </summary>
     /// <param name="logString">String to add to the log as a warning</param>
-    public void LogWarning(string logString)
+    public void LogWarning(string logString, EGS_Control.EGS_DebugLevel debugLevel)
     {
         // Format the string to log.
         string stringToLog = "[" + GetCurrentDateTime() + "] " + "<color=yellow>" + logString + "</color>";
@@ -116,23 +161,31 @@ public class EGS_Log : MonoBehaviour
         // Log the string.
         lock (logLock)
         {
-            EGS_Dispatcher.RunOnMainThread(() =>
+            // To the server console.
+            if (EGS_Config.DEBUG_MODE_CONSOLE >= debugLevel)
             {
-                Debug.LogWarning(logString);
-                text_log.text += stringToLog + "\n";
-            });
-            streamWriter.WriteLine(logString);
+                EGS_Dispatcher.RunOnMainThread(() =>
+                {
+                    Debug.LogWarning(logString);
+                    text_log.text += stringToLog + "\n";
+                });
+            }
+
+            // To the file.
+            if (EGS_Config.DEBUG_MODE_FILE >= debugLevel)
+                streamWriter.WriteLine(logString);
         }
 
         // Update the scrollbar.
-        scrollbarMustUpdate = true;
+        if (EGS_Config.DEBUG_MODE_CONSOLE >= debugLevel)
+            scrollbarMustUpdate = true;
     }
 
     /// <summary>
     /// Method LogError, that formats the given string to yellow as an error.
     /// </summary>
     /// <param name="logString">String to add to the log as an error</param>
-    public void LogError(string logString)
+    public void LogError(string logString, EGS_Control.EGS_DebugLevel debugLevel)
     {
         // Format the string to log.
         string stringToLog = "[" + GetCurrentDateTime() + "] " + "<color=red>" + logString + "</color>";
@@ -140,29 +193,24 @@ public class EGS_Log : MonoBehaviour
         // Log the string.
         lock (logLock)
         {
-            EGS_Dispatcher.RunOnMainThread(() =>
+            // To the server console.
+            if (EGS_Config.DEBUG_MODE_CONSOLE >= debugLevel)
             {
-                Debug.LogError(logString);
-                text_log.text += stringToLog + "\n";
-            });
-            streamWriter.WriteLine(logString);
+                EGS_Dispatcher.RunOnMainThread(() =>
+                {
+                    Debug.LogError(logString);
+                    text_log.text += stringToLog + "\n";
+                });
+            }
+
+            // To the file.
+            if (EGS_Config.DEBUG_MODE_FILE >= debugLevel)
+                streamWriter.WriteLine(logString);
         }
 
         // Update the scrollbar.
-        scrollbarMustUpdate = true;
-    }
-
-    /// <summary>
-    /// Method LogToFile, that will log the string only to the file.
-    /// </summary>
-    /// <param name="logString"></param>
-    public void LogToFile(string logString)
-    {
-        // Log the string.
-        lock (logLock)
-        {
-            streamWriter.WriteLine(logString);
-        }
+        if (EGS_Config.DEBUG_MODE_CONSOLE >= debugLevel)
+            scrollbarMustUpdate = true;
     }
 
     /// <summary>
@@ -170,8 +218,17 @@ public class EGS_Log : MonoBehaviour
     /// </summary>
     public void CloseLog()
     {
-        Log("<color=green>Easy Game Server</color> closed.");
+        Log("<color=green>Easy Game Server</color> closed.", EGS_Control.EGS_DebugLevel.Minimal);
         streamWriter.Close();
+    }
+
+    /// <summary>
+    /// Method UpdateAutoscroll, to check if execute autoscroll on new log.
+    /// </summary>
+    /// <param name="autoscrollValue">New autoscroll value</param>
+    public void UpdateAutoscroll(bool autoscrollValue)
+    {
+        this.autoscroll = autoscrollValue;
     }
 
     #region Private Methods

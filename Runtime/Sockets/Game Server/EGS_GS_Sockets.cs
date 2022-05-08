@@ -82,11 +82,9 @@ public class EGS_GS_Sockets
     public void SendMessageToMasterServer(string type, string msg)
     {
         // Create new message.
-        EGS_Message thisMessage = new EGS_Message();
-        thisMessage.messageType = type;
-        thisMessage.messageContent = msg;
+        EGS_Message thisMessage = new EGS_Message(type, msg);
 
-        // Convert message to JSON .
+        // Convert message to JSON.
         string messageJson = thisMessage.ConvertMessage();
 
         // Send the message.
@@ -95,7 +93,7 @@ public class EGS_GS_Sockets
 
     public void SendMessageToMasterServer(EGS_Message messageToSend)
     {
-        // Convert message to JSON .
+        // Convert message to JSON.
         string messageJson = messageToSend.ConvertMessage();
 
         // Send the message.
@@ -105,9 +103,7 @@ public class EGS_GS_Sockets
     public void SendMessageToClient(Socket socket, string type, string msg)
     {
         // Create new message.
-        EGS_Message thisMessage = new EGS_Message();
-        thisMessage.messageType = type;
-        thisMessage.messageContent = msg;
+        EGS_Message thisMessage = new EGS_Message(type, msg);
 
         // Convert message to JSON .
         string messageJson = thisMessage.ConvertMessage();
@@ -237,10 +233,12 @@ public class EGS_GS_Sockets
         }
         catch (SocketException se)
         {
+            // LOG.
             Debug.LogError("[GAME_SERVER] SocketException: " + se.ToString());
         }
         catch (ObjectDisposedException ode)
         {
+            // LOG.
             Debug.LogError("[GAME_SERVER] ObjectDisposedException: " + ode.ToString());
         }
     }

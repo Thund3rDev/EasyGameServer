@@ -118,6 +118,7 @@ public class EGS_RoundTripTime
     /// </summary>
     private void RTT()
     {
+        // While client is still connected to the server.
         while (stillConnected)
         {
             connectedMutex.WaitOne();
@@ -126,30 +127,30 @@ public class EGS_RoundTripTime
             if (!stillConnected)
                 return;
 
-            EGS_Message msg = new EGS_Message();
-            msg.messageType = "RTT";
-            msg.messageContent = lastRTTMilliseconds.ToString();
+            // Create the message to be send.
+            EGS_Message msg = new EGS_Message("RTT", lastRTTMilliseconds.ToString());
             string jsonMSG = msg.ConvertMessage();
 
+            // Try to send the message to the client.
             try
             {
                 if (client_socket.Connected)
                     socketController.Send(client_socket, jsonMSG);
-                // TODO: BUG: If this fails, client_socket loses its RemoteEndPoint.
+            }
+            catch (Exception)
+            {
+                // LOG.
             }
             finally
             {
                 connectedMutex.ReleaseMutex();
             }
-            /*catch (SocketException se)
-            {
-                
-                // TODO: Control this exception.
-            }*/
 
+            // Start the time for another RTT.
             if (!roundTripTimeStopwatch.IsRunning)
                 roundTripTimeStopwatch.Start();
 
+            // Sleep to wait until next RTT.
             Thread.Sleep(EGS_Config.TIME_BETWEEN_RTTS);
         }
     }

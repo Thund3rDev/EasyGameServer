@@ -12,11 +12,6 @@ public class EGS_ServerManager : MonoBehaviour
     [Tooltip("Bool that indicates if the server has started or not")]
     private bool serverStarted = false;
 
-
-    [Header("References")]
-    [Tooltip("Reference to the Log")]
-    [SerializeField] private EGS_Log egs_Log = null;
-
     [Tooltip("Reference to the server socket manager")]
     private EGS_SE_Sockets socketsController = null;
     #endregion
@@ -30,8 +25,7 @@ public class EGS_ServerManager : MonoBehaviour
         // Check if server already started.
         if (serverStarted)
         {
-            if (EGS_Config.DEBUG_MODE > -1)
-                egs_Log.LogWarning("Easy Game Server already started.");
+            EGS_Log.instance.LogWarning("Easy Game Server already started.", EGS_Control.EGS_DebugLevel.Minimal);
             return;
         }
 
@@ -39,7 +33,7 @@ public class EGS_ServerManager : MonoBehaviour
         serverStarted = true;
 
         // Start the server log.
-        egs_Log.StartLog();
+        EGS_Log.instance.StartLog();
 
         // Read Server config data.
         ReadConfigData();
@@ -53,13 +47,8 @@ public class EGS_ServerManager : MonoBehaviour
         // Call the onMasterServerStart delegate.
         EGS_MasterServerDelegates.onMasterServerStart?.Invoke();
 
-        // Log that server started.
-        if (EGS_Config.DEBUG_MODE > -1)
-            egs_Log.Log("Started <color=green>EasyGameServer</color> with version <color=orange>" + EGS_Config.version + "</color>.");
-
-
         // Create sockets manager.
-        socketsController = new EGS_SE_Sockets(egs_Log);
+        socketsController = new EGS_SE_Sockets();
 
         // Start listening for connections.
         socketsController.StartListening();
@@ -87,7 +76,7 @@ public class EGS_ServerManager : MonoBehaviour
         EGS_MasterServerDelegates.onMasterServerShutdown?.Invoke();
 
         // Close the Log.
-        egs_Log.CloseLog();
+        EGS_Log.instance.CloseLog();
     }
 
     #region Private Methods
@@ -108,8 +97,11 @@ public class EGS_ServerManager : MonoBehaviour
 
         /// Server Data.
         // Get debug mode.
-        node = doc.DocumentElement.SelectSingleNode("//server/debug-mode");
-        EGS_Config.DEBUG_MODE = int.Parse(node.InnerText);
+        node = doc.DocumentElement.SelectSingleNode("//server/debug-mode-console");
+        EGS_Config.DEBUG_MODE_CONSOLE = (EGS_Control.EGS_DebugLevel)int.Parse(node.InnerText);
+
+        node = doc.DocumentElement.SelectSingleNode("//server/debug-mode-file");
+        EGS_Config.DEBUG_MODE_FILE = (EGS_Control.EGS_DebugLevel)int.Parse(node.InnerText);
 
         // Get maximum number of connections.
         node = doc.DocumentElement.SelectSingleNode("//server/max-connections");

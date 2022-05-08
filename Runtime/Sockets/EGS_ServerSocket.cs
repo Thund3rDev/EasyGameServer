@@ -53,13 +53,15 @@ public class EGS_ServerSocket
                 new AsyncCallback(AcceptCallback),
                 socket_listener);
         }
-        catch (ThreadAbortException)
+        catch (ThreadInterruptedException)
         {
-            //egs_Log.LogWarning("Aborted server thread"); // TODO: Control this Exception.
+            // LOG.
+            //EGS_Log.instance.LogWarning("Interrupted server thread");
         }
         catch (Exception)
         {
-            //egs_Log.LogWarning("Aborted server thread"); // TODO: Control this Exception.
+            // LOG.
+            //EGS_Log.instance.LogWarning("Exception");
         }
     }
 
@@ -163,25 +165,22 @@ public class EGS_ServerSocket
     /// <param name="ar">IAsyncResult</param>
     protected virtual void SendCallback(IAsyncResult ar)
     {
-        // Retrieve the socket from the state object.  
-        Socket handler = (Socket)ar.AsyncState;
-
-        // Complete sending the data to the remote device.  
-        int bytesSent = handler.EndSend(ar);
-
-        /*try
+        try
         {
-            
+            // Retrieve the socket from the state object.  
+            Socket handler = (Socket)ar.AsyncState;
 
+            // Complete sending the data to the remote device.  
+            int bytesSent = handler.EndSend(ar);
         }
         catch (SocketException)
         {
-            // TODO: Control this Exception.
+            // LOG. Socket exception.
         }
         catch (Exception)
         {
-            // TODO: Control this Exception.
-        }*/
+            // LOG. Exception.
+        }
     }
 
     /// <summary>
@@ -297,20 +296,6 @@ public class EGS_ServerSocket
         DisconnectClient(client_socket, clientType);
     }
     #endregion
-
-    /// <summary>
-    /// Method TestMessage, for testing purposes.
-    /// </summary>
-    /// <param name="client_socket">Socket that handles the client</param>
-    private void TestMessage(Socket client_socket)
-    {
-        // Send the test message
-        EGS_Message msg = new EGS_Message();
-        msg.messageType = "TEST_MESSAGE";
-        string jsonMSG = msg.ConvertMessage();
-
-        Send(client_socket, jsonMSG);
-    }
     #endregion
     #endregion
 }

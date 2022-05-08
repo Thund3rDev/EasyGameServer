@@ -8,8 +8,11 @@ public struct EGS_Config
     [Tooltip("Easy Game Server version")]
     public static readonly string version = "0.1.0";
 
-    [Tooltip("Int that indicates the level of debug")]
-    public static int DEBUG_MODE = 2; /// -1: No debug | 0: Release debug | 1: Minimal debug | 2: Some useful debugs | 3: Complete debug
+    [Tooltip("Level of debug of the server console log")]
+    public static EGS_Control.EGS_DebugLevel DEBUG_MODE_CONSOLE;
+
+    [Tooltip("Level of debug of the file log")]
+    public static EGS_Control.EGS_DebugLevel DEBUG_MODE_FILE;
 
     [Tooltip("IP where the server will be set")]
     public static string serverIP;

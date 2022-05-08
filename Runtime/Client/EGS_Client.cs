@@ -109,13 +109,7 @@ public class EGS_Client : MonoBehaviour
         // Create the user.
         user = new EGS_User();
 
-        // Get the stored user ID.
-        EGS_Dispatcher.RunOnMainThread(() =>
-        {
-            if (PlayerPrefs.HasKey("userID"))
-                user.SetUserID(PlayerPrefs.GetInt("userID"));
-        });
-
+        // Call the onUserCreate delegate.
         EGS_ClientDelegates.onUserCreate?.Invoke(user);
 
         // Read server config data.
@@ -234,8 +228,8 @@ public class EGS_Client : MonoBehaviour
 
         /// Server Data.
         // Get debug mode.
-        node = doc.DocumentElement.SelectSingleNode("//server/debug-mode");
-        EGS_Config.DEBUG_MODE = int.Parse(node.InnerText);
+        node = doc.DocumentElement.SelectSingleNode("//server/debug-mode-console");
+        EGS_Config.DEBUG_MODE_CONSOLE = (EGS_Control.EGS_DebugLevel)int.Parse(node.InnerText);
 
         // Get time between round trip times.
         node = doc.DocumentElement.SelectSingleNode("//server/time-between-rtt");
