@@ -471,14 +471,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 417c13f70f59118499622dc094ecfd18, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gameServerPort: 0
-  connectedToMasterServer: 0
-  gameServerState: 0
-  gameServerID: -1
-  gameFoundData:
-    usersToGame: []
-    room: 0
-  test_text: {fileID: 614128985}
+  console_text: {fileID: 614128985}
 --- !u!114 &840397727
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -503,9 +496,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 86219c483c0dcd54996c184d6c78070d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  egs_type: 1
-  userClassAssemblyName: Assembly-CSharp
-  userClassName: User
+  instanceType: 1
 --- !u!4 &840397729
 Transform:
   m_ObjectHideFlags: 0
