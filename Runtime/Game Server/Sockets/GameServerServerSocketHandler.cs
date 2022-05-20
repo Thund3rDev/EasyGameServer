@@ -187,7 +187,7 @@ public class GameServerServerSocketHandler : ServerSocketHandler
                 // Get the user.
                 thisUser = connectedUsers[handler];
 
-                // DisconnectFromMasterServer the user from the server.
+                // DisconnectUserToMasterServer the user from the server.
                 DisconnectUserToMasterServer(thisUser, handler);
 
                 // Echo the disconnection back to the client.
@@ -264,7 +264,7 @@ public class GameServerServerSocketHandler : ServerSocketHandler
         DisconnectClient(client_socket, EasyGameServerControl.EnumInstanceType.Client);
 
         // Update the players still connected value for the end controller.
-        MainThreadDispatcher.RunOnMainThread(() => { GameServerEndController.instance.UpdateNumOfPlayersConnected(socketManager); });
+        MainThreadDispatcher.RunOnMainThread(() => { GameServerEndController.instance.UpdateNumOfPlayersConnected(socketManager, userToDisconnect); });
 
         // TODO: Log working.
         /*// Display data on the console.
@@ -298,7 +298,7 @@ public class GameServerServerSocketHandler : ServerSocketHandler
         base.DisconnectUser(userToDisconnect);
 
         // Update the players still connected value for the end controller.
-        MainThreadDispatcher.RunOnMainThread(() => { GameServerEndController.instance.UpdateNumOfPlayersConnected(socketManager); });
+        MainThreadDispatcher.RunOnMainThread(() => { GameServerEndController.instance.UpdateNumOfPlayersConnected(socketManager, userToDisconnect); });
 
         // Display data on the console. // LOG.
         //if (EasyGameServerConfig.DEBUG_MODE_CONSOLE > -1)

@@ -49,7 +49,6 @@ public class GameServer : MonoBehaviour
     [Tooltip("Long that stores the time a RTT lasts since server ask and receive")]
     private long clientPing;
 
-    // TEST .
     // TODO: Make a Game Server Console with Log and UI.
     [Header("Control")]
     [Tooltip("Text shown in the Game Server Console")]

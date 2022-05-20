@@ -82,7 +82,8 @@ public class GameServerEndController : MonoBehaviour
     /// Method UpdateNumOfPlayersConnected, called when another client leaves the game server.
     /// </summary>
     /// <param name="socketsController"></param>
-    public void UpdateNumOfPlayersConnected(GameServerSocketManager socketsController)
+    /// <param name="userID"></param>
+    public void UpdateNumOfPlayersConnected(GameServerSocketManager socketsController, UserData user)
     {
         try
         {
@@ -95,11 +96,11 @@ public class GameServerEndController : MonoBehaviour
             if (numPlayersStillConnected == 0)
                 socketsController.StopListening();
 
+            // Update the end game server text.
+            endGameServer_text.text += "\n Disconnected player [" + user.GetUsername() + "]. Players remaining to disconnect: " + numPlayersStillConnected + " / " + numPlayers;
+
             // Check if can close the Game Server.
             CheckToCloseGameServer();
-
-            // Update the end game server text.
-            endGameServer_text.text += "\n Players remaining to disconnect: " + numPlayersStillConnected + " / " + numPlayers;
         }
         catch (Exception)
         {

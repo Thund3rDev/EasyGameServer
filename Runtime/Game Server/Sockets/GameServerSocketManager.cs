@@ -207,7 +207,9 @@ public class GameServerSocketManager
     /// </summary>
     public void CloseClientSocket()
     {
-        socket_client.Shutdown(SocketShutdown.Both);
+        if (socket_client.Connected)
+            socket_client.Shutdown(SocketShutdown.Both);
+
         socket_client.Close();
 
         // Log on the Game Server.
@@ -219,7 +221,9 @@ public class GameServerSocketManager
     /// </summary>
     public void CloseServerSocket()
     {
-        socket_server.Shutdown(SocketShutdown.Both);
+        if (socket_server.Connected)
+            socket_server.Shutdown(SocketShutdown.Both);
+
         socket_server.Close();
 
         // Log on the Game Server.
@@ -236,11 +240,8 @@ public class GameServerSocketManager
             clientConnectionsThread.Interrupt();
             serverConnectionsThread.Interrupt();
 
-            if (socket_client.Connected)
-                CloseClientSocket();
-
-            if (socket_server.Connected)
-                CloseServerSocket();
+            CloseClientSocket();
+            CloseServerSocket();
         }
         catch (SocketException se)
         {

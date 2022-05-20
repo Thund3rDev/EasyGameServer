@@ -6,7 +6,7 @@
 		<max-connections>10</max-connections>
 		<max-games>5</max-games>
 		<time-between-rtt>1000</time-between-rtt>
-		<disconnect-timeout>4000</disconnect-timeout>
+		<disconnect-timeout>15000</disconnect-timeout>
     </server>
 	<game-server>
 		<path>C:\\Users\\Samue\\Desktop\\URJC\\TFG\\Builds\\Game Server\\Easy Game Server.exe</path>
