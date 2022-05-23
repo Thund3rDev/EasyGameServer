@@ -34,6 +34,9 @@ public static class ClientDelegates
     [Tooltip("Delegate to the OnDisconnect function")]
     public static Action onDisconnect;
 
+    [Tooltip("Delegate to the OnUserDelete function")]
+    public static Action<UserData> onUserDelete;
+
     [Tooltip("Delegate to the OnPrepareToChangeFromMasterToGameServer function")]
     public static Action<string, int> onPrepareToChangeFromMasterToGameServer; // string: IP, int: Port.
 
@@ -51,6 +54,9 @@ public static class ClientDelegates
 
     [Tooltip("Delegate to the OnReturnToMasterServer function")]
     public static Action<UserData> onReturnToMasterServer;
+
+    [Tooltip("Delegate to the OnServerClosed function")]
+    public static Action onServerClosed;
 
 
     [Header("Moment Delegates")]

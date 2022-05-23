@@ -28,7 +28,7 @@ public class GameServerEndController : MonoBehaviour
     private Mutex numPlayers_mutex = new Mutex();
 
 
-    // TODO: Make a Game Server Console with Log and UI.
+    // LOG: Make a Game Server Console with Log and UI.
     [Header("End Game Server UI")]
     [Tooltip("Text where the end game server info will be written")]
     [SerializeField]

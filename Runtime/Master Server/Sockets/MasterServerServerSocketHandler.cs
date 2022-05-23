@@ -65,10 +65,12 @@ public class MasterServerServerSocketHandler : ServerSocketHandler
         // Local variables that are used in the cases below.
         string jsonMSG;
         UserData thisUser;
+        UserData storedUser;
         int gameServerID;
+        GameServerIPData gameServerIPData;
         long rttPing;
         string gameServerIP;
-        string[] messageInfo;
+        int room;
 
         // Depending on the messageType, do different things.
         switch (receivedMessage.GetMessageType())
@@ -132,6 +134,9 @@ public class MasterServerServerSocketHandler : ServerSocketHandler
                 }
                 else
                 {
+                    // Display data on the console.
+                    Log.instance.WriteLog("<color=purple>Connected User</color>: UserID: " + thisUser.GetUserID() + " - Username: " + thisUser.GetUsername() + " - IP: " + thisUser.GetIPAddress() + ".", EasyGameServerControl.EnumLogDebugLevel.Minimal);
+
                     // Establish the message to JOIN.
                     messageToSend.SetMessageType("JOIN_MASTER_SERVER");
                 }
@@ -166,7 +171,7 @@ public class MasterServerServerSocketHandler : ServerSocketHandler
                 break;
             case "QUEUE_JOIN":
                 // Get the user.
-                UserData storedUser = connectedUsers[handler];
+                storedUser = connectedUsers[handler];
 
                 // Get the received user.
                 thisUser = JsonUtility.FromJson<UserData>(receivedMessage.GetMessageContent());
@@ -175,7 +180,7 @@ public class MasterServerServerSocketHandler : ServerSocketHandler
                 UpdateUserBaseParameters(thisUser, storedUser);
 
                 // Add the player to the queue.
-                ServerGamesManager.instance.GetSearchingGameUsers().Enqueue(thisUser); // TODO: Encapsulate.
+                ServerGamesManager.instance.EnqueueUser(thisUser);
 
                 Log.instance.WriteLog("<color=#00ffffff>Searching game: </color>" + thisUser.GetUsername() + "<color=#00ffffff>.</color>", EasyGameServerControl.EnumLogDebugLevel.Extended);
 
@@ -252,11 +257,11 @@ public class MasterServerServerSocketHandler : ServerSocketHandler
                 MasterServerDelegates.onUserLeaveGame?.Invoke(thisUser);
                 break;
             case "CREATED_GAME_SERVER":
-                // Get the message info.
-                messageInfo = receivedMessage.GetMessageContent().Split('#');
+                // Get the Game Server IP Data.
+                gameServerIPData = JsonUtility.FromJson<GameServerIPData>(receivedMessage.GetMessageContent());
 
                 // Get the gameServerID.
-                gameServerID = int.Parse(messageInfo[0]);
+                gameServerID = gameServerIPData.GetGameServerID();
 
                 // Add it to the dictionary of Game Servers connected.
                 connectedGameServers.Add(handler, ServerGamesManager.instance.GetGameServerData(gameServerID));
@@ -266,7 +271,7 @@ public class MasterServerServerSocketHandler : ServerSocketHandler
                 CreateRTT(handler, EasyGameServerControl.EnumInstanceType.GameServer);
 
                 // Get the game server IP from the message.
-                gameServerIP = messageInfo[1];
+                gameServerIP = gameServerIPData.GetGameServerIP();
 
                 // Update the GameServer status.
                 ServerGamesManager.instance.UpdateGameServerStatus(gameServerID, GameServerData.EnumGameServerState.CREATED);
@@ -286,17 +291,17 @@ public class MasterServerServerSocketHandler : ServerSocketHandler
                 Send(handler, jsonMSG);
                 break;
             case "READY_GAME_SERVER":
-                // Get the message info.
-                messageInfo = receivedMessage.GetMessageContent().Split('#');
+                // Get the Game Server IP Data.
+                gameServerIPData = JsonUtility.FromJson<GameServerIPData>(receivedMessage.GetMessageContent());
 
                 // Get the gameServerID.
-                gameServerID = int.Parse(messageInfo[0]);
+                gameServerID = gameServerIPData.GetGameServerID();
 
                 // Assign the created status.
                 ServerGamesManager.instance.UpdateGameServerStatus(gameServerID, GameServerData.EnumGameServerState.WAITING_PLAYERS);
 
                 // Get the game server IP from the message.
-                gameServerIP = messageInfo[1];
+                gameServerIP = gameServerIPData.GetGameServerIP();
 
                 // Call the onGameServerReady delegate.
                 MasterServerDelegates.onGameServerReady?.Invoke(gameServerID);
@@ -306,29 +311,38 @@ public class MasterServerServerSocketHandler : ServerSocketHandler
                 messageToSend.SetMessageContent(gameServerIP);
                 jsonMSG = messageToSend.ConvertMessage();
 
-                int roomID = ServerGamesManager.instance.GetGameServerData(gameServerID).GetRoom();
+                room = ServerGamesManager.instance.GetGameServerData(gameServerID).GetRoom();
 
-                foreach (UserData user in ServerGamesManager.instance.GetUsersInRooms()[roomID])
+                foreach (UserData user in ServerGamesManager.instance.GetUsersInRooms()[room])
                 {
                     Send(user.GetSocket(), jsonMSG);
                     Log.instance.WriteLog("<color=#00ffffff>Sent order to change to the game server to: </color>" + user.GetUsername() + "<color=#00ffffff>.</color>", EasyGameServerControl.EnumLogDebugLevel.Extended);
                 }
                 break;
             case "GAME_START":
-                // TODO: 
+                // Get the Start Data.
+                UpdateData startUpdateData = JsonUtility.FromJson<UpdateData>(receivedMessage.GetMessageContent());
+                room = startUpdateData.GetRoom();
+
+                Log.instance.WriteLog("<color=#00ffffff>Game Started on room: </color>" + room + "<color=#00ffffff>.</color>", EasyGameServerControl.EnumLogDebugLevel.Useful);
+
                 // Update the GameServer status.
-                // ServerGamesManager.instance.UpdateGameServerStatus(gameServerID, GameServerData.EnumGameServerState.STARTED_GAME);
+                gameServerID = connectedGameServers[handler].GetGameServerID();
+                ServerGamesManager.instance.UpdateGameServerStatus(gameServerID, GameServerData.EnumGameServerState.STARTED_GAME);
+
+                // Call the onGameStart delegate.
+                MasterServerDelegates.onGameStart?.Invoke(startUpdateData);
                 break;
             case "GAME_END":
                 // Get the Game End Information.
                 GameEndData gameEndData = JsonUtility.FromJson<GameEndData>(receivedMessage.GetMessageContent());
                 gameServerID = gameEndData.GetGameServerID();
-                roomID = gameEndData.GetRoom();
+                room = gameEndData.GetRoom();
 
                 // Log the information.
                 if (EasyGameServerConfig.DEBUG_MODE_CONSOLE >= EasyGameServerControl.EnumLogDebugLevel.Minimal)
                 {
-                    List<UserData> playersFromFinishedGame = ServerGamesManager.instance.GetUsersInRooms()[roomID];
+                    List<UserData> playersFromFinishedGame = ServerGamesManager.instance.GetUsersInRooms()[room];
                     List<int> playerIDsOrdered = gameEndData.GetPlayerIDsOrderList();
 
                     string playersString = "";
@@ -340,7 +354,7 @@ public class MasterServerServerSocketHandler : ServerSocketHandler
                     
                     playersString = playersString.Substring(0, playersString.Length - 2) + ".";
 
-                    Log.instance.WriteLog("<color=#00ffffff>Game finished for room </color>" + roomID + "<color=#00ffffff> on GameServer </color>" + gameServerID + "<color=#00ffffff>. Players: </color>" + playersString, EasyGameServerControl.EnumLogDebugLevel.Minimal);
+                    Log.instance.WriteLog("<color=#00ffffff>Game finished for room </color>" + room + "<color=#00ffffff> on GameServer </color>" + gameServerID + "<color=#00ffffff>. Players: </color>" + playersString, EasyGameServerControl.EnumLogDebugLevel.Minimal);
                 }
 
                 // Update the GameServer status.
@@ -350,13 +364,26 @@ public class MasterServerServerSocketHandler : ServerSocketHandler
                 MasterServerDelegates.onGameEnd?.Invoke(gameEndData);
 
                 // Register all needed data and disconnect the Game Server.
-                FinishAndDisconnectGameServer(roomID, gameServerID, handler);
+                FinishAndDisconnectGameServer(room, gameServerID, handler);
 
                 // Tell the Game Server to close.
                 messageToSend.SetMessageType("DISCONNECT_AND_CLOSE_GAMESERVER");
                 jsonMSG = messageToSend.ConvertMessage();
 
                 Send(handler, jsonMSG);
+                break;
+            case "USER_DELETE":
+                // Get the received user.
+                thisUser = JsonUtility.FromJson<UserData>(receivedMessage.GetMessageContent());
+
+                // Get the stored user.
+                storedUser = connectedUsers[handler];
+
+                // Update the base parameters.
+                UpdateUserBaseParameters(thisUser, storedUser);
+
+                // Delete the user.
+                DeleteUser(thisUser);
                 break;
             default:
                 // Call the onMessageReceive delegate.
@@ -453,9 +480,6 @@ public class MasterServerServerSocketHandler : ServerSocketHandler
     {
         base.ConnectUser(userToConnect, client_socket);
 
-        // Display data on the console.
-        Log.instance.WriteLog("<color=purple>Connected User</color>: UserID: " + userToConnect.GetUserID() + " - Username: " + userToConnect.GetUsername() + " - IP: " + userToConnect.GetIPAddress() + ".", EasyGameServerControl.EnumLogDebugLevel.Minimal);
-
         // Call the onUserConnect delegate.
         MasterServerDelegates.onUserConnect?.Invoke(userToConnect);
     }
@@ -548,9 +572,11 @@ public class MasterServerServerSocketHandler : ServerSocketHandler
     /// <param name="userToDelete">User to be deleted from the server</param>
     private void DeleteUser(UserData userToDelete)
     {
-        // TODO: Program the User Deletion.
         // Assing correct data to User.
         userToDelete.SetSocket(allUsers[userToDelete.GetUserID()].GetSocket());
+
+        // Call the onUserDelete delegate.
+        MasterServerDelegates.onUserDelete?.Invoke(userToDelete);
 
         // If it is a manual user delete.
         lock (connectedUsers)
@@ -568,14 +594,42 @@ public class MasterServerServerSocketHandler : ServerSocketHandler
         }
 
         // Send message to user.
-        NetworkMessage msg = new NetworkMessage("DELETE_USER", JsonUtility.ToJson(userToDelete));
+        NetworkMessage msg = new NetworkMessage("USER_DELETE", JsonUtility.ToJson(userToDelete));
         Send(userToDelete.GetSocket(), msg.ConvertMessage());
 
         // Display data on the console.
         Log.instance.WriteLog("<color=purple>Deleted User</color>: UserID: " + userToDelete.GetUserID() + " - Username: " + userToDelete.GetUsername(), EasyGameServerControl.EnumLogDebugLevel.Minimal);
+    }
 
-        // Call the onUserDelete delegate.
-        MasterServerDelegates.onUserDelete?.Invoke(userToDelete);
+    /// <summary>
+    /// Method DisconnectAllUsers, that disconnects all the connected users to close the master server.
+    /// </summary>
+    public void DisconnectAllUsers()
+    {
+        UserData userToDisconnect;
+        NetworkMessage disconnectMessage = new NetworkMessage("CLOSE_SERVER");
+        string disconnectMessageJSON = disconnectMessage.ConvertMessage();
+        
+        // For each connected user, disconnect it.
+        foreach (Socket clientSocket in connectedUsers.Keys)
+        {
+            userToDisconnect = connectedUsers[clientSocket];
+
+            if (clientSocket.Connected)
+            {
+                // Send the client the message.
+                Send(clientSocket, disconnectMessageJSON);
+
+                // Close the socket and stop the Round Trip Time.
+                clientSocket.Shutdown(SocketShutdown.Both);
+                clientSocket.Close();
+
+                StopRTT(clientSocket);
+
+                // Display data on the console.
+                Log.instance.WriteLog("<color=purple>Disconnected User</color>: UserID: " + userToDisconnect.GetUserID() + " - Username: " + userToDisconnect.GetUsername() + " - IP: " + userToDisconnect.GetIPAddress() + ".", EasyGameServerControl.EnumLogDebugLevel.Minimal);
+            }
+        }
     }
     #endregion
     #endregion

@@ -84,14 +84,14 @@ public class GameServerServerSocketHandler : ServerSocketHandler
                 rttPing = roundTripTimes[handler].ReceiveRTT();
                 thisUser = connectedUsers[handler];
 
-                // TODO: Log in the Game Server Console.
+                // Log in the Game Server Console.
                 /*if (EasyGameServerConfig.DEBUG_MODE_CONSOLE > EasyGameServerControl.EnumLogDebugLevel.FullWithEveryMessage)
                     Log.instance.Log("<color=blue>Round Trip Time (Client):</color> " + thisUser.GetUsername() + " (" + rttPing + " ms).");*/
 
                 // Call the onReceiveClientRTT delegate with UserID and the rtt ping in milliseconds.
                 GameServerDelegates.onReceiveClientRTT?.Invoke(thisUser.GetUserID(), rttPing);
 
-                // TODO: Update UI? I think it is better on UI Update method or in the delegate.
+                // TODO / LOG: Update UI? I think it is better on UI Update method or in the delegate.
                 break;
             case "JOIN_GAME_SERVER":
                 try
@@ -146,13 +146,13 @@ public class GameServerServerSocketHandler : ServerSocketHandler
             case "PLAYER_INPUT":
                 // Get the input data
                 PlayerInputs playerInputs = JsonUtility.FromJson<PlayerInputs>(receivedMessage.GetMessageContent());
-                bool[] inputs = playerInputs.GetInputs();
+                bool[] inputs = playerInputs.GetBoolInputs();
 
                 // Get the player from its ingameID.
                 thisPlayer = NetworkGameManager.instance.GetPlayerByID(playerInputs.GetIngameID());
 
                 // Assign its inputs.
-                thisPlayer.SetInputs(inputs);
+                thisPlayer.SetInputs(playerInputs);
 
                 // Call the onPlayerSendInput delegate.
                 GameServerDelegates.onPlayerSendInput?.Invoke(thisPlayer, playerInputs);
@@ -266,7 +266,7 @@ public class GameServerServerSocketHandler : ServerSocketHandler
         // Update the players still connected value for the end controller.
         MainThreadDispatcher.RunOnMainThread(() => { GameServerEndController.instance.UpdateNumOfPlayersConnected(socketManager, userToDisconnect); });
 
-        // TODO: Log working.
+        // Log working.
         /*// Display data on the console.
         if (EasyGameServerConfig.DEBUG_MODE_CONSOLE > -1)
             Log.instance.Log("<color=purple>Disconnected To Connect to the Game Server</color>: UserID: " + userToDisconnect.GetUserID() + " - Username: " + userToDisconnect.GetUsername() + " - IP: " + client_socket.RemoteEndPoint + ".");*/

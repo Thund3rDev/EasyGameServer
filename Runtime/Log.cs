@@ -42,6 +42,9 @@ public class Log : MonoBehaviour
     [Tooltip("StreamWriter to write log")]
     private StreamWriter streamWriter;
 
+    [Tooltip("Bool that indicates if streamWriter is open")]
+    private bool streamWriterOpen = false;
+
 
     [Header("Concurrency")]
     [Tooltip("Lock object")]
@@ -103,7 +106,12 @@ public class Log : MonoBehaviour
         // Create the log file.
         string dateString = GetStartDateAndTime();
         streamWriter = File.CreateText(Application.persistentDataPath +
-        "/logs/log_" + dateString + ".txt");
+            "/logs/log_" + dateString + ".txt");
+
+        lock (streamWriter)
+        {
+            streamWriterOpen = true;
+        }
 
         // Erase all text that could been in the log.
         text_log.text = "";
@@ -118,15 +126,20 @@ public class Log : MonoBehaviour
     public void CloseLog()
     {
         WriteLog("<color=green>Easy Game Server</color> closed.", EasyGameServerControl.EnumLogDebugLevel.Minimal);
-        streamWriter.Close();
+        lock(streamWriter)
+        {
+            streamWriter.Close();
+            streamWriterOpen = false;
+        }
     }
     #endregion
 
     #region LogWritting
     /// <summary>
-    /// Method Log, that adds the given string to the log.
+    /// Method WriteLog, that adds the given string to the log.
     /// </summary>
     /// <param name="logString">String to add to the log</param>
+    /// <param name="debugLevel">Level of debug given</param>
     public void WriteLog(string logString, EasyGameServerControl.EnumLogDebugLevel debugLevel)
     {
         // Format the string to log.
@@ -153,7 +166,13 @@ public class Log : MonoBehaviour
 
             // To the file.
             if (EasyGameServerConfig.DEBUG_MODE_FILE >= debugLevel)
-                streamWriter.WriteLine(nonRichStringToLog);
+            {
+                lock (streamWriter)
+                {
+                    if (streamWriterOpen)
+                        streamWriter.WriteLine(nonRichStringToLog);
+                }
+            }
         }
 
         // Update the scrollbar.
@@ -165,6 +184,7 @@ public class Log : MonoBehaviour
     /// Method WriteWarningLog, that formats the given string to yellow as a warning.
     /// </summary>
     /// <param name="logString">String to add to the log as a warning</param>
+    /// /// <param name="debugLevel">Level of debug given</param>
     public void WriteWarningLog(string logString, EasyGameServerControl.EnumLogDebugLevel debugLevel)
     {
         // Format the string to log.
@@ -185,7 +205,13 @@ public class Log : MonoBehaviour
 
             // To the file.
             if (EasyGameServerConfig.DEBUG_MODE_FILE >= debugLevel)
-                streamWriter.WriteLine(logString);
+            {
+                lock (streamWriter)
+                {
+                    if (streamWriterOpen)
+                        streamWriter.WriteLine(logString);
+                }
+            }
         }
 
         // Update the scrollbar.
@@ -197,6 +223,7 @@ public class Log : MonoBehaviour
     /// Method WriteErrorLog, that formats the given string to yellow as an error.
     /// </summary>
     /// <param name="logString">String to add to the log as an error</param>
+    /// /// <param name="debugLevel">Level of debug given</param>
     public void WriteErrorLog(string logString, EasyGameServerControl.EnumLogDebugLevel debugLevel)
     {
         // Format the string to log.
@@ -217,7 +244,13 @@ public class Log : MonoBehaviour
 
             // To the file.
             if (EasyGameServerConfig.DEBUG_MODE_FILE >= debugLevel)
-                streamWriter.WriteLine(logString);
+            {
+                lock (streamWriter)
+                {
+                    if (streamWriterOpen)
+                        streamWriter.WriteLine(logString);
+                }
+            }
         }
 
         // Update the scrollbar.

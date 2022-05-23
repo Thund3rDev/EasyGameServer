@@ -12,9 +12,9 @@ public class PlayerInputs
     [SerializeField]
     private int ingameID;
 
-    [Tooltip("Array of player inputs.")]
+    [Tooltip("Array of player boolInputs.")]
     [SerializeField]
-    private bool[] inputs;
+    private bool[] boolInputs;
     #endregion
 
     #region Constructors
@@ -32,7 +32,7 @@ public class PlayerInputs
     public PlayerInputs(int ingameID_, bool[] inputs_)
     {
         ingameID = ingameID_;
-        inputs = inputs_;
+        boolInputs = inputs_;
     }
     #endregion
 
@@ -50,15 +50,15 @@ public class PlayerInputs
     public void SetIngameID(int ingameID) { this.ingameID = ingameID; }
 
     /// <summary>
-    /// Getter for the Inputs.
+    /// Getter for the bool Inputs.
     /// </summary>
     /// <returns>Player inputs</returns>
-    public bool[] GetInputs() { return inputs; }
+    public bool[] GetBoolInputs() { return boolInputs; }
 
     /// <summary>
-    /// Setter for the Inputs.
+    /// Setter for the bool Inputs.
     /// </summary>
     /// <param name="inputs">New player inputs</param>
-    public void SetInputs(bool[] inputs) { this.inputs = inputs; }
+    public void SetBoolInputs(bool[] inputs) { this.boolInputs = inputs; }
     #endregion
 }

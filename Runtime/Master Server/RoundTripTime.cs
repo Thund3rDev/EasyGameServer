@@ -84,7 +84,7 @@ public class EGS_RoundTripTime
     /// Method StopRTT, that stops the Round Trip Time closing the timer and cancelling the RTT Thread.
     /// </summary>
     public void StopRTT()
-    {
+    {        
         timeoutTimer.Stop();
         timeoutTimer.Close();
 

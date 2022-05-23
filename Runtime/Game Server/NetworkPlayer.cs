@@ -11,6 +11,9 @@ public class NetworkPlayer : MonoBehaviour
     [Tooltip("User data of the player")]
     private UserData user;
 
+    [Tooltip("Object containing the constant boolInputs from the player")]
+    private PlayerInputs inputs;
+
 
     [Header("Modifiable from Unity")]
     [Tooltip("Player's in game ID")]
@@ -20,9 +23,6 @@ public class NetworkPlayer : MonoBehaviour
     [Tooltip("List of Client Scripts to DELETE")]
     [SerializeField]
     private List<MonoBehaviour> clientScriptsToDelete = null;
-
-    [Tooltip("Array of player inputs")]
-    private bool[] inputs; // TODO: Use PlayerInputs and permit different type of inputs (bool, float, string...).
     #endregion
 
     #region Unity Methods
@@ -74,12 +74,12 @@ public class NetworkPlayer : MonoBehaviour
     /// Getter for the inputs.
     /// </summary>
     /// <returns>Inputs</returns>
-    public bool[] GetInputs() { return inputs; }
+    public PlayerInputs GetInputs() { return inputs; }
 
     /// <summary>
     /// Setter for the inputs.
     /// </summary>
     /// <param name="inputs">New inputs</param>
-    public void SetInputs(bool[] inputs) { this.inputs = inputs; }
+    public void SetInputs(PlayerInputs inputs) { this.inputs = inputs; }
     #endregion
 }

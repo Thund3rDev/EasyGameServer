@@ -41,9 +41,6 @@ public class MasterServer : MonoBehaviour
         // Initialize Server Games Manager.
         ServerGamesManager.instance.InitializeServerGamesManager();
 
-        // TODO: ReadUsersData.
-
-
         // Call the onMasterServerStart delegate.
         MasterServerDelegates.onMasterServerStart?.Invoke();
 
@@ -69,7 +66,8 @@ public class MasterServer : MonoBehaviour
         // Stop listening on the socket.
         serverSocketManager.StopListening();
 
-        // TODO:  DisconnectFromMasterServer players.
+        // Reset the next room number.
+        ServerGamesManager.instance.ResetRoomNumber();
 
         // Call the onMasterServerShutdown delegate.
         MasterServerDelegates.onMasterServerShutdown?.Invoke();
@@ -135,7 +133,7 @@ public class MasterServer : MonoBehaviour
 
 
         /// Games Data.
-        node = doc.DocumentElement.SelectSingleNode("//game/players-per-game"); // TODO: Make MIN_PLAYERS and MAX_PLAYERS.
+        node = doc.DocumentElement.SelectSingleNode("//game/players-per-game"); // FUTURE: Make MIN_PLAYERS and MAX_PLAYERS.
         EasyGameServerConfig.PLAYERS_PER_GAME = int.Parse(node.InnerText);
     }
     #endregion

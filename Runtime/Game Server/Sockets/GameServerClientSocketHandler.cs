@@ -109,7 +109,10 @@ public class GameServerClientSocketHandler : ClientSocketHandler
 
         // Local variables that are used in the cases below.
         string jsonMSG;
+        int gameServerID;
         string gameServerIP;
+        GameServerIPData gameServerIPData;
+        string gameServerIPDataJson;
 
         // Depending on the messageType, do different things.
         switch (receivedMessage.GetMessageType())
@@ -142,10 +145,14 @@ public class GameServerClientSocketHandler : ClientSocketHandler
                 // Send a message to the master server.
                 messageToSend.SetMessageType("CREATED_GAME_SERVER");
 
-                // Construct the gameServerIP to be sent:
-                // TODO: Send as an object.
+                // Construct the GameServerIPData to be sent.
+                gameServerID = GameServer.instance.GetGameServerID();
                 gameServerIP = EasyGameServerConfig.SERVER_IP + ":" + GameServer.instance.GetGameServerPort();
-                messageToSend.SetMessageContent(GameServer.instance.GetGameServerID() + "#" + gameServerIP);
+                
+                gameServerIPData = new GameServerIPData(gameServerID, gameServerIP);
+                gameServerIPDataJson = JsonUtility.ToJson(gameServerIPData);
+                messageToSend.SetMessageContent(gameServerIPDataJson);
+
                 MainThreadDispatcher.RunOnMainThread(() => { GameServer.instance.console_text.text += "\nIPADRESS " + EasyGameServerConfig.SERVER_IP; });
 
                 // Convert message to JSON.
@@ -173,9 +180,15 @@ public class GameServerClientSocketHandler : ClientSocketHandler
                 gameServerIP = EasyGameServerConfig.SERVER_IP + ":" + GameServer.instance.GetGameServerPort();
 
                 // Send a message to the master server.
-                // TODO: Send as an object.
                 messageToSend.SetMessageType("READY_GAME_SERVER");
-                messageToSend.SetMessageContent(GameServer.instance.GetGameServerID() + "#" + gameServerIP);
+
+                // Construct the GameServerIPData to be sent.
+                gameServerID = GameServer.instance.GetGameServerID();
+                gameServerIP = EasyGameServerConfig.SERVER_IP + ":" + GameServer.instance.GetGameServerPort();
+
+                gameServerIPData = new GameServerIPData(gameServerID, gameServerIP);
+                gameServerIPDataJson = JsonUtility.ToJson(gameServerIPData);
+                messageToSend.SetMessageContent(gameServerIPDataJson);
 
                 // Convert message to JSON.
                 jsonMSG = messageToSend.ConvertMessage();

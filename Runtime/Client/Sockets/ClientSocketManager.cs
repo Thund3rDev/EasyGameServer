@@ -70,7 +70,7 @@ public class ClientSocketManager
         // Connect to game server.
         clientSocketHandler.StartClient(remoteEP, socket_client);
 
-        // TODO: SI.
+        // TODO: SI. Tener en cuenta el thread anterior.
         // connectionsThread = new Thread(() => clientSocketHandler.StartClient(remoteEP, socket_client));
         // connectionsThread.Start();
     }

@@ -43,6 +43,21 @@ public class MasterServerSocketManager
     }
 
     /// <summary>
+    /// Method StopListening, to close the socket and stop listening to connections.
+    /// </summary>
+    public void StopListening()
+    {
+        // Disconnect all players.
+        serverSocketHandler.DisconnectAllUsers();
+
+        if (socket_listener.Connected)
+            socket_listener.Shutdown(SocketShutdown.Both);
+
+        socket_listener.Close();
+        Log.instance.WriteLog("<color=green>Easy Game Server</color> stopped listening connections.", EasyGameServerControl.EnumLogDebugLevel.Minimal);
+    }
+
+    /// <summary>
     /// Method CreateSocket, that creates the client socket and returns the server endpoint
     /// </summary>
     /// <returns>EndPoint where the server it is</returns>
@@ -60,15 +75,6 @@ public class MasterServerSocketManager
 
         // Return the EndPoint
         return localEndPoint;
-    }
-
-    /// <summary>
-    /// Method StopListening, to close the socket and stop listening to connections.
-    /// </summary>
-    public void StopListening()
-    {
-        socket_listener.Close();
-        Log.instance.WriteLog("<color=green>Easy Game Server</color> stopped listening connections.", EasyGameServerControl.EnumLogDebugLevel.Minimal);
     }
     #endregion
 }

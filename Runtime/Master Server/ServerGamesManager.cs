@@ -260,6 +260,23 @@ public class ServerGamesManager : MonoBehaviour
     }
 
     /// <summary>
+    /// Method ResetRoomNumber, to reset the next room number.
+    /// </summary>
+    public void ResetRoomNumber()
+    {
+        nextRoom = 0;
+    }
+
+    /// <summary>
+    /// Method EnqueueUser, to add an user to the searching game queue.
+    /// </summary>
+    /// <param name="userToEnqueue">User to enqueue for a game</param>
+    public void EnqueueUser(UserData userToEnqueue)
+    {
+        searchingGameUsers.Enqueue(userToEnqueue);
+    }
+
+    /// <summary>
     /// Method GetUsersByRoom, that returns the list of users for an specific room.
     /// </summary>
     /// <param name="room">Room number</param>

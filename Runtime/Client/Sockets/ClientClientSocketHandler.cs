@@ -353,6 +353,20 @@ public class ClientClientSocketHandler : ClientSocketHandler
                 // Call the onReturnToMasterServer delegate.
                 ClientDelegates.onReturnToMasterServer?.Invoke(thisUser);
                 break;
+            case "CLOSE_SERVER":
+                // Call the onServerClosed delegate.
+                ClientDelegates.onServerClosed?.Invoke();
+                break;
+            case "USER_DELETE":
+                // Call the onUserDelete delegate.
+                ClientDelegates.onUserDelete?.Invoke(Client.instance.GetUser());
+
+                // Close the socket to disconnect from the server.
+                socketManager.CloseSocket();
+
+                // Save as disconnected from the master server.
+                Client.instance.SetConnectedToMasterServer(false);
+                break;
             default:
                 // Call the onMessageReceive delegate.
                 ClientDelegates.onMessageReceive?.Invoke(receivedMessage);

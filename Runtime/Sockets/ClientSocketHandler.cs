@@ -197,7 +197,6 @@ public class ClientSocketHandler
         catch (ThreadInterruptedException)
         {
             // LOG.
-            // TODO: Control this exception.
         }
         catch (Exception e)
         {

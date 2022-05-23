@@ -165,6 +165,18 @@ public class Client : MonoBehaviour
         // DisconnectFromMasterServer from server.
         clientSocketManager.DisconnectFromServer();
     }
+
+    /// <summary>
+    /// Method DeleteUser, to delete the Client user from the Server.
+    /// </summary>
+    public void DeleteUser()
+    {
+        // Convert user to JSON.
+        string userJson = JsonUtility.ToJson(user);
+
+        // Send the message.
+        SendMessage("USER_DELETE", userJson);
+    }
     #endregion
 
     #region Messaging

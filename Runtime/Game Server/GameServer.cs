@@ -20,8 +20,8 @@ public class GameServer : MonoBehaviour
     [Tooltip("Port where the Game Server will be hosted")]
     private int gameServerPort;
 
-    [Tooltip("Controller for game server sockets")]
-    private GameServerSocketManager gameServerSocketsController = null;
+    [Tooltip("Manager for game server sockets")]
+    private GameServerSocketManager gameServerSocketsManager = null;
 
     [Tooltip("Bool that indicates if game server is conected to the master server")]
     private bool connectedToMasterServer;
@@ -41,7 +41,7 @@ public class GameServer : MonoBehaviour
     private Game game;
 
     [Tooltip("Game found data, that is received on parameters")]
-    private GameFoundData gameFoundData; // TODO: Think if need to store.
+    private GameFoundData gameFoundData;
 
     [Tooltip("Data about the Game Ended")]
     private GameEndData gameEndData = null;
@@ -49,7 +49,7 @@ public class GameServer : MonoBehaviour
     [Tooltip("Long that stores the time a RTT lasts since server ask and receive")]
     private long clientPing;
 
-    // TODO: Make a Game Server Console with Log and UI.
+    // LOG: Make a Game Server Console with Log and UI.
     [Header("Control")]
     [Tooltip("Text shown in the Game Server Console")]
     public TextMeshProUGUI console_text;
@@ -109,9 +109,9 @@ public class GameServer : MonoBehaviour
     private void OnApplicationQuit()
     {
         // If already created the sockets controller, interrupt the threads and close the sockets.
-        if (gameServerSocketsController != null)
+        if (gameServerSocketsManager != null)
         {
-            gameServerSocketsController.CloseSocketsOnApplicationQuit();
+            gameServerSocketsManager.CloseSocketsOnApplicationQuit();
         }
     }
     #endregion
@@ -124,10 +124,10 @@ public class GameServer : MonoBehaviour
     private void ConnectToMasterServer()
     {
         // Create sockets manager.
-        gameServerSocketsController = new GameServerSocketManager();
+        gameServerSocketsManager = new GameServerSocketManager();
 
         // Connect to the server.
-        gameServerSocketsController.ConnectToMasterServer();
+        gameServerSocketsManager.ConnectToMasterServer();
     }
 
     /// <summary>
@@ -142,7 +142,7 @@ public class GameServer : MonoBehaviour
         if (currentConnectionTries > 0)
         {
             // Connect to the server.
-            gameServerSocketsController.ConnectToMasterServer();
+            gameServerSocketsManager.ConnectToMasterServer();
         }
         else
         {
@@ -158,16 +158,17 @@ public class GameServer : MonoBehaviour
     }
 
     /// <summary>
-    /// Method DisconnectFromMasterServer, that will stop sending messages and listening.
+    /// Method DisconnectFromMasterServer, to disconnect from the master server.
+    /// This method shouldn't be used on the normal flow.
     /// </summary>
-    public void DisconnectFromMasterServer() // TODO: Why use?
+    public void DisconnectFromMasterServer()
     {
         // If not connected to master server, return.
         if (!connectedToMasterServer)
             return;
 
         // Stop listening on the sockets.
-        gameServerSocketsController.DisconnectFromMasterServer();
+        gameServerSocketsManager.DisconnectFromMasterServer();
     }
     #endregion
 
@@ -180,7 +181,7 @@ public class GameServer : MonoBehaviour
     public void SendMessageToMasterServer(string messageType, string messageContent)
     {
         // Send the message by the socket controller.
-        gameServerSocketsController.SendMessageToMasterServer(messageType, messageContent);
+        gameServerSocketsManager.SendMessageToMasterServer(messageType, messageContent);
     }
 
     /// <summary>
@@ -190,7 +191,7 @@ public class GameServer : MonoBehaviour
     public void SendMessageToMasterServer(NetworkMessage messageToSend)
     {
         // Send the message by the socket controller.
-        gameServerSocketsController.SendMessageToMasterServer(messageToSend);
+        gameServerSocketsManager.SendMessageToMasterServer(messageToSend);
     }
 
     /// <summary>
@@ -202,7 +203,7 @@ public class GameServer : MonoBehaviour
     public void SendMessageToClient(Socket socket, string messageType, string messageContent)
     {
         // Send the message by the socket controller.
-        gameServerSocketsController.SendMessageToClient(socket, messageType, messageContent);
+        gameServerSocketsManager.SendMessageToClient(socket, messageType, messageContent);
     }
 
     /// <summary>
@@ -213,7 +214,7 @@ public class GameServer : MonoBehaviour
     public void SendMessageToClient(Socket socket, NetworkMessage messageToSend)
     {
         // Send the message by the socket controller.
-        gameServerSocketsController.SendMessageToClient(socket, messageToSend);
+        gameServerSocketsManager.SendMessageToClient(socket, messageToSend);
     }
     #endregion
 
@@ -263,7 +264,7 @@ public class GameServer : MonoBehaviour
 
         /// Games Data.
         // Get the number of players per game.
-        node = doc.DocumentElement.SelectSingleNode("//game/players-per-game"); // TODO: Make MIN_PLAYERS and MAX_PLAYERS.
+        node = doc.DocumentElement.SelectSingleNode("//game/players-per-game"); // FUTURE: Make MIN_PLAYERS and MAX_PLAYERS.
         EasyGameServerConfig.PLAYERS_PER_GAME = int.Parse(node.InnerText);
 
         // Get the number of calculations per second.
@@ -289,13 +290,13 @@ public class GameServer : MonoBehaviour
     /// Getter for the Game Server Sockets Controller.
     /// </summary>
     /// <returns>Game Server Sockets Controller</returns>
-    public GameServerSocketManager GetGameServerSocketsController() { return gameServerSocketsController; }
+    public GameServerSocketManager GetGameServerSocketsController() { return gameServerSocketsManager; }
 
     /// <summary>
     /// Setter for the Game Server Sockets Controller.
     /// </summary>
     /// <param name="gameServerSocketsController">New Game Server Sockets Controller</param>
-    public void SetGameServerSocketsController(GameServerSocketManager gameServerSocketsController) { this.gameServerSocketsController = gameServerSocketsController; }
+    public void SetGameServerSocketsController(GameServerSocketManager gameServerSocketsController) { this.gameServerSocketsManager = gameServerSocketsController; }
 
     /// <summary>
     /// Getter for the Connected To Master Server bool.
