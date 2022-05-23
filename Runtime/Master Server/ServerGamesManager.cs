@@ -143,6 +143,12 @@ public class ServerGamesManager : MonoBehaviour
                 server_socket.Send(userToGame.GetSocket(), jsonMSG);
             }
         }
+        else
+        {
+            // If not enough players, free the Semaphore.
+            games_semaphore.Release();
+        }
+            
     }
 
     /// <summary>
