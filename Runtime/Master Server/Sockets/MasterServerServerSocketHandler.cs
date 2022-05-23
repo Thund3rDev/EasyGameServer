@@ -2,9 +2,7 @@ using System;
 using System.Net.Sockets;
 using System.Threading;
 using System.Collections.Generic;
-using System.Collections.Concurrent;
 using UnityEngine;
-using System.Linq;
 using System.Timers;
 
 /// <summary>
@@ -196,32 +194,14 @@ public class MasterServerServerSocketHandler : ServerSocketHandler
                 break;
 
             case MasterServerMessageTypes.QUEUE_LEAVE:
-                // Bool to know if player is in queue.
-                bool isUserInQueue = false;
-
                 // Get the user.
                 thisUser = connectedUsers[handler];
 
-                // Lock the queue. // TODO: Encapsulate.
-                lock (ServerGamesManager.instance.GetSearchingGameUsers())
-                {
-                    // Check if user is in queue.
-                    foreach (UserData userInQueue in ServerGamesManager.instance.GetSearchingGameUsers())
-                    {
-                        if (userInQueue.GetUserID() == thisUser.GetUserID())
-                        {
-                            isUserInQueue = true;
+                // Bool to know if user is in queue.
+                bool wasUserInQueue = ServerGamesManager.instance.LeaveFromQueue(thisUser);
 
-                            // Remove the player from the Queue by constructing a new queue based on the previous one but without the left player.
-                            ServerGamesManager.instance.SetSearchingGameUsers(
-                                new ConcurrentQueue<UserData>(ServerGamesManager.instance.GetSearchingGameUsers().Where(x => x.GetSocket() != handler)));
-
-                            break;
-                        }
-                    }
-                }
-
-                if (isUserInQueue)
+                // If user was in queue.
+                if (wasUserInQueue)
                 {
                     // Log.
                     Log.instance.WriteLog("<color=#00ffffff>Leave Queue: </color>" + thisUser.GetUsername() + "<color=#00ffffff>.</color>", EasyGameServerControl.EnumLogDebugLevel.Extended);

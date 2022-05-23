@@ -4,6 +4,7 @@ using System.Threading;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System;
+using System.Linq;
 
 /// <summary>
 /// Class ServerGamesManager, that creates and manages the new games.
@@ -31,10 +32,8 @@ public class ServerGamesManager : MonoBehaviour
     [Tooltip("Integer that assigns the room number for the next room")]
     private int nextRoom = 0;
 
-
-    [Header("Sync")]
-    [Tooltip("Mutex that controls concurrency for create and delete games")]
-    private Mutex games_mutex = new Mutex(); // TODO: Manejar concurrencia.
+    [Tooltip("Semaphore that controls concurrency for create and delete games")]
+    private SemaphoreSlim games_semaphore;
     #endregion
 
     #region Unity Methods
@@ -62,6 +61,10 @@ public class ServerGamesManager : MonoBehaviour
     public void InitializeServerGamesManager()
     {
         gameServersData = new GameServerData[EasyGameServerConfig.MAX_GAMES];
+        games_semaphore = new SemaphoreSlim(EasyGameServerConfig.MAX_GAMES);
+
+        for (int i = 0; i < EasyGameServerConfig.MAX_GAMES; i++)
+            gameServersData[i] = new GameServerData();
     }
 
     /// <summary>
@@ -78,17 +81,31 @@ public class ServerGamesManager : MonoBehaviour
         {
             // If there are enough players to start a game.
             if (searchingGameUsers.Count >= EasyGameServerConfig.PLAYERS_PER_GAME)
-            {
                 areEnoughForAGame = true;
-                // Get the users that will play the game.
-                for (int i = 0; i < EasyGameServerConfig.PLAYERS_PER_GAME; i++)
-                {
-                    // Dequeue the user.
-                    UserData userToGame;
-                    searchingGameUsers.TryDequeue(out userToGame);
+        }
 
-                    // Add the user to the list of this game.
-                    usersForThisGame.Add(userToGame);
+        // If enough players to start the game wait until can Create a new Game.
+        if (areEnoughForAGame)
+        {
+            games_semaphore.Wait();
+            areEnoughForAGame = false; // Users could have left.
+
+            lock (searchingGameUsers)
+            {
+                // If there are still enough players to start a game, dequeue the first ones.
+                if (searchingGameUsers.Count >= EasyGameServerConfig.PLAYERS_PER_GAME)
+                {
+                    areEnoughForAGame = true;
+                    // Get the users that will play the game.
+                    for (int i = 0; i < EasyGameServerConfig.PLAYERS_PER_GAME; i++)
+                    {
+                        // Dequeue the user.
+                        UserData userToGame;
+                        searchingGameUsers.TryDequeue(out userToGame);
+
+                        // Add the user to the list of this game.
+                        usersForThisGame.Add(userToGame);
+                    }
                 }
             }
         }
@@ -126,6 +143,36 @@ public class ServerGamesManager : MonoBehaviour
                 server_socket.Send(userToGame.GetSocket(), jsonMSG);
             }
         }
+    }
+
+    /// <summary>
+    /// Method LeaveFromQueue, used when a player wants to leave the Queue.
+    /// </summary>
+    /// <param name="userLeavingQueue">User leaving the queue</param>
+    /// <returns>Bool indicating if was in the queue</returns>
+    public bool LeaveFromQueue(UserData userLeavingQueue)
+    {
+        // Bool to know if user is in queue.
+        bool wasUserInQueue = false;
+
+        // Lock the queue.
+        lock (searchingGameUsers)
+        {
+            // Check if user is in queue.
+            foreach (UserData userInQueue in searchingGameUsers)
+            {
+                if (userInQueue.GetUserID() == userLeavingQueue.GetUserID())
+                {
+                    wasUserInQueue = true;
+
+                    // Remove the player from the Queue by constructing a new queue based on the previous one but without the left user.
+                    searchingGameUsers = new ConcurrentQueue<UserData>(searchingGameUsers.Where(x => x.GetUserID() != userLeavingQueue.GetUserID()));
+
+                    break;
+                }
+            }
+        }
+        return wasUserInQueue;
     }
 
     /// <summary>
@@ -177,6 +224,9 @@ public class ServerGamesManager : MonoBehaviour
         // Update the GameServer status.
         UpdateGameServerStatus(gameServerID, GameServerData.EnumGameServerState.INACTIVE);
 
+        // Release one permission of the games semaphore.
+        games_semaphore.Release();
+
         // Display data on the console.
         Log.instance.WriteLog("<color=blue>Disconnected Game Server</color>: ID: " + gameServerID + " - Room: " + room + ".", EasyGameServerControl.EnumLogDebugLevel.Useful);
 
@@ -213,50 +263,40 @@ public class ServerGamesManager : MonoBehaviour
         int index = 0;
 
         // Search for an available server.
-        while (!serverAvailable && index < gameServersData.Length)
+        while (!serverAvailable && index < EasyGameServerConfig.MAX_GAMES)
         {
-            if (gameServersData[index] == null)
+            if (gameServersData[index].GetStatus().Equals(GameServerData.EnumGameServerState.INACTIVE))
             {
                 serverAvailable = true;
                 gameServerID = index;
             }
             else
-            {
                 index++;
-            }
         }
 
-        // There is a server available.
-        if (gameServerID > -1)
+        // Construct the arguments.
+        int gameServerPort = EasyGameServerConfig.SERVER_PORT + gameServerID + 1; // This makes the port be one of the next MAX_GAMES ports.
+        GameServerArguments arguments = new GameServerArguments(gameServerID, gameServerPort);
+        string argumentsJson = JsonUtility.ToJson(arguments);
+
+        // Save the GameServer data.
+        gameServersData[gameServerID] = new GameServerData(gameServerID, gameFoundData);
+
+        // Try to launch the GameServer.
+        try
         {
-            // Construct the arguments.
-            int gameServerPort = EasyGameServerConfig.SERVER_PORT + gameServerID + 1; // This makes the port be one of the next MAX_GAMES ports.
-            GameServerArguments arguments = new GameServerArguments(gameServerID, gameServerPort);
-            string argumentsJson = JsonUtility.ToJson(arguments);
+            gameServersData[gameServerID].SetProcess(new Process());
+            gameServersData[gameServerID].GetProcess().StartInfo.FileName = EasyGameServerConfig.GAMESERVER_PATH;
+            gameServersData[gameServerID].GetProcess().StartInfo.Arguments = argumentsJson;
+            gameServersData[gameServerID].GetProcess().Start();
 
-            // Save the GameServer data.
-            gameServersData[gameServerID] = new GameServerData(gameServerID, gameFoundData);
-
-            // Try to launch the GameServer.
-            try
-            {
-                gameServersData[gameServerID].SetProcess(new Process());
-                gameServersData[gameServerID].GetProcess().StartInfo.FileName = EasyGameServerConfig.GAMESERVER_PATH;
-                gameServersData[gameServerID].GetProcess().StartInfo.Arguments = argumentsJson;
-                gameServersData[gameServerID].GetProcess().Start();
-
-                Log.instance.WriteLog("<color=blue>Launched Game Server with parameters: </color>" + argumentsJson, EasyGameServerControl.EnumLogDebugLevel.Extended);
-            }
-            catch (Exception e)
-            {
-                Log.instance.WriteErrorLog(e.ToString(), EasyGameServerControl.EnumLogDebugLevel.Minimal);
-            }
+            Log.instance.WriteLog("<color=blue>Launched Game Server with parameters: </color>" + argumentsJson, EasyGameServerControl.EnumLogDebugLevel.Extended);
         }
-        //TODO: There is NO server available.
-        else
+        catch (Exception e)
         {
-
+            Log.instance.WriteErrorLog(e.ToString(), EasyGameServerControl.EnumLogDebugLevel.Minimal);
         }
+
     }
 
     /// <summary>
