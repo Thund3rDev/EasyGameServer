@@ -44,11 +44,18 @@ public class ClientSocketManager
         // Create the Client Socket.
         CreateClientSocket();
 
+        // If alive, interrupt the connectionsThread.
+        if (connectionsThread != null && connectionsThread.IsAlive)
+            connectionsThread.Interrupt();
+
         // Get EndPoint.
         EndPoint remoteEP = CreateEndpoint(serverIpAddress, EasyGameServerConfig.SERVER_PORT);
 
+        // Initialize the client socket handler.
+        if (clientSocketHandler == null)
+            clientSocketHandler = new ClientClientSocketHandler(this);
+
         // Connect to server.
-        clientSocketHandler = new ClientClientSocketHandler(this);
         connectionsThread = new Thread(() => clientSocketHandler.StartClient(remoteEP, socket_client));
         connectionsThread.Start();
     }
@@ -61,18 +68,19 @@ public class ClientSocketManager
         // Obtain IP Address.
         IPAddress gameServerIpAddress = ObtainIPAddress(serverIP);
 
-        // Create the Client Socket. TODO: PROBLEMA AQUI: HAY QUE PARAR EL THREAD ANTERIOR Y LANZAR EL NUEVO!
+        // Create the Client Socket.
         CreateClientSocket();
+
+        // If alive, interrupt the connectionsThread.
+        if (connectionsThread != null && connectionsThread.IsAlive)
+            connectionsThread.Interrupt();
 
         // Get EndPoint.
         EndPoint remoteEP = CreateEndpoint(gameServerIpAddress, serverPort);
 
         // Connect to game server.
-        clientSocketHandler.StartClient(remoteEP, socket_client);
-
-        // TODO: SI. Tener en cuenta el thread anterior.
-        // connectionsThread = new Thread(() => clientSocketHandler.StartClient(remoteEP, socket_client));
-        // connectionsThread.Start();
+        connectionsThread = new Thread(() => clientSocketHandler.StartClient(remoteEP, socket_client));
+        connectionsThread.Start();
     }
 
     /// <summary>
@@ -80,7 +88,7 @@ public class ClientSocketManager
     /// </summary>
     public void DisconnectFromServer()
     {
-        SendMessage("DISCONNECT_USER", "");
+        SendMessage(MasterServerMessageTypes.DISCONNECT_USER, "");
     }
     #endregion
 

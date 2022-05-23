@@ -272,8 +272,9 @@ public class GameServerSocketManager
     private void CreateGame()
     {
         // Create the game data.
-        GameServer.instance.SetGame(new Game(serverSocketHandler, GameServer.instance.GetGameFoundData().GetRoom(), "Level_0"));
-        // TODO: Get the scene name from the server.
+        int room = GameServer.instance.GetGameFoundData().GetRoom();
+        string levelSceneName = GameServer.instance.GetGameFoundData().GetLevelSceneName();
+        GameServer.instance.SetGame(new Game(serverSocketHandler, room, levelSceneName));
     }
     #endregion
     #endregion

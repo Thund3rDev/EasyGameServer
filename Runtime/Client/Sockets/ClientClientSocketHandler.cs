@@ -117,11 +117,10 @@ public class ClientClientSocketHandler : ClientSocketHandler
         UpdateData updateData;
         UserData thisUser;
 
-        // TODO: Maybe messageType (EGS only) as an enum?
         // Depending on the messageType, do different things.
         switch (receivedMessage.GetMessageType())
         {
-            case "RTT":
+            case ClientMessageTypes.RTT:
                 // Save the client ping.
                 long lastRTTMilliseconds = long.Parse(receivedMessage.GetMessageContent());
                 Client.instance.SetClientPing(lastRTTMilliseconds);
@@ -130,7 +129,7 @@ public class ClientClientSocketHandler : ClientSocketHandler
                 ClientDelegates.onRTT?.Invoke(lastRTTMilliseconds);
 
                 // Prepare the message to send.
-                messageToSend.SetMessageType("RTT_RESPONSE_CLIENT");
+                messageToSend.SetMessageType(MasterServerMessageTypes.RTT_RESPONSE_CLIENT);
                 messageToSend.SetMessageContent(Client.instance.GetUser().GetUserID().ToString());
 
                 // Convert message to JSON.
@@ -139,7 +138,8 @@ public class ClientClientSocketHandler : ClientSocketHandler
                 // Send data to server.
                 Send(handler, jsonMSG);
                 break;
-            case "CONNECT_TO_MASTER_SERVER":
+
+            case ClientMessageTypes.CONNECT_TO_MASTER_SERVER:
                 // Save as connected to the master server.
                 Client.instance.SetConnectedToMasterServer(true);
                 Client.instance.SetConnectingToServer(false);
@@ -154,7 +154,7 @@ public class ClientClientSocketHandler : ClientSocketHandler
                 userJson = JsonUtility.ToJson(thisUser);
 
                 // Construct the message.
-                messageToSend.SetMessageType("USER_JOIN_SERVER");
+                messageToSend.SetMessageType(MasterServerMessageTypes.USER_JOIN_SERVER);
                 messageToSend.SetMessageContent(userJson);
 
                 // Convert message to JSON.
@@ -163,7 +163,8 @@ public class ClientClientSocketHandler : ClientSocketHandler
                 // Send data to server.
                 Send(handler, jsonMSG);
                 break;
-            case "JOIN_MASTER_SERVER":
+
+            case ClientMessageTypes.JOIN_MASTER_SERVER:
                 // Get and update User Data.
                 UserData updatedUser = JsonUtility.FromJson<UserData>(receivedMessage.GetMessageContent());
                 Client.instance.SetUser(updatedUser);
@@ -171,7 +172,7 @@ public class ClientClientSocketHandler : ClientSocketHandler
                 // Call the onJoinMasterServer delegate.
                 ClientDelegates.onJoinMasterServer?.Invoke(updatedUser);
                 break;
-            case "DISCONNECT":
+            case ClientMessageTypes.DISCONNECT:
                 // Close the socket to disconnect from the server.
                 socketManager.CloseSocket();
 
@@ -181,7 +182,8 @@ public class ClientClientSocketHandler : ClientSocketHandler
                 // Call the onDisconnect delegate.
                 ClientDelegates.onDisconnect?.Invoke();
                 break;
-            case "GAME_FOUND":
+
+            case ClientMessageTypes.GAME_FOUND:
                 // Obtain GameFoundData.
                 GameFoundData gameFoundData = JsonUtility.FromJson<GameFoundData>(receivedMessage.GetMessageContent());
                 Client.instance.SetGameFoundData(gameFoundData);
@@ -206,7 +208,8 @@ public class ClientClientSocketHandler : ClientSocketHandler
                 // Execute code on game found.
                 ClientDelegates.onGameFound?.Invoke(gameFoundData);
                 break;
-            case "CHANGE_TO_GAME_SERVER":
+
+            case ClientMessageTypes.CHANGE_TO_GAME_SERVER:
                 // Save the Game Server connection data (IP and port).
                 string[] ep = receivedMessage.GetMessageContent().Split(':');
                 gameServerIP = ep[0];
@@ -216,7 +219,7 @@ public class ClientClientSocketHandler : ClientSocketHandler
                 ClientDelegates.onPrepareToChangeFromMasterToGameServer?.Invoke(gameServerIP, gameServerPort);
 
                 // Tell the server that the client received the information so can connect to the game server.
-                messageToSend.SetMessageType("DISCONNECT_TO_GAME");
+                messageToSend.SetMessageType(MasterServerMessageTypes.DISCONNECT_TO_GAME);
 
                 // Convert message to JSON.
                 jsonMSG = messageToSend.ConvertMessage();
@@ -224,7 +227,8 @@ public class ClientClientSocketHandler : ClientSocketHandler
                 // Send data to server.
                 Send(handler, jsonMSG);
                 break;
-            case "DISCONNECT_TO_GAME":
+
+            case ClientMessageTypes.DISCONNECT_TO_GAME:
                 // Close the socket to disconnect from the server.
                 socketManager.CloseSocket();
 
@@ -235,9 +239,9 @@ public class ClientClientSocketHandler : ClientSocketHandler
                 ClientDelegates.onChangeFromMasterToGameServer?.Invoke(gameServerIP, gameServerPort);
 
                 // Try to connect to Game Server.
-                socketManager.ConnectToGameServer(gameServerIP, gameServerPort);
+                MainThreadDispatcher.RunOnMainThread(() => socketManager.ConnectToGameServer(gameServerIP, gameServerPort));
                 break;
-            case "CONNECT_TO_GAME_SERVER":
+            case ClientMessageTypes.CONNECT_TO_GAME_SERVER:
                 // Save as connected to the game server.
                 Client.instance.SetConnectedToGameServer(true);
 
@@ -248,7 +252,7 @@ public class ClientClientSocketHandler : ClientSocketHandler
                 userJson = JsonUtility.ToJson(Client.instance.GetUser());
 
                 // Construct the message.
-                messageToSend.SetMessageType("JOIN_GAME_SERVER");
+                messageToSend.SetMessageType(GameServerMessageTypes.JOIN_GAME_SERVER);
                 messageToSend.SetMessageContent(userJson);
 
                 // Convert message to JSON.
@@ -257,11 +261,13 @@ public class ClientClientSocketHandler : ClientSocketHandler
                 // Send data to server.
                 Send(handler, jsonMSG);
                 break;
-            case "JOIN_GAME_SERVER":
+
+            case ClientMessageTypes.JOIN_GAME_SERVER:
                 // Call the onJoinMasterServer delegate.
                 ClientDelegates.onJoinGameServer?.Invoke();
                 break;
-            case "GAME_START":
+
+            case ClientMessageTypes.GAME_START:
                 // Save the Update Data.
                 updateData = JsonUtility.FromJson<UpdateData>(receivedMessage.GetMessageContent());
                 Client.instance.SetGameData(updateData);
@@ -276,7 +282,8 @@ public class ClientClientSocketHandler : ClientSocketHandler
                 // Call the onGameStart delegate.
                 ClientDelegates.onGameStart?.Invoke();
                 break;
-            case "UPDATE":
+
+            case ClientMessageTypes.UPDATE:
                 // Save the Update Data.
                 updateData = JsonUtility.FromJson<UpdateData>(receivedMessage.GetMessageContent());
                 Client.instance.GetGameData().SetPlayersAtGame(updateData.GetPlayersAtGame());
@@ -284,7 +291,8 @@ public class ClientClientSocketHandler : ClientSocketHandler
                 // Call the onGameReceiveUpdate delegate.
                 ClientDelegates.onGameReceiveUpdate?.Invoke(updateData);
                 break;
-            case "PLAYER_LEAVE_GAME":
+
+            case ClientMessageTypes.PLAYER_LEAVE_GAME:
                 // Get the Player ID from the message.
                 int playerID = int.Parse(receivedMessage.GetMessageContent());
 
@@ -297,7 +305,8 @@ public class ClientClientSocketHandler : ClientSocketHandler
 
                 MainThreadDispatcher.RunOnMainThread(() => { Debug.Log("Player left Game: " + playerID); });
                 break;
-            case "GAME_END":
+
+            case ClientMessageTypes.GAME_END:
                 // Get the Game End Data and save it.
                 GameEndData gameEndData = JsonUtility.FromJson<GameEndData>(receivedMessage.GetMessageContent());
                 Client.instance.SetGameEndData(gameEndData);
@@ -314,7 +323,7 @@ public class ClientClientSocketHandler : ClientSocketHandler
                 ClientDelegates.onPrepareToChangeFromGameToMasterServer?.Invoke(EasyGameServerConfig.SERVER_IP, EasyGameServerConfig.SERVER_PORT);
 
                 // DisconnectFromMasterServer from the Game Server and return to the MasterServer.
-                messageToSend.SetMessageType("RETURN_TO_MASTER_SERVER");
+                messageToSend.SetMessageType(GameServerMessageTypes.RETURN_TO_MASTER_SERVER);
 
                 // Convert message to JSON.
                 jsonMSG = messageToSend.ConvertMessage();
@@ -322,7 +331,8 @@ public class ClientClientSocketHandler : ClientSocketHandler
                 // Send data to server.
                 Send(handler, jsonMSG);
                 break;
-            case "DISCONNECT_TO_MASTER_SERVER":
+
+            case ClientMessageTypes.DISCONNECT_TO_MASTER_SERVER:
                 // Close the socket to disconnect from the server.
                 socketManager.CloseSocket();
 
@@ -345,7 +355,8 @@ public class ClientClientSocketHandler : ClientSocketHandler
                 // Try to connect to Game Server.
                 socketManager.ConnectToServer();
                 break;
-            case "RETURN_TO_MASTER_SERVER":
+
+            case ClientMessageTypes.RETURN_TO_MASTER_SERVER:
                 // Get and update User Data.
                 thisUser = JsonUtility.FromJson<UserData>(receivedMessage.GetMessageContent());
                 Client.instance.SetUser(thisUser);
@@ -353,11 +364,13 @@ public class ClientClientSocketHandler : ClientSocketHandler
                 // Call the onReturnToMasterServer delegate.
                 ClientDelegates.onReturnToMasterServer?.Invoke(thisUser);
                 break;
-            case "CLOSE_SERVER":
+
+            case ClientMessageTypes.CLOSE_SERVER:
                 // Call the onServerClosed delegate.
                 ClientDelegates.onServerClosed?.Invoke();
                 break;
-            case "USER_DELETE":
+
+            case ClientMessageTypes.USER_DELETE:
                 // Call the onUserDelete delegate.
                 ClientDelegates.onUserDelete?.Invoke(Client.instance.GetUser());
 
@@ -367,6 +380,7 @@ public class ClientClientSocketHandler : ClientSocketHandler
                 // Save as disconnected from the master server.
                 Client.instance.SetConnectedToMasterServer(false);
                 break;
+
             default:
                 // Call the onMessageReceive delegate.
                 ClientDelegates.onMessageReceive?.Invoke(receivedMessage);

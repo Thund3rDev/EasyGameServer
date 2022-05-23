@@ -79,7 +79,7 @@ public class GameServerServerSocketHandler : ServerSocketHandler
         // Depending on the messageType, do different things.
         switch (receivedMessage.GetMessageType())
         {
-            case "RTT_RESPONSE_CLIENT":
+            case GameServerMessageTypes.RTT_RESPONSE_CLIENT:
                 // Get the needed data.
                 rttPing = roundTripTimes[handler].ReceiveRTT();
                 thisUser = connectedUsers[handler];
@@ -91,9 +91,10 @@ public class GameServerServerSocketHandler : ServerSocketHandler
                 // Call the onReceiveClientRTT delegate with UserID and the rtt ping in milliseconds.
                 GameServerDelegates.onReceiveClientRTT?.Invoke(thisUser.GetUserID(), rttPing);
 
-                // TODO / LOG: Update UI? I think it is better on UI Update method or in the delegate.
+                // LOG: Update UI? I think it is better on UI Update method or in the delegate.
                 break;
-            case "JOIN_GAME_SERVER":
+
+            case GameServerMessageTypes.JOIN_GAME_SERVER:
                 try
                 {
                     // Get the received user
@@ -114,7 +115,7 @@ public class GameServerServerSocketHandler : ServerSocketHandler
                         CreateRTT(handler, EasyGameServerControl.EnumInstanceType.Client);
 
                         // Echo the data back to the client.
-                        messageToSend.SetMessageType("JOIN_GAME_SERVER");
+                        messageToSend.SetMessageType(ClientMessageTypes.JOIN_GAME_SERVER);
                         jsonMSG = messageToSend.ConvertMessage();
                         Send(handler, jsonMSG);
 
@@ -122,7 +123,7 @@ public class GameServerServerSocketHandler : ServerSocketHandler
                         GameServerDelegates.onUserJoinServer?.Invoke(thisUser);
 
                         // Check if game started / are all players.
-                        // TODO: Only prepare the game, not start it.
+                        // FUTURE: Only prepare the game, not start it.
                         bool allPlayersConnected = GameServer.instance.GetGame().Ready();
                         // Log.
                         MainThreadDispatcher.RunOnMainThread(() => { GameServer.instance.console_text.text += "\nAllPlayersConnected: " + allPlayersConnected; });
@@ -143,7 +144,8 @@ public class GameServerServerSocketHandler : ServerSocketHandler
                     MainThreadDispatcher.RunOnMainThread(() => { GameServer.instance.console_text.text += "\nEXCEPTION: " + e.ToString(); });
                 }
                 break;
-            case "PLAYER_INPUT":
+
+            case GameServerMessageTypes.PLAYER_INPUT:
                 // Get the input data
                 PlayerInputs playerInputs = JsonUtility.FromJson<PlayerInputs>(receivedMessage.GetMessageContent());
                 bool[] inputs = playerInputs.GetBoolInputs();
@@ -157,7 +159,8 @@ public class GameServerServerSocketHandler : ServerSocketHandler
                 // Call the onPlayerSendInput delegate.
                 GameServerDelegates.onPlayerSendInput?.Invoke(thisPlayer, playerInputs);
                 break;
-            case "LEAVE_GAME":
+
+            case GameServerMessageTypes.LEAVE_GAME:
                 // Get the user.
                 thisUser = connectedUsers[handler];
 
@@ -174,7 +177,7 @@ public class GameServerServerSocketHandler : ServerSocketHandler
                 // Echo the disconnection back to the client.
                 leavingGameString = bool.TrueString;
 
-                messageToSend.SetMessageType("DISCONNECT_TO_MASTER_SERVER");
+                messageToSend.SetMessageType(ClientMessageTypes.DISCONNECT_TO_MASTER_SERVER);
                 messageToSend.SetMessageContent(leavingGameString);
                 jsonMSG = messageToSend.ConvertMessage();
 
@@ -183,7 +186,8 @@ public class GameServerServerSocketHandler : ServerSocketHandler
                 // Call the onPlayerLeaveGame delegate.
                 GameServerDelegates.onPlayerLeaveGame?.Invoke(thisPlayer);
                 break;
-            case "RETURN_TO_MASTER_SERVER":
+
+            case GameServerMessageTypes.RETURN_TO_MASTER_SERVER:
                 // Get the user.
                 thisUser = connectedUsers[handler];
 
@@ -193,7 +197,7 @@ public class GameServerServerSocketHandler : ServerSocketHandler
                 // Echo the disconnection back to the client.
                 leavingGameString = bool.FalseString;
 
-                messageToSend.SetMessageType("DISCONNECT_TO_MASTER_SERVER");
+                messageToSend.SetMessageType(ClientMessageTypes.DISCONNECT_TO_MASTER_SERVER);
                 messageToSend.SetMessageContent(leavingGameString);
                 jsonMSG = messageToSend.ConvertMessage();
 
@@ -202,6 +206,7 @@ public class GameServerServerSocketHandler : ServerSocketHandler
                 // Call the onUserDisconnectToMasterServer delegate.
                 GameServerDelegates.onUserDisconnectToMasterServer?.Invoke(thisUser);
                 break;
+
             default:
                 // Call the onClientMessageReceive delegate.
                 GameServerDelegates.onClientMessageReceive?.Invoke(receivedMessage, this, handler);
@@ -220,7 +225,7 @@ public class GameServerServerSocketHandler : ServerSocketHandler
         MainThreadDispatcher.RunOnMainThread(() => { GameServer.instance.console_text.text += "\nPLAYER CONNECTED: " + client_socket.RemoteEndPoint; });
 
         // Ask client for user data.
-        NetworkMessage msg = new NetworkMessage("CONNECT_TO_GAME_SERVER", "");
+        NetworkMessage msg = new NetworkMessage(ClientMessageTypes.CONNECT_TO_GAME_SERVER, "");
         string jsonMSG = msg.ConvertMessage();
 
         Send(client_socket, jsonMSG);

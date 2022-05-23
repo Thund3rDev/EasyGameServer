@@ -175,7 +175,7 @@ public class Client : MonoBehaviour
         string userJson = JsonUtility.ToJson(user);
 
         // Send the message.
-        SendMessage("USER_DELETE", userJson);
+        SendMessage(MasterServerMessageTypes.USER_DELETE, userJson);
     }
     #endregion
 
@@ -212,7 +212,7 @@ public class Client : MonoBehaviour
         string userJson = JsonUtility.ToJson(user);
 
         // Send the message.
-        SendMessage("QUEUE_JOIN", userJson);
+        SendMessage(MasterServerMessageTypes.QUEUE_JOIN, userJson);
     }
 
     /// <summary>
@@ -220,7 +220,7 @@ public class Client : MonoBehaviour
     /// </summary>
     public void LeaveQueue()
     {
-        SendMessage("QUEUE_LEAVE", "");
+        SendMessage(MasterServerMessageTypes.QUEUE_LEAVE, "");
     }
 
     /// <summary>
@@ -228,7 +228,7 @@ public class Client : MonoBehaviour
     /// </summary>
     public void LeaveGame()
     {
-        clientSocketManager.SendMessage("LEAVE_GAME", user.GetIngameID().ToString());
+        clientSocketManager.SendMessage(GameServerMessageTypes.LEAVE_GAME, user.GetIngameID().ToString());
     }
     #endregion
 

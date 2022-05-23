@@ -75,7 +75,7 @@ public class MasterServerServerSocketHandler : ServerSocketHandler
         // Depending on the messageType, do different things.
         switch (receivedMessage.GetMessageType())
         {
-            case "RTT_RESPONSE_CLIENT":
+            case MasterServerMessageTypes.RTT_RESPONSE_CLIENT:
                 // Get the needed data.
                 rttPing = roundTripTimes[handler].ReceiveRTT();
                 thisUser = connectedUsers[handler];
@@ -85,7 +85,8 @@ public class MasterServerServerSocketHandler : ServerSocketHandler
                 // Call the onClientRTT delegate with UserID and the rtt ping in milliseconds.
                 MasterServerDelegates.onClientRTT?.Invoke(thisUser.GetUserID(), rttPing);
                 break;
-            case "RTT_RESPONSE_GAME_SERVER":
+
+            case MasterServerMessageTypes.RTT_RESPONSE_GAME_SERVER:
                 // Get the needed data.
                 rttPing = roundTripTimes[handler].ReceiveRTT();
                 gameServerID = int.Parse(receivedMessage.GetMessageContent());
@@ -95,7 +96,8 @@ public class MasterServerServerSocketHandler : ServerSocketHandler
                 // Call the onGameServerRTT delegate with GameServerID and the rtt ping in milliseconds.
                 MasterServerDelegates.onGameServerRTT?.Invoke(gameServerID, rttPing);
                 break;
-            case "USER_JOIN_SERVER":
+
+            case MasterServerMessageTypes.USER_JOIN_SERVER:
                 // Get the received user.
                 thisUser = JsonUtility.FromJson<UserData>(receivedMessage.GetMessageContent());
                 thisUser.SetSocket(handler);
@@ -130,7 +132,7 @@ public class MasterServerServerSocketHandler : ServerSocketHandler
                     thisUser.SetLeftGame(false);
 
                     // Establish the message to RETURN.
-                    messageToSend.SetMessageType("RETURN_TO_MASTER_SERVER");
+                    messageToSend.SetMessageType(ClientMessageTypes.RETURN_TO_MASTER_SERVER);
                 }
                 else
                 {
@@ -138,7 +140,7 @@ public class MasterServerServerSocketHandler : ServerSocketHandler
                     Log.instance.WriteLog("<color=purple>Connected User</color>: UserID: " + thisUser.GetUserID() + " - Username: " + thisUser.GetUsername() + " - IP: " + thisUser.GetIPAddress() + ".", EasyGameServerControl.EnumLogDebugLevel.Minimal);
 
                     // Establish the message to JOIN.
-                    messageToSend.SetMessageType("JOIN_MASTER_SERVER");
+                    messageToSend.SetMessageType(ClientMessageTypes.JOIN_MASTER_SERVER);
                 }
 
                 // Connect the user.
@@ -153,7 +155,8 @@ public class MasterServerServerSocketHandler : ServerSocketHandler
                 // Call the onUserJoinServer delegate.
                 MasterServerDelegates.onUserJoinServer?.Invoke(thisUser, returning);
                 break;
-            case "DISCONNECT_USER":
+
+            case MasterServerMessageTypes.DISCONNECT_USER:
                 // Get the user.
                 thisUser = connectedUsers[handler];
 
@@ -161,7 +164,7 @@ public class MasterServerServerSocketHandler : ServerSocketHandler
                 DisconnectUser(thisUser);
 
                 // Echo the disconnection back to the client.
-                messageToSend.SetMessageType("DISCONNECT");
+                messageToSend.SetMessageType(ClientMessageTypes.DISCONNECT);
                 jsonMSG = messageToSend.ConvertMessage();
 
                 Send(handler, jsonMSG);
@@ -169,7 +172,8 @@ public class MasterServerServerSocketHandler : ServerSocketHandler
                 // Call the onUserDisconnect delegate.
                 MasterServerDelegates.onUserDisconnect?.Invoke(thisUser);
                 break;
-            case "QUEUE_JOIN":
+
+            case MasterServerMessageTypes.QUEUE_JOIN:
                 // Get the user.
                 storedUser = connectedUsers[handler];
 
@@ -190,7 +194,8 @@ public class MasterServerServerSocketHandler : ServerSocketHandler
                 // Check the Queue to Start Game.
                 ServerGamesManager.instance.CheckQueueToStartGame(this);
                 break;
-            case "QUEUE_LEAVE":
+
+            case MasterServerMessageTypes.QUEUE_LEAVE:
                 // Bool to know if player is in queue.
                 bool isUserInQueue = false;
 
@@ -225,7 +230,8 @@ public class MasterServerServerSocketHandler : ServerSocketHandler
                     MasterServerDelegates.onUserLeaveQueue?.Invoke(thisUser);
                 }
                 break;
-            case "DISCONNECT_TO_GAME":
+
+            case MasterServerMessageTypes.DISCONNECT_TO_GAME:
                 // Get the user.
                 thisUser = connectedUsers[handler];
 
@@ -233,7 +239,7 @@ public class MasterServerServerSocketHandler : ServerSocketHandler
                 DisconnectUserToGame(thisUser, handler);
 
                 // Echo the disconnection back to the client.
-                messageToSend.SetMessageType("DISCONNECT_TO_GAME");
+                messageToSend.SetMessageType(ClientMessageTypes.DISCONNECT_TO_GAME);
                 jsonMSG = messageToSend.ConvertMessage();
 
                 Send(handler, jsonMSG);
@@ -241,7 +247,8 @@ public class MasterServerServerSocketHandler : ServerSocketHandler
                 // Call the onUserDisconnectToGameServer delegate.
                 MasterServerDelegates.onUserDisconnectToGameServer?.Invoke(thisUser);
                 break;
-            case "USER_LEAVE_GAME":
+
+            case MasterServerMessageTypes.USER_LEAVE_GAME:
                 // Get the user from the GameServer.
                 thisUser = JsonUtility.FromJson<UserData>(receivedMessage.GetMessageContent());
 
@@ -256,7 +263,8 @@ public class MasterServerServerSocketHandler : ServerSocketHandler
                 // Call the onUserLeaveGame delegate.
                 MasterServerDelegates.onUserLeaveGame?.Invoke(thisUser);
                 break;
-            case "CREATED_GAME_SERVER":
+
+            case MasterServerMessageTypes.CREATED_GAME_SERVER:
                 // Get the Game Server IP Data.
                 gameServerIPData = JsonUtility.FromJson<GameServerIPData>(receivedMessage.GetMessageContent());
 
@@ -284,13 +292,14 @@ public class MasterServerServerSocketHandler : ServerSocketHandler
                 // Send the game found data to the game server.
                 string gameFoundDataJson = JsonUtility.ToJson(ServerGamesManager.instance.GetGameServerData(gameServerID).GetGameFoundData());
 
-                messageToSend.SetMessageType("RECEIVE_GAME_DATA");
+                messageToSend.SetMessageType(GameServerMessageTypes.RECEIVE_GAME_DATA);
                 messageToSend.SetMessageContent(gameFoundDataJson);
                 jsonMSG = messageToSend.ConvertMessage();
 
                 Send(handler, jsonMSG);
                 break;
-            case "READY_GAME_SERVER":
+
+            case MasterServerMessageTypes.READY_GAME_SERVER:
                 // Get the Game Server IP Data.
                 gameServerIPData = JsonUtility.FromJson<GameServerIPData>(receivedMessage.GetMessageContent());
 
@@ -307,7 +316,7 @@ public class MasterServerServerSocketHandler : ServerSocketHandler
                 MasterServerDelegates.onGameServerReady?.Invoke(gameServerID);
 
                 // Send the game server IP to the players.
-                messageToSend.SetMessageType("CHANGE_TO_GAME_SERVER");
+                messageToSend.SetMessageType(ClientMessageTypes.CHANGE_TO_GAME_SERVER);
                 messageToSend.SetMessageContent(gameServerIP);
                 jsonMSG = messageToSend.ConvertMessage();
 
@@ -319,7 +328,8 @@ public class MasterServerServerSocketHandler : ServerSocketHandler
                     Log.instance.WriteLog("<color=#00ffffff>Sent order to change to the game server to: </color>" + user.GetUsername() + "<color=#00ffffff>.</color>", EasyGameServerControl.EnumLogDebugLevel.Extended);
                 }
                 break;
-            case "GAME_START":
+
+            case MasterServerMessageTypes.GAME_START:
                 // Get the Start Data.
                 UpdateData startUpdateData = JsonUtility.FromJson<UpdateData>(receivedMessage.GetMessageContent());
                 room = startUpdateData.GetRoom();
@@ -333,7 +343,8 @@ public class MasterServerServerSocketHandler : ServerSocketHandler
                 // Call the onGameStart delegate.
                 MasterServerDelegates.onGameStart?.Invoke(startUpdateData);
                 break;
-            case "GAME_END":
+
+            case MasterServerMessageTypes.GAME_END:
                 // Get the Game End Information.
                 GameEndData gameEndData = JsonUtility.FromJson<GameEndData>(receivedMessage.GetMessageContent());
                 gameServerID = gameEndData.GetGameServerID();
@@ -367,12 +378,13 @@ public class MasterServerServerSocketHandler : ServerSocketHandler
                 FinishAndDisconnectGameServer(room, gameServerID, handler);
 
                 // Tell the Game Server to close.
-                messageToSend.SetMessageType("DISCONNECT_AND_CLOSE_GAMESERVER");
+                messageToSend.SetMessageType(GameServerMessageTypes.DISCONNECT_AND_CLOSE_GAMESERVER);
                 jsonMSG = messageToSend.ConvertMessage();
 
                 Send(handler, jsonMSG);
                 break;
-            case "USER_DELETE":
+
+            case MasterServerMessageTypes.USER_DELETE:
                 // Get the received user.
                 thisUser = JsonUtility.FromJson<UserData>(receivedMessage.GetMessageContent());
 
@@ -385,6 +397,7 @@ public class MasterServerServerSocketHandler : ServerSocketHandler
                 // Delete the user.
                 DeleteUser(thisUser);
                 break;
+
             default:
                 // Call the onMessageReceive delegate.
                 MasterServerDelegates.onMessageReceive?.Invoke(receivedMessage);
@@ -416,7 +429,7 @@ public class MasterServerServerSocketHandler : ServerSocketHandler
         Log.instance.WriteLog("<color=#ff00ffff>New connection</color>. IP: " + client_socket.RemoteEndPoint + ".", EasyGameServerControl.EnumLogDebugLevel.Complete);
 
         // Ask client for user data.
-        NetworkMessage msg = new NetworkMessage("CONNECT_TO_MASTER_SERVER", "");
+        NetworkMessage msg = new NetworkMessage(ClientMessageTypes.CONNECT_TO_MASTER_SERVER, "");
         string jsonMSG = msg.ConvertMessage();
 
         Send(client_socket, jsonMSG);
@@ -594,7 +607,7 @@ public class MasterServerServerSocketHandler : ServerSocketHandler
         }
 
         // Send message to user.
-        NetworkMessage msg = new NetworkMessage("USER_DELETE", JsonUtility.ToJson(userToDelete));
+        NetworkMessage msg = new NetworkMessage(ClientMessageTypes.USER_DELETE, JsonUtility.ToJson(userToDelete));
         Send(userToDelete.GetSocket(), msg.ConvertMessage());
 
         // Display data on the console.
@@ -607,7 +620,7 @@ public class MasterServerServerSocketHandler : ServerSocketHandler
     public void DisconnectAllUsers()
     {
         UserData userToDisconnect;
-        NetworkMessage disconnectMessage = new NetworkMessage("CLOSE_SERVER");
+        NetworkMessage disconnectMessage = new NetworkMessage(ClientMessageTypes.CLOSE_SERVER);
         string disconnectMessageJSON = disconnectMessage.ConvertMessage();
         
         // For each connected user, disconnect it.

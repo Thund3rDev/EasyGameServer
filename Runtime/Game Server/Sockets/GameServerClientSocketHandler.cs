@@ -117,7 +117,7 @@ public class GameServerClientSocketHandler : ClientSocketHandler
         // Depending on the messageType, do different things.
         switch (receivedMessage.GetMessageType())
         {
-            case "RTT":
+            case GameServerMessageTypes.RTT:
                 // Save the client ping.
                 long lastRTTMilliseconds = long.Parse(receivedMessage.GetMessageContent());
                 GameServer.instance.SetClientPing(lastRTTMilliseconds);
@@ -126,7 +126,7 @@ public class GameServerClientSocketHandler : ClientSocketHandler
                 GameServerDelegates.onRTT?.Invoke(lastRTTMilliseconds);
 
                 // Prepare the message to send.
-                messageToSend.SetMessageType("RTT_RESPONSE_GAME_SERVER");
+                messageToSend.SetMessageType(MasterServerMessageTypes.RTT_RESPONSE_GAME_SERVER);
                 messageToSend.SetMessageContent(GameServer.instance.GetGameServerID().ToString());
 
                 // Convert message to JSON.
@@ -135,7 +135,8 @@ public class GameServerClientSocketHandler : ClientSocketHandler
                 // Send data to server.
                 Send(handler, jsonMSG);
                 break;
-            case "CONNECT_TO_MASTER_SERVER":
+
+            case GameServerMessageTypes.CONNECT_TO_MASTER_SERVER:
                 // Save as connected to the master server.
                 GameServer.instance.SetConnectedToMasterServer(true);
 
@@ -143,7 +144,7 @@ public class GameServerClientSocketHandler : ClientSocketHandler
                 GameServerDelegates.onConnectToMasterServer?.Invoke();
 
                 // Send a message to the master server.
-                messageToSend.SetMessageType("CREATED_GAME_SERVER");
+                messageToSend.SetMessageType(MasterServerMessageTypes.CREATED_GAME_SERVER);
 
                 // Construct the GameServerIPData to be sent.
                 gameServerID = GameServer.instance.GetGameServerID();
@@ -153,7 +154,7 @@ public class GameServerClientSocketHandler : ClientSocketHandler
                 gameServerIPDataJson = JsonUtility.ToJson(gameServerIPData);
                 messageToSend.SetMessageContent(gameServerIPDataJson);
 
-                MainThreadDispatcher.RunOnMainThread(() => { GameServer.instance.console_text.text += "\nIPADRESS " + EasyGameServerConfig.SERVER_IP; });
+                MainThreadDispatcher.RunOnMainThread(() => { GameServer.instance.console_text.text += "\nIPADRESS " + gameServerIP; });
 
                 // Convert message to JSON.
                 jsonMSG = messageToSend.ConvertMessage();
@@ -161,7 +162,8 @@ public class GameServerClientSocketHandler : ClientSocketHandler
                 // Send data to server.
                 Send(handler, jsonMSG);
                 break;
-            case "RECEIVE_GAME_DATA":
+
+            case GameServerMessageTypes.RECEIVE_GAME_DATA:
                 // Receive the GameFoundData.
                 GameServer.instance.SetGameFoundData(JsonUtility.FromJson<GameFoundData>(receivedMessage.GetMessageContent()));
 
@@ -176,11 +178,8 @@ public class GameServerClientSocketHandler : ClientSocketHandler
                 // Call the onReadyToConnectPlayers delegate.
                 GameServerDelegates.onReadyToConnectPlayers?.Invoke();
 
-                // Construct the gameServerIP to be sent.
-                gameServerIP = EasyGameServerConfig.SERVER_IP + ":" + GameServer.instance.GetGameServerPort();
-
                 // Send a message to the master server.
-                messageToSend.SetMessageType("READY_GAME_SERVER");
+                messageToSend.SetMessageType(MasterServerMessageTypes.READY_GAME_SERVER);
 
                 // Construct the GameServerIPData to be sent.
                 gameServerID = GameServer.instance.GetGameServerID();
@@ -196,7 +195,8 @@ public class GameServerClientSocketHandler : ClientSocketHandler
                 // Send data to server.
                 Send(handler, jsonMSG);
                 break;
-            case "DISCONNECT_AND_CLOSE_GAMESERVER":
+
+            case GameServerMessageTypes.DISCONNECT_AND_CLOSE_GAMESERVER:
                 // Close the socket to disconnect from the server.
                 socketManager.CloseClientSocket();
 
@@ -206,13 +206,23 @@ public class GameServerClientSocketHandler : ClientSocketHandler
                 // Trigger the UpdateDisconnected on the Game Server End Controller.
                 MainThreadDispatcher.RunOnMainThread(() => { GameServerEndController.instance.UpdateDisconnectedFromMasterServer(); });
                 break;
-            case "MASTER_SERVER_CLOSE_GAME_SERVER":
+
+            case GameServerMessageTypes.MASTER_SERVER_CLOSE_GAME_SERVER:
+                // FUTURE: Tell the clients to go back to the Master Server, then disconnect them all, then close.
+
+                // Close the socket to disconnect from the server.
+                socketManager.CloseClientSocket();
+
                 // Save as disconnected from the master server.
                 GameServer.instance.SetConnectedToMasterServer(false);
 
                 // Call the onMasterServerCloseGameServer delegate.
                 GameServerDelegates.onMasterServerCloseGameServer?.Invoke();
+
+                // Close the Game Server.
+                GameServerEndController.instance.CloseGameServer();
                 break;
+
             default:
                 // Call the onServerMessageReceive delegate.
                 GameServerDelegates.onServerMessageReceive?.Invoke(receivedMessage);

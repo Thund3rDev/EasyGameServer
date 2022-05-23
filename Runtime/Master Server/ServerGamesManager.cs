@@ -111,9 +111,12 @@ public class ServerGamesManager : MonoBehaviour
             // Save the users in the room.
             usersInRooms.Add(gameFoundData.GetRoom(), usersForThisGame);
 
+            // Call the onGameFound delegate.
+            MasterServerDelegates.onGameFound?.Invoke(gameFoundData); // Use this delegate to set the scene name.
+
             // Message for the players.
             string gameFoundMessageContent = JsonUtility.ToJson(gameFoundData);
-            NetworkMessage msg = new NetworkMessage("GAME_FOUND", gameFoundMessageContent);
+            NetworkMessage msg = new NetworkMessage(ClientMessageTypes.GAME_FOUND, gameFoundMessageContent);
 
             string jsonMSG = msg.ConvertMessage();
 
@@ -122,9 +125,6 @@ public class ServerGamesManager : MonoBehaviour
             {
                 server_socket.Send(userToGame.GetSocket(), jsonMSG);
             }
-
-            // Call the onGameFound delegate.
-            MasterServerDelegates.onGameFound?.Invoke(gameFoundData);
         }
     }
 
@@ -229,10 +229,10 @@ public class ServerGamesManager : MonoBehaviour
         // There is a server available.
         if (gameServerID > -1)
         {
-            // TODO: Put this on a class to serialize as json -> GameServerStartData.
             // Construct the arguments.
-            int gameServerPort = EasyGameServerConfig.SERVER_PORT + gameServerID + 1;
-            string arguments = EasyGameServerConfig.SERVER_IP + "#" + EasyGameServerConfig.SERVER_PORT + "#" + gameServerID + "#" + gameServerPort;
+            int gameServerPort = EasyGameServerConfig.SERVER_PORT + gameServerID + 1; // This makes the port be one of the next MAX_GAMES ports.
+            GameServerArguments arguments = new GameServerArguments(gameServerID, gameServerPort);
+            string argumentsJson = JsonUtility.ToJson(arguments);
 
             // Save the GameServer data.
             gameServersData[gameServerID] = new GameServerData(gameServerID, gameFoundData);
@@ -242,10 +242,10 @@ public class ServerGamesManager : MonoBehaviour
             {
                 gameServersData[gameServerID].SetProcess(new Process());
                 gameServersData[gameServerID].GetProcess().StartInfo.FileName = EasyGameServerConfig.GAMESERVER_PATH;
-                gameServersData[gameServerID].GetProcess().StartInfo.Arguments = arguments;
+                gameServersData[gameServerID].GetProcess().StartInfo.Arguments = argumentsJson;
                 gameServersData[gameServerID].GetProcess().Start();
 
-                Log.instance.WriteLog("<color=blue>Launched Game Server with parameters: </color>" + arguments, EasyGameServerControl.EnumLogDebugLevel.Extended);
+                Log.instance.WriteLog("<color=blue>Launched Game Server with parameters: </color>" + argumentsJson, EasyGameServerControl.EnumLogDebugLevel.Extended);
             }
             catch (Exception e)
             {

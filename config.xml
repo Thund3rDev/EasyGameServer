@@ -3,7 +3,7 @@
 	<server>
 		<debug-mode-console>1</debug-mode-console>
 		<debug-mode-file>2</debug-mode-file>
-		<max-connections>10</max-connections>
+		<max-connections-queue>10</max-connections-queue>
 		<max-games>5</max-games>
 		<time-between-rtt>1000</time-between-rtt>
 		<disconnect-timeout>15000</disconnect-timeout>

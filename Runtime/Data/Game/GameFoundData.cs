@@ -16,6 +16,10 @@ public class GameFoundData
     [Tooltip("Room number")]
     [SerializeField]
     private int room;
+
+    [Tooltip("Name of the scene where this game will be played")]
+    [SerializeField]
+    private string levelSceneName;
     #endregion
 
     #region Constructors
@@ -25,15 +29,18 @@ public class GameFoundData
     public GameFoundData()
     {
         this.usersToGame = new List<UserData>();
+        this.room = -1;
+        this.levelSceneName = "Level";
     }
 
     /// <summary>
     /// Base Constructor.
     /// </summary>
-    public GameFoundData(int room)
+    public GameFoundData(int room, string levelSceneName)
     {
         this.usersToGame = new List<UserData>();
         this.room = room;
+        this.levelSceneName = levelSceneName;
     }
     #endregion
 
@@ -61,5 +68,17 @@ public class GameFoundData
     /// </summary>
     /// <param name="room">New room number</param>
     public void SetRoom(int room) { this.room = room; }
+
+    /// <summary>
+    /// Getter for the level scene name.
+    /// </summary>
+    /// <returns>Level scene name</returns>
+    public string GetLevelSceneName() { return levelSceneName; }
+
+    /// <summary>
+    /// Setter for the level scene name.
+    /// </summary>
+    /// <param name="levelSceneName">New level scene name</param>
+    public void SetLevelSceneName(string levelSceneName) { this.levelSceneName = levelSceneName; }
     #endregion
 }

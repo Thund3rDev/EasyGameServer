@@ -148,7 +148,7 @@ public class Game
         MainThreadDispatcher.RunOnMainThread(() => { GameServerEndController.instance.ShowEndGameInfo(); });
 
         // Create a message indicating that game has finished.
-        NetworkMessage messageToSend = new NetworkMessage("GAME_END", gameEndMessageContent);
+        NetworkMessage messageToSend = new NetworkMessage(ClientMessageTypes.GAME_END, gameEndMessageContent);
 
         // Send the message to the players.
         Broadcast(messageToSend);
@@ -174,10 +174,10 @@ public class Game
 
             // Tell the master server that the player left the game.
             string userJson = JsonUtility.ToJson(leftPlayer.GetUser());
-            GameServer.instance.SendMessageToMasterServer("USER_LEAVE_GAME", userJson);
+            GameServer.instance.SendMessageToMasterServer(MasterServerMessageTypes.USER_LEAVE_GAME, userJson);
 
             // Tell the players that a player left the game.
-            NetworkMessage playerLeftMessage = new NetworkMessage("PLAYER_LEAVE_GAME", leftPlayer.GetIngameID().ToString());
+            NetworkMessage playerLeftMessage = new NetworkMessage(ClientMessageTypes.PLAYER_LEAVE_GAME, leftPlayer.GetIngameID().ToString());
             Broadcast(playerLeftMessage);
 
             // Check if only one player remains.
@@ -335,7 +335,7 @@ public class Game
             string updateDataMessageContent = JsonUtility.ToJson(updateData);
 
             // Create the message and sent it to the players.
-            NetworkMessage msg = new NetworkMessage("UPDATE", updateDataMessageContent);
+            NetworkMessage msg = new NetworkMessage(ClientMessageTypes.UPDATE, updateDataMessageContent);
             Broadcast(msg);
         }
         catch (Exception e)

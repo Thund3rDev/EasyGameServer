@@ -1,38 +1,38 @@
 using UnityEngine;
 
 /// <summary>
-/// Class GameServerIPData, that will store the Game Server Listener IP to exchange messages.
+/// Class GameServerArguments, that will tell what port will use the Game Server Listener.
 /// </summary>
-public class GameServerIPData
+public class GameServerArguments
 {
     #region Variables
-    [Header("Data")]
+    [Header("Arguments")]
     [Tooltip("Game Server ID")]
     [SerializeField]
     private int gameServerID;
 
-    [Tooltip("Game Server Listener IP")]
+    [Tooltip("Game Server Listener Port")]
     [SerializeField]
-    private string gameServerIP;
+    private int gameServerPort;
     #endregion
 
     #region Constructors
     /// <summary>
     /// Empty Constructor.
     /// </summary>
-    public GameServerIPData()
+    public GameServerArguments()
     {
         this.gameServerID = -1;
-        this.gameServerIP = "";
+        this.gameServerPort = -1;
     }
 
     /// <summary>
     /// Base Constructor.
     /// </summary>
-    public GameServerIPData(int gameServerID, string gameServerIP)
+    public GameServerArguments(int gameServerID, int gameServerPort)
     {
         this.gameServerID = gameServerID;
-        this.gameServerIP = gameServerIP;
+        this.gameServerPort = gameServerPort;
     }
     #endregion
 
@@ -50,15 +50,15 @@ public class GameServerIPData
     public void SetGameServerID(int gameServerID) { this.gameServerID = gameServerID; }
 
     /// <summary>
-    /// Getter for the GameServer Listener IP.
+    /// Getter for the GameServer Listener Port.
     /// </summary>
     /// <returns>GameServer Listener IP</returns>
-    public string GetGameServerIP() { return gameServerIP; }
+    public int GetGameServerPort() { return gameServerPort; }
 
     /// <summary>
-    /// Setter for the GameServer Listener ID.
+    /// Setter for the GameServer Listener Port.
     /// </summary>
-    /// <param name="gameServerID">New GameServer Listener IP</param>
-    public void SetGameServerIP(string gameServerIP) { this.gameServerIP = gameServerIP; }
+    /// <param name="gameServerPort">New GameServer Listener IP</param>
+    public void SetGameServerPort(int gameServerPort) { this.gameServerPort = gameServerPort; }
     #endregion
 }

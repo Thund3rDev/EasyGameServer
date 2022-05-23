@@ -100,7 +100,7 @@ public class MasterServer : MonoBehaviour
         EasyGameServerConfig.DEBUG_MODE_FILE = (EasyGameServerControl.EnumLogDebugLevel)int.Parse(node.InnerText);
 
         // Get maximum number of connections.
-        node = doc.DocumentElement.SelectSingleNode("//server/max-connections");
+        node = doc.DocumentElement.SelectSingleNode("//server/max-connections-queue");
         EasyGameServerConfig.MAX_CONNECTIONS = int.Parse(node.InnerText);
 
         // Get maximum number of game servers.

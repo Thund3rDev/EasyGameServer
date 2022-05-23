@@ -80,9 +80,11 @@ public class GameServer : MonoBehaviour
     {
         try
         {
-            // Read the arguments and the config data.
+            // Read the arguments received.
             ReadArguments();
-            ReadConfigData(); // TODO: Read Config Data from Master Server as a JSON Resource.
+
+            // Read the config data.
+            ReadConfigData();
 
             // Assign the current connection tries.
             currentConnectionTries = EasyGameServerConfig.CONNECTION_TRIES;
@@ -223,12 +225,10 @@ public class GameServer : MonoBehaviour
     /// </summary>
     private void ReadArguments()
     {
-        string[] arguments = Environment.GetCommandLineArgs();
-        string[] realArguments = arguments[1].Split('#');
-        EasyGameServerConfig.SERVER_IP = realArguments[0];
-        EasyGameServerConfig.SERVER_PORT = int.Parse(realArguments[1]);
-        gameServerID = int.Parse(realArguments[2]);
-        gameServerPort = int.Parse(realArguments[3]);
+        string[] argumentsArray = Environment.GetCommandLineArgs();
+        GameServerArguments arguments = JsonUtility.FromJson<GameServerArguments>(argumentsArray[1]);
+        gameServerID = arguments.GetGameServerID();
+        gameServerPort = arguments.GetGameServerPort();
     }
 
     /// <summary>
@@ -261,6 +261,15 @@ public class GameServer : MonoBehaviour
         // Get time to disconnect client if no response.
         node = doc.DocumentElement.SelectSingleNode("//server/disconnect-timeout");
         EasyGameServerConfig.DISCONNECT_TIMEOUT = int.Parse(node.InnerText);
+
+        /// Networking Data.
+        // Get server ip.
+        node = doc.DocumentElement.SelectSingleNode("//networking/server-ip");
+        EasyGameServerConfig.SERVER_IP = node.InnerText;
+
+        // Get server port.
+        node = doc.DocumentElement.SelectSingleNode("//networking/base-port");
+        EasyGameServerConfig.SERVER_PORT = int.Parse(node.InnerText);
 
         /// Games Data.
         // Get the number of players per game.

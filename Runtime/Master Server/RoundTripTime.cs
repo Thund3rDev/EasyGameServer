@@ -125,7 +125,7 @@ public class EGS_RoundTripTime
                 return;
 
             // Create the message to be send.
-            NetworkMessage msg = new NetworkMessage("RTT", lastRTTMilliseconds.ToString());
+            NetworkMessage msg = new NetworkMessage(ClientMessageTypes.RTT, lastRTTMilliseconds.ToString());
             string jsonMSG = msg.ConvertMessage();
 
             // Try to send the message to the client.

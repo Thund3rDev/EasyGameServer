@@ -84,7 +84,7 @@ public class NetworkGameManager : MonoBehaviour
 
             // Create the message to send to the players and master server.
             string gameStartMessageContent = JsonUtility.ToJson(startUpdateData);
-            NetworkMessage messageToSend = new NetworkMessage("GAME_START", gameStartMessageContent);
+            NetworkMessage messageToSend = new NetworkMessage(ClientMessageTypes.GAME_START, gameStartMessageContent);
 
             // Log the players connected on GameStart.
             string playersString = "";
@@ -105,7 +105,7 @@ public class NetworkGameManager : MonoBehaviour
             }
 
             // Send to the master server the info of the started game.
-            GameServer.instance.SendMessageToMasterServer("GAME_START", gameStartMessageContent);
+            GameServer.instance.SendMessageToMasterServer(messageToSend);
 
             // Call the onGameStart delegate.
             GameServerDelegates.onGameStart?.Invoke();
