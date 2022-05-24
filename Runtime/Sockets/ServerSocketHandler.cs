@@ -21,7 +21,7 @@ public class ServerSocketHandler
     protected Dictionary<Socket, UserData> connectedUsers = new Dictionary<Socket, UserData>();
 
     [Tooltip("Dictionary that stores the timer by socket to check if still connected")]
-    protected Dictionary<Socket, EGS_RoundTripTime> roundTripTimes = new Dictionary<Socket, EGS_RoundTripTime>();
+    protected Dictionary<Socket, RoundTripTime> roundTripTimes = new Dictionary<Socket, RoundTripTime>();
     #endregion
 
     #region Constructors

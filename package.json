@@ -1,21 +1,22 @@
 {
-  "name": "com.thund3r.easy_game_server",
-  "version": "0.0.1",
+  "name": "com.samuelrios.easy_game_server",
+  "version": "0.1.0",
   "displayName": "Easy Game Server",
   "description": "A package that will allow you to set up a server for your game in an easy way.",
   "unity": "2020.3",
   "unityRelease": "4f1",
   "dependencies": {
     "com.unity.textmeshpro": "3.0.1"
- },
- "keywords": [
+  },
+  "keywords": [
     "Easy Server",
     "Game Server",
     "Server"
   ],
   "author": {
-    "name": "Thund3r",
+    "name": "Samuel Ríos",
     "email": "samuelriosdev@gmail.com",
     "url": "https://thund3rdev.github.io"
-  }
+  },
+  "type": "tool"
 }
