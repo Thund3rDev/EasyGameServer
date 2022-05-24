@@ -30,11 +30,11 @@ public class MasterServerDelegates
     [Tooltip("Delegate to the OnUserConnect function")]
     public static Action<UserData> onUserConnect;
 
-    [Tooltip("Delegate to the OnUserDelete function")]
-    public static Action<UserData> onUserDelete;
-
     [Tooltip("Delegate to the OnUserDisconnect function")]
     public static Action<UserData> onUserDisconnect;
+
+    [Tooltip("Delegate to the OnUserDelete function")]
+    public static Action<UserData> onUserDelete;
 
 
     [Header("User Moment Delegates")]

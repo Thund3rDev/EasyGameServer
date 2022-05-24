@@ -261,7 +261,7 @@ public class ServerSocketHandler
     /// <param name="clientType">Type of the client</param>
     protected virtual void CreateRTT(Socket client_socket, EasyGameServerControl.EnumInstanceType clientType)
     {
-        EGS_RoundTripTime thisRoundTripTime = new EGS_RoundTripTime(this, client_socket, clientType);
+        RoundTripTime thisRoundTripTime = new RoundTripTime(this, client_socket, clientType);
         lock (roundTripTimes)
         {
             roundTripTimes.Add(client_socket, thisRoundTripTime);

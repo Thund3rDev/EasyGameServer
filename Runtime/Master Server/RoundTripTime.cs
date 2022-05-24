@@ -5,9 +5,9 @@ using System.Threading;
 using UnityEngine;
 
 /// <summary>
-/// Class EGS_RoundTripTime, that controls the connection of a client and indicate its ping.
+/// Class RoundTripTime, that controls the connection of a client and indicate its ping.
 /// </summary>
-public class EGS_RoundTripTime
+public class RoundTripTime
 {
     #region Variables
     [Header("Control")]
@@ -50,7 +50,7 @@ public class EGS_RoundTripTime
     /// <param name="socketController">Reference to the server socket controller</param>
     /// <param name="client_socket">Reference to the client socket assigned</param>
     /// <param name="clientType">Type of client</param>
-    public EGS_RoundTripTime(ServerSocketHandler socketController, Socket client_socket, EasyGameServerControl.EnumInstanceType clientType)
+    public RoundTripTime(ServerSocketHandler socketController, Socket client_socket, EasyGameServerControl.EnumInstanceType clientType)
     {
         // Assign references.
         this.socketController = socketController;
