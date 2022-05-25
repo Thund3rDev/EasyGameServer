@@ -148,7 +148,7 @@ public class Client : MonoBehaviour
 
             Debug.LogError("[EGS_CLIENT] Coulnd't connect to the server.");
 
-            // Call the onCantConnectToServer delegate.
+            // Call the onCantConnectToMasterServer delegate.
             ClientDelegates.onCantConnectToServer?.Invoke();
         }
     }

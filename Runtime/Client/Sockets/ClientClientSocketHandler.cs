@@ -57,7 +57,7 @@ public class ClientClientSocketHandler : ClientSocketHandler
                 // Try to connect to the server again.
                 Client.instance.TryConnectToServerAgain();
 
-                // Call the onServerRefusesConnection delegate.
+                // Call the onMasterServerRefusesConnection delegate.
                 ClientDelegates.onServerRefusesConnection?.Invoke();
             }
         }
@@ -280,7 +280,7 @@ public class ClientClientSocketHandler : ClientSocketHandler
                 Client.instance.GetInGameSender().StartGameLoop();
 
                 // Call the onGameStart delegate.
-                ClientDelegates.onGameStart?.Invoke();
+                ClientDelegates.onGameStart?.Invoke(updateData);
                 break;
 
             case ClientMessageTypes.UPDATE:

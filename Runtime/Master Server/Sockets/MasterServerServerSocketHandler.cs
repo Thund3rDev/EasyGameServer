@@ -80,8 +80,8 @@ public class MasterServerServerSocketHandler : ServerSocketHandler
 
                 Log.instance.WriteLog("<color=#a52a2aff>Round Trip Time (Client):</color> " + thisUser.GetUsername() + " (" + rttPing + " ms).", EasyGameServerControl.EnumLogDebugLevel.Complete);
 
-                // Call the onClientRTT delegate with UserID and the rtt ping in milliseconds.
-                MasterServerDelegates.onClientRTT?.Invoke(thisUser.GetUserID(), rttPing);
+                // Call the onReceiveClientRTT delegate with UserID and the rtt ping in milliseconds.
+                MasterServerDelegates.onReceiveClientRTT?.Invoke(thisUser.GetUserID(), rttPing);
                 break;
 
             case MasterServerMessageTypes.RTT_RESPONSE_GAME_SERVER:
@@ -91,8 +91,8 @@ public class MasterServerServerSocketHandler : ServerSocketHandler
 
                 Log.instance.WriteLog("<color=#a52a2aff>Round Trip Time (Game Server)</color> ID: " + receivedMessage.GetMessageContent() + " (" + rttPing + " ms).", EasyGameServerControl.EnumLogDebugLevel.Complete);
 
-                // Call the onGameServerRTT delegate with GameServerID and the rtt ping in milliseconds.
-                MasterServerDelegates.onGameServerRTT?.Invoke(gameServerID, rttPing);
+                // Call the onReceiveGameServerRTT delegate with GameServerID and the rtt ping in milliseconds.
+                MasterServerDelegates.onReceiveGameServerRTT?.Invoke(gameServerID, rttPing);
                 break;
 
             case MasterServerMessageTypes.USER_JOIN_SERVER:

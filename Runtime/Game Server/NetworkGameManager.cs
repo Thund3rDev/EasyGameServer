@@ -108,7 +108,7 @@ public class NetworkGameManager : MonoBehaviour
             GameServer.instance.SendMessageToMasterServer(messageToSend);
 
             // Call the onGameStart delegate.
-            GameServerDelegates.onGameStart?.Invoke();
+            GameServerDelegates.onGameStart?.Invoke(startUpdateData);
         }
     }
     #endregion

@@ -64,7 +64,7 @@ public static class ClientDelegates
     public static Action<GameFoundData> onGameFound;
 
     [Tooltip("Delegate to the OnGameStart function")]
-    public static Action onGameStart;
+    public static Action<UpdateData> onGameStart;
 
     [Tooltip("Delegate to the OnGameEnd function")]
     public static Action<GameEndData> onGameEnd;

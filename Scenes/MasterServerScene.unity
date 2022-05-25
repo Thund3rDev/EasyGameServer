@@ -2305,7 +2305,7 @@ PrefabInstance:
       objectReference: {fileID: 2081972885}
     - target: {fileID: 8857200903084652090, guid: f8678ecb77fa704469062f97c286d06e, type: 3}
       propertyPath: m_Name
-      value: EGS_MasterServerController
+      value: EGS_MasterServer
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: f8678ecb77fa704469062f97c286d06e, type: 3}

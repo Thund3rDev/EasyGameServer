@@ -154,8 +154,8 @@ public class GameServer : MonoBehaviour
             // LOG.
             //Debug.Log("[GAME SERVER] Coulnd't connect to the server.");
 
-            // Call the onCantConnectToServer delegate.
-            GameServerDelegates.onCantConnectToServer?.Invoke();
+            // Call the onCantConnectToMasterServer delegate.
+            GameServerDelegates.onCantConnectToMasterServer?.Invoke();
         }
     }
 

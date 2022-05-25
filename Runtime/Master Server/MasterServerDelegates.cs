@@ -74,10 +74,10 @@ public class MasterServerDelegates
 
 
     [Header("Control Delegates")]
-    [Tooltip("Delegate to the OnClientRTT function")]
-    public static Action<int, long> onClientRTT; // int: Client ID, long: milliseconds.
+    [Tooltip("Delegate to the OnReceiveClientRTT function")]
+    public static Action<int, long> onReceiveClientRTT; // int: Client ID, long: milliseconds.
 
-    [Tooltip("Delegate to the OnClientRTT function")]
-    public static Action<int, long> onGameServerRTT; // int: Game Server ID, long: milliseconds.
+    [Tooltip("Delegate to the OnReceiveClientRTT function")]
+    public static Action<int, long> onReceiveGameServerRTT; // int: Game Server ID, long: milliseconds.
     #endregion
 }

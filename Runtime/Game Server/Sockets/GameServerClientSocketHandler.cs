@@ -49,8 +49,8 @@ public class GameServerClientSocketHandler : ClientSocketHandler
                 // Try to connect to the server again.
                 GameServer.instance.TryConnectToServerAgain();
 
-                // Call the onServerRefusesConnection delegate.
-                GameServerDelegates.onServerRefusesConnection?.Invoke();
+                // Call the onMasterServerRefusesConnection delegate.
+                GameServerDelegates.onMasterServerRefusesConnection?.Invoke();
             }
         }
         catch (Exception e)
@@ -208,7 +208,8 @@ public class GameServerClientSocketHandler : ClientSocketHandler
                 break;
 
             case GameServerMessageTypes.MASTER_SERVER_CLOSE_GAME_SERVER:
-                // FUTURE: Tell the clients to go back to the Master Server, then disconnect them all, then close.
+                // FUTURE (actually not working):
+                // Tell the clients to go back to the Master Server, then disconnect them all, then close.
 
                 // Close the socket to disconnect from the server.
                 socketManager.CloseClientSocket();
@@ -224,8 +225,8 @@ public class GameServerClientSocketHandler : ClientSocketHandler
                 break;
 
             default:
-                // Call the onServerMessageReceive delegate.
-                GameServerDelegates.onServerMessageReceive?.Invoke(receivedMessage);
+                // Call the onMasterServerMessageReceive delegate.
+                GameServerDelegates.onMasterServerMessageReceive?.Invoke(receivedMessage);
                 break;
         }
     }
