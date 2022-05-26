@@ -55,20 +55,21 @@ public class GameServerEndController : MonoBehaviour
             Destroy(this.gameObject);
         }
     }
-
-    /// <summary>
-    /// Method Start, that is called before the first frame update.
-    /// </summary>
-    private void Start()
-    {
-        // Reset and get the values.
-        this.disconnectedFromMasterServer = false;
-        this.numPlayers = GameServer.instance.GetGameServerSocketsController().GetPlayersConnected();
-        this.numPlayersStillConnected = numPlayers;
-    }
     #endregion
 
     #region Class Methods
+    /// <summary>
+    /// Method InitializeGameServerEndController, called to establish the initial values.
+    /// </summary>
+    /// <param name="playersConnected">Count of players connected to the GameServer</param>
+    public void InitializeGameServerEndController(int playersConnected)
+    {
+        // Reset and get the values.
+        this.disconnectedFromMasterServer = false;
+        this.numPlayers = playersConnected;
+        this.numPlayersStillConnected = numPlayers;
+    }
+
     /// <summary>
     /// Method ShowEndGameInfo, that will show the End Game Info GameObject and will update the text with the current data.
     /// </summary>

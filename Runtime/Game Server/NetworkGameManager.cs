@@ -14,7 +14,6 @@ public class NetworkGameManager : MonoBehaviour
 
     [Header("Players")]
     [Tooltip("List of player instances in the game")]
-    [SerializeField]
     private List<NetworkPlayer> playersInGame = new List<NetworkPlayer>();
 
 
@@ -56,60 +55,73 @@ public class NetworkGameManager : MonoBehaviour
             // Delete the scripts on the clientScriptsToDelete list.
             foreach (MonoBehaviour script in clientScriptsToDelete)
                 Destroy(script);
-
-            // For each player in the game.
-            foreach (NetworkPlayer player in playersInGame)
-            {
-                // Assign User info.
-                foreach (UserData userToGame in GameServer.instance.GetGameFoundData().GetUsersToGame())
-                {
-                    if (player.GetIngameID() == userToGame.GetIngameID())
-                    {
-                        player.SetUser(userToGame);
-                    }
-                }
-
-                // Add player to lists.
-                GameServer.instance.GetGame().AddPlayer(player);
-            }
-
-            // Get the start game positions.
-            UpdateData startUpdateData = new UpdateData(GameServer.instance.GetGame().GetRoom());
-
-            foreach (NetworkPlayer player in GameServer.instance.GetGame().GetPlayers())
-            {
-                PlayerData playerData = new PlayerData(player.GetIngameID(), player.transform.position, new Vector3());
-                startUpdateData.GetPlayersAtGame().Add(playerData);
-            }
-
-            // Create the message to send to the players and master server.
-            string gameStartMessageContent = JsonUtility.ToJson(startUpdateData);
-            NetworkMessage messageToSend = new NetworkMessage(ClientMessageTypes.GAME_START, gameStartMessageContent);
-
-            // Log the players connected on GameStart.
-            string playersString = "";
-            foreach (UserData user in GameServer.instance.GetGameFoundData().GetUsersToGame())
-            {
-                playersString += user.GetUsername() + ", ";
-            }
-
-            // LOG ?
-            MainThreadDispatcher.RunOnMainThread(() => { GameServer.instance.console_text.text += "\n" + GameServer.instance.GetGame().GetPlayers().Count + " | " + playersString; });
-
-            // For each user / player, send the game start message.
-            foreach (UserData user in GameServer.instance.GetGameFoundData().GetUsersToGame())
-            {
-                // LOG ?
-                MainThreadDispatcher.RunOnMainThread(() => { GameServer.instance.console_text.text += "\nSEND TO : " + user.GetUsername(); });
-                GameServer.instance.SendMessageToClient(user.GetSocket(), messageToSend);
-            }
-
-            // Send to the master server the info of the started game.
-            GameServer.instance.SendMessageToMasterServer(messageToSend);
-
-            // Call the onGameStart delegate.
-            GameServerDelegates.onGameStart?.Invoke(startUpdateData);
         }
+    }
+
+    /// <summary>
+    /// Method InitializeNetworkGameManager, that receive the NetworkPlayers list and send the start message.
+    /// </summary>
+    /// <param name="players">List of players in the GameServer</param>
+    public void InitializeNetworkGameManager(List<NetworkPlayer> players)
+    {
+        // Assign the list of players in game.
+        this.playersInGame = players;
+
+        // For each player in the game.
+        foreach (NetworkPlayer player in playersInGame)
+        {
+            // Assign User info.
+            foreach (UserData userToGame in GameServer.instance.GetGameFoundData().GetUsersToGame())
+            {
+                if (player.GetIngameID() == userToGame.GetIngameID())
+                {
+                    player.SetUser(userToGame);
+                }
+            }
+
+            // Add player to lists.
+            GameServer.instance.GetGame().AddPlayer(player);
+        }
+
+        // Initialize the GameServerEndController.
+        GameServerEndController.instance.InitializeGameServerEndController(playersInGame.Count);
+
+        // Get the start game positions.
+        UpdateData startUpdateData = new UpdateData(GameServer.instance.GetGame().GetRoom());
+
+        foreach (NetworkPlayer player in GameServer.instance.GetGame().GetPlayers())
+        {
+            PlayerData playerData = new PlayerData(player.GetIngameID(), player.transform.position, new Vector3());
+            startUpdateData.GetPlayersAtGame().Add(playerData);
+        }
+
+        // Create the message to send to the players and master server.
+        string gameStartMessageContent = JsonUtility.ToJson(startUpdateData);
+        NetworkMessage messageToSend = new NetworkMessage(ClientMessageTypes.GAME_START, gameStartMessageContent);
+
+        // Log the players connected on GameStart.
+        string playersString = "";
+        foreach (UserData user in GameServer.instance.GetGameFoundData().GetUsersToGame())
+        {
+            playersString += user.GetUsername() + ", ";
+        }
+
+        // LOG ?
+        MainThreadDispatcher.RunOnMainThread(() => { GameServer.instance.console_text.text += "\n" + GameServer.instance.GetGame().GetPlayers().Count + " | " + playersString; });
+
+        // For each user / player, send the game start message.
+        foreach (UserData user in GameServer.instance.GetGameFoundData().GetUsersToGame())
+        {
+            // LOG ?
+            MainThreadDispatcher.RunOnMainThread(() => { GameServer.instance.console_text.text += "\nSEND TO : " + user.GetUsername(); });
+            GameServer.instance.SendMessageToClient(user.GetSocket(), messageToSend);
+        }
+
+        // Send to the master server the info of the started game.
+        GameServer.instance.SendMessageToMasterServer(messageToSend);
+
+        // Call the onGameStart delegate.
+        GameServerDelegates.onGameStart?.Invoke(startUpdateData);
     }
     #endregion
 

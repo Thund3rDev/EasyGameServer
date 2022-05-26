@@ -148,7 +148,6 @@ public class GameServerServerSocketHandler : ServerSocketHandler
             case GameServerMessageTypes.PLAYER_INPUT:
                 // Get the input data
                 PlayerInputs playerInputs = JsonUtility.FromJson<PlayerInputs>(receivedMessage.GetMessageContent());
-                bool[] inputs = playerInputs.GetBoolInputs();
 
                 // Get the player from its ingameID.
                 thisPlayer = NetworkGameManager.instance.GetPlayerByID(playerInputs.GetIngameID());

@@ -229,26 +229,34 @@ public class ClientSocketHandler
     /// <param name="ar">IAsyncResult</param>
     protected void SendCallback(IAsyncResult ar)
     {
-        try
+        // Retrieve the socket from the state object.  
+        Socket socket_client = (Socket)ar.AsyncState;
+
+        // Complete sending the data to the remote device.  
+
+        if (socket_client.Connected)
         {
-            // Retrieve the socket from the state object.  
-            Socket socket_client = (Socket)ar.AsyncState;
+            try
+            {
+                int bytesSent = socket_client.EndSend(ar);
+                // LOG.
+                if (EasyGameServerConfig.DEBUG_MODE_CONSOLE >= EasyGameServerControl.EnumLogDebugLevel.Complete)
+                    Debug.Log("[CLIENT] Sent " + bytesSent + " bytes to server.");
 
-            // Complete sending the data to the remote device.  
-            int bytesSent = socket_client.EndSend(ar);
-            if (EasyGameServerConfig.DEBUG_MODE_CONSOLE >= EasyGameServerControl.EnumLogDebugLevel.Complete)
-                Debug.Log("[CLIENT] Sent " + bytesSent + " bytes to server.");
-
-            // LOG.
-
-            // Signal that all bytes have been sent.  
-            sendDone.Set();
+            }
+            catch (ObjectDisposedException)
+            {
+                // LOG. Object already disposed...
+            }
+            catch (Exception e)
+            {
+                // LOG.
+                Debug.LogError("[CLIENT] " + e.ToString());
+            }
         }
-        catch (Exception e)
-        {
-            // LOG.
-            Debug.LogError("[CLIENT] " + e.ToString());
-        }
+
+        // Signal that all bytes have been sent.  
+        sendDone.Set();
     }
 
     /// <summary>

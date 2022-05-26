@@ -296,16 +296,16 @@ public class GameServer : MonoBehaviour
     public void SetGameServerPort(int gameServerPort) { this.gameServerPort = gameServerPort; }
 
     /// <summary>
-    /// Getter for the Game Server Sockets Controller.
+    /// Getter for the Game Server Sockets Manager.
     /// </summary>
-    /// <returns>Game Server Sockets Controller</returns>
-    public GameServerSocketManager GetGameServerSocketsController() { return gameServerSocketsManager; }
+    /// <returns>Game Server Sockets Manager</returns>
+    public GameServerSocketManager GetGameServerSocketsManager() { return gameServerSocketsManager; }
 
     /// <summary>
-    /// Setter for the Game Server Sockets Controller.
+    /// Setter for the Game Server Sockets Manager.
     /// </summary>
-    /// <param name="gameServerSocketsController">New Game Server Sockets Controller</param>
-    public void SetGameServerSocketsController(GameServerSocketManager gameServerSocketsController) { this.gameServerSocketsManager = gameServerSocketsController; }
+    /// <param name="gameServerSocketsController">New Game Server Sockets Manager</param>
+    public void SetGameServerSocketsManager(GameServerSocketManager gameServerSocketsManager) { this.gameServerSocketsManager = gameServerSocketsManager; }
 
     /// <summary>
     /// Getter for the Connected To Master Server bool.

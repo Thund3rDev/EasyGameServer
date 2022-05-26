@@ -23,16 +23,24 @@ public class PlayerInputs
     /// </summary>
     public PlayerInputs()
     {
-        ingameID = -1;
+        this.ingameID = -1;
+    }
+
+    /// <summary>
+    /// ID Constructor.
+    /// </summary>
+    public PlayerInputs(int ingameID)
+    {
+        this.ingameID = ingameID;
     }
 
     /// <summary>
     /// Base Constructor.
     /// </summary>
-    public PlayerInputs(int ingameID_, bool[] inputs_)
+    public PlayerInputs(int ingameID, bool[] boolInputs)
     {
-        ingameID = ingameID_;
-        boolInputs = inputs_;
+        this.ingameID = ingameID;
+        this.boolInputs = boolInputs;
     }
     #endregion
 

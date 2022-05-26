@@ -11,7 +11,7 @@ public class NetworkPlayer : MonoBehaviour
     [Tooltip("User data of the player")]
     private UserData user;
 
-    [Tooltip("Object containing the constant boolInputs from the player")]
+    [Tooltip("Object containing the inputs from the player")]
     private PlayerInputs inputs;
 
 
@@ -41,6 +41,8 @@ public class NetworkPlayer : MonoBehaviour
             // Delete the scripts on the clientScriptsToDelete list.
             foreach (MonoBehaviour script in clientScriptsToDelete)
                 Destroy(script);
+
+            inputs = new PlayerInputs(ingameID);
         }
     }
     #endregion
