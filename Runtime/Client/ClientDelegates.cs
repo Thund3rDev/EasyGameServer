@@ -72,8 +72,8 @@ public static class ClientDelegates
     [Tooltip("Delegate to the OnGameSenderTick function")]
     public static Action onGameSenderTick;
 
-    [Tooltip("Delegate to the OnGameUpdate function")]
-    public static Action<UpdateData> onGameReceiveUpdate;
+    [Tooltip("Delegate to the OnGameUpdateReceive function")]
+    public static Action<UpdateData> onGameUpdateReceive;
 
     [Tooltip("Delegate to the OnAnotherPlayerLeaveGame function")]
     public static Action<PlayerData> onAnotherPlayerLeaveGame;

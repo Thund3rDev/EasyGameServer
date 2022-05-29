@@ -303,5 +303,17 @@ public class GameServerSocketManager
     /// </summary>
     /// <param name="clientConnectionsThread">New Client Connections Thread</param>
     public void SetClientConnectionsThread(Thread clientConnectionsThread) { this.clientConnectionsThread = clientConnectionsThread; }
+
+    /// <summary>
+    /// Getter for the server socket handler.
+    /// </summary>
+    /// <returns>Server socket handler</returns>
+    public GameServerServerSocketHandler GetServerSocketHandler() { return serverSocketHandler; }
+
+    /// <summary>
+    /// Setter for the server socket handler.
+    /// </summary>
+    /// <param name="startDone_MRE">New server socket handler</param>
+    public void SetServerSocketHandler(GameServerServerSocketHandler serverSocketHandler) { this.serverSocketHandler = serverSocketHandler; }
     #endregion
 }

@@ -295,4 +295,19 @@ public class ServerSocketHandler
     }
     #endregion
     #endregion
+
+    #region Getters y Setters
+    /// <summary>
+    /// Method GetLastRTTFromUser, to get the last RTT from an user.
+    /// </summary>
+    /// <param name="thisUser">User to get its last RTT</param>
+    /// <returns>Last RTT time</returns>
+    public long GetLastRTTFromUser(UserData thisUser)
+    {
+        if (roundTripTimes.ContainsKey(thisUser.GetSocket()))
+            return roundTripTimes[thisUser.GetSocket()].GetLastRTT();
+        else
+            return 0;
+    }
+    #endregion
 }

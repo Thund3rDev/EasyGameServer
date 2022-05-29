@@ -288,8 +288,8 @@ public class ClientClientSocketHandler : ClientSocketHandler
                 updateData = JsonUtility.FromJson<UpdateData>(receivedMessage.GetMessageContent());
                 Client.instance.GetGameData().SetPlayersAtGame(updateData.GetPlayersAtGame());
 
-                // Call the onGameReceiveUpdate delegate.
-                ClientDelegates.onGameReceiveUpdate?.Invoke(updateData);
+                // Call the onGameUpdateReceive delegate.
+                ClientDelegates.onGameUpdateReceive?.Invoke(updateData);
                 break;
 
             case ClientMessageTypes.PLAYER_LEAVE_GAME:

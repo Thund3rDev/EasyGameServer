@@ -191,6 +191,8 @@ public class MasterServerServerSocketHandler : ServerSocketHandler
 
                 // Check the Queue to Start Game.
                 ServerGamesManager.instance.CheckQueueToStartGame(this);
+
+                // FUTURE: Return the message to the player so it knows that joined queue.
                 break;
 
             case MasterServerMessageTypes.QUEUE_LEAVE:
@@ -209,6 +211,8 @@ public class MasterServerServerSocketHandler : ServerSocketHandler
                     // Call the onUserLeaveQueue delegate.
                     MasterServerDelegates.onUserLeaveQueue?.Invoke(thisUser);
                 }
+
+                // FUTURE: Return the message to the player so it knows that left queue.
                 break;
 
             case MasterServerMessageTypes.DISCONNECT_TO_GAME:
