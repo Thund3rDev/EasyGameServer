@@ -44,7 +44,7 @@ public class ClientSocketHandler
     /// </summary>
     /// <param name="remoteEP">EndPoint where the server is</param>
     /// <param name="socket_client">Client socket to use</param>
-    public void StartClient(EndPoint remoteEP, Socket socket_client)
+    public virtual void StartClient(EndPoint remoteEP, Socket socket_client)
     {
         // Reset the ManualResetEvents.
         connectDone.Reset();

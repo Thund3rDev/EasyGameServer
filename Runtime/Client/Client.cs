@@ -17,6 +17,9 @@ public class Client : MonoBehaviour
     [Tooltip("Bool that indicates if client is connecting to a server")]
     private bool connectingToServer = false;
 
+    [Tooltip("Bool that indicates if server refused the connection")]
+    private bool serverRefusedConnection = false;
+
     [Tooltip("Bool that indicates if client is connected to the master server")]
     private bool connectedToMasterServer = false;
 
@@ -96,12 +99,13 @@ public class Client : MonoBehaviour
         if (connectedToMasterServer)
         {
             Debug.LogWarning("[EGS_CLIENT] Client already connected.");
+            return;
+        }
 
-            // Check if client is already connecting to the server.
-            if (connectingToServer)
-            {
-                Debug.LogWarning("[EGS_CLIENT] Client already connecting.");
-            }
+        // Check if client is already connecting to the server.
+        if (connectingToServer)
+        {
+            Debug.LogWarning("[EGS_CLIENT] Client already connecting.");
             return;
         }
 
@@ -146,7 +150,7 @@ public class Client : MonoBehaviour
             // Reset the connection tries value.
             currentConnectionTries = EasyGameServerConfig.CONNECTION_TRIES;
 
-            Debug.LogError("[EGS_CLIENT] Coulnd't connect to the server.");
+            Debug.LogError("[EGS_CLIENT] Couldn't connect to the server.");
 
             // Call the onCantConnectToMasterServer delegate.
             ClientDelegates.onCantConnectToServer?.Invoke();
@@ -288,6 +292,18 @@ public class Client : MonoBehaviour
     /// </summary>
     /// <param name="connectingToServer">New bool that indicates if client is connecting to a server</param>
     public void SetConnectingToServer(bool connectingToServer) { this.connectingToServer = connectingToServer; }
+
+    /// <summary>
+    /// Getter for the server refused connection bool.
+    /// </summary>
+    /// <returns>Bool that indicates if server refused connection</returns>
+    public bool GetServerRefusedConnection() { return serverRefusedConnection; }
+
+    /// <summary>
+    /// Setter for the server refused connection bool.
+    /// </summary>
+    /// <param name="connectingToServer">New bool that indicates if server refused connection</param>
+    public void SetServerRefusedConnection(bool serverRefusedConnection) { this.serverRefusedConnection = serverRefusedConnection; }
 
     /// <summary>
     /// Getter for the connected to master server bool.

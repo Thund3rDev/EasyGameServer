@@ -1,5 +1,8 @@
 using System;
+using System.Net;
 using System.Net.Sockets;
+using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 
 /// <summary>
@@ -34,6 +37,48 @@ public class ClientClientSocketHandler : ClientSocketHandler
     #region Class Methods
     #region Networking
     /// <summary>
+    /// Method StartClient, that tries to connect to the server.
+    /// </summary>
+    /// <param name="remoteEP">EndPoint where the server is</param>
+    /// <param name="socket_client">Client socket to use</param>
+    public override void StartClient(EndPoint remoteEP, Socket socket_client)
+    {
+        try
+        {
+            // Task after 5 seconds of delay to check if could connect.
+            Task.Delay(new TimeSpan(0, 0, 5)).ContinueWith(o => { CheckIfConnected(); });
+
+            // Execute the base code.
+            base.StartClient(remoteEP, socket_client);
+        }
+        catch (ThreadInterruptedException)
+        {
+            Debug.LogWarning("Interruped connections thread: no access to given IP.");
+        }
+    }
+
+    /// <summary>
+    /// Method CheckIfConnected, to know if Client could connect to the server.
+    /// </summary>
+    private void CheckIfConnected()
+    {
+        if (!Client.instance.GetConnectedToMasterServer() && !Client.instance.GetConnectedToGameServer())
+        {
+            if (Client.instance.GetConnectingToServer() && !Client.instance.GetServerRefusedConnection())
+            {
+                // Interrupt the connectionsThread.
+                socketManager.GetConnectionsThread().Interrupt();
+
+                // Try to connect to the server again.
+                Client.instance.TryConnectToServerAgain();
+
+                // Call the onMasterServerRefusesConnection delegate.
+                ClientDelegates.onServerRefusesConnection?.Invoke();
+            }
+        }
+    }
+
+    /// <summary>
     /// Method ConnectCallback, called when connected to server.
     /// </summary>
     /// <param name="ar">IAsyncResult</param>
@@ -48,6 +93,9 @@ public class ClientClientSocketHandler : ClientSocketHandler
             // If SocketException error code is SocketError.ConnectionRefused.
             if (se.ErrorCode == 10061) // 10061 = SocketError.ConnectionRefused.
             {
+                // Establish that the server refused the connection.
+                Client.instance.SetServerRefusedConnection(true);
+
                 if (EasyGameServerConfig.DEBUG_MODE_CONSOLE >= EasyGameServerControl.EnumLogDebugLevel.Extended)
                     Debug.LogWarning("[CLIENT] Server refused the connection.");
 
