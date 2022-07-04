@@ -42,9 +42,9 @@ public class GameEndData
     /// <summary>
     /// Base Constructor.
     /// </summary>
-    public GameEndData(int gameServerID_)
+    public GameEndData(int gameServerID)
     {
-        this.gameServerID = gameServerID_;
+        this.gameServerID = gameServerID;
         this.room = -1;
         this.playerIDsOrderList = new List<int>();
         this.endedAsDisconnection = false;
@@ -53,12 +53,12 @@ public class GameEndData
     /// <summary>
     /// Full Constructor.
     /// </summary>
-    public GameEndData(int gameServerID_, int room_, List<int> userIDsOrderList_, bool endedAsDisconnection_)
+    public GameEndData(int gameServerID, int room, List<int> userIDsOrderList, bool endedAsDisconnection)
     {
-        this.gameServerID = gameServerID_;
-        this.room = room_;
-        this.playerIDsOrderList = new List<int>(userIDsOrderList_);
-        this.endedAsDisconnection = endedAsDisconnection_;
+        this.gameServerID = gameServerID;
+        this.room = room;
+        this.playerIDsOrderList = new List<int>(userIDsOrderList);
+        this.endedAsDisconnection = endedAsDisconnection;
     }
     #endregion
 

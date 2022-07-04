@@ -21,7 +21,7 @@ public class GameServer : MonoBehaviour
     private int gameServerPort;
 
     [Tooltip("Manager for game server sockets")]
-    private GameServerSocketManager gameServerSocketsManager = null;
+    private GameServerSocketManager gameServerSocketManager = null;
 
     [Tooltip("Bool that indicates if game server is conected to the master server")]
     private bool connectedToMasterServer;
@@ -111,9 +111,9 @@ public class GameServer : MonoBehaviour
     private void OnApplicationQuit()
     {
         // If already created the sockets controller, interrupt the threads and close the sockets.
-        if (gameServerSocketsManager != null)
+        if (gameServerSocketManager != null)
         {
-            gameServerSocketsManager.CloseSocketsOnApplicationQuit();
+            gameServerSocketManager.CloseSocketsOnApplicationQuit();
         }
     }
     #endregion
@@ -126,10 +126,10 @@ public class GameServer : MonoBehaviour
     private void ConnectToMasterServer()
     {
         // Create sockets manager.
-        gameServerSocketsManager = new GameServerSocketManager();
+        gameServerSocketManager = new GameServerSocketManager();
 
         // Connect to the server.
-        gameServerSocketsManager.ConnectToMasterServer();
+        gameServerSocketManager.ConnectToMasterServer();
     }
 
     /// <summary>
@@ -144,7 +144,7 @@ public class GameServer : MonoBehaviour
         if (currentConnectionTries > 0)
         {
             // Connect to the server.
-            gameServerSocketsManager.ConnectToMasterServer();
+            gameServerSocketManager.ConnectToMasterServer();
         }
         else
         {
@@ -170,7 +170,7 @@ public class GameServer : MonoBehaviour
             return;
 
         // Stop listening on the sockets.
-        gameServerSocketsManager.DisconnectFromMasterServer();
+        gameServerSocketManager.DisconnectFromMasterServer();
     }
     #endregion
 
@@ -183,7 +183,7 @@ public class GameServer : MonoBehaviour
     public void SendMessageToMasterServer(string messageType, string messageContent)
     {
         // Send the message by the socket controller.
-        gameServerSocketsManager.SendMessageToMasterServer(messageType, messageContent);
+        gameServerSocketManager.SendMessageToMasterServer(messageType, messageContent);
     }
 
     /// <summary>
@@ -193,7 +193,7 @@ public class GameServer : MonoBehaviour
     public void SendMessageToMasterServer(NetworkMessage messageToSend)
     {
         // Send the message by the socket controller.
-        gameServerSocketsManager.SendMessageToMasterServer(messageToSend);
+        gameServerSocketManager.SendMessageToMasterServer(messageToSend);
     }
 
     /// <summary>
@@ -205,7 +205,7 @@ public class GameServer : MonoBehaviour
     public void SendMessageToClient(Socket socket, string messageType, string messageContent)
     {
         // Send the message by the socket controller.
-        gameServerSocketsManager.SendMessageToClient(socket, messageType, messageContent);
+        gameServerSocketManager.SendMessageToClient(socket, messageType, messageContent);
     }
 
     /// <summary>
@@ -216,7 +216,7 @@ public class GameServer : MonoBehaviour
     public void SendMessageToClient(Socket socket, NetworkMessage messageToSend)
     {
         // Send the message by the socket controller.
-        gameServerSocketsManager.SendMessageToClient(socket, messageToSend);
+        gameServerSocketManager.SendMessageToClient(socket, messageToSend);
     }
     #endregion
 
@@ -296,16 +296,16 @@ public class GameServer : MonoBehaviour
     public void SetGameServerPort(int gameServerPort) { this.gameServerPort = gameServerPort; }
 
     /// <summary>
-    /// Getter for the Game Server Sockets Manager.
+    /// Getter for the Game Server Socket Manager.
     /// </summary>
-    /// <returns>Game Server Sockets Manager</returns>
-    public GameServerSocketManager GetGameServerSocketsManager() { return gameServerSocketsManager; }
+    /// <returns>Game Server Socket Manager</returns>
+    public GameServerSocketManager GetGameServerSocketManager() { return gameServerSocketManager; }
 
     /// <summary>
-    /// Setter for the Game Server Sockets Manager.
+    /// Setter for the Game Server Socket Manager.
     /// </summary>
-    /// <param name="gameServerSocketsController">New Game Server Sockets Manager</param>
-    public void SetGameServerSocketsManager(GameServerSocketManager gameServerSocketsManager) { this.gameServerSocketsManager = gameServerSocketsManager; }
+    /// <param name="gameServerSocketManager">New Game Server Socket Manager</param>
+    public void SetGameServerSocketManager(GameServerSocketManager gameServerSocketManager) { this.gameServerSocketManager = gameServerSocketManager; }
 
     /// <summary>
     /// Getter for the Connected To Master Server bool.

@@ -45,8 +45,8 @@ public class Game
 
 
     [Header("References")]
-    [Tooltip("Reference to the server socket controller")]
-    private GameServerServerSocketHandler socketController;
+    [Tooltip("Reference to the server socket handler")]
+    private GameServerServerSocketHandler serverSocketHandler;
 
 
     [Header("Game data")]
@@ -64,14 +64,14 @@ public class Game
     /// <summary>
     /// Base Constructor.
     /// </summary>
-    /// <param name="sc">Reference of the server socket controller</param>
-    /// <param name="room_">Room number</param>
-    /// <param name="gameSceneName_">Name of the Game Scene</param>
-    public Game(GameServerServerSocketHandler sc, int room_, string gameSceneName_)
+    /// <param name="serverSocketHandler">Reference of the server socket handler</param>
+    /// <param name="room">Room number</param>
+    /// <param name="gameSceneName">Name of the Game Scene</param>
+    public Game(GameServerServerSocketHandler serverSocketHandler, int room, string gameSceneName)
     {
-        this.socketController = sc;
-        this.room = room_;
-        this.gameSceneName = gameSceneName_;
+        this.serverSocketHandler = serverSocketHandler;
+        this.room = room;
+        this.gameSceneName = gameSceneName;
         this.startGame_mutex = new Mutex();
         this.playerIDsOrderStack = new Stack<int>();
     }
@@ -274,7 +274,7 @@ public class Game
             {
                 // Try to send the message to the player.
                 gameLoop_mutex.WaitOne();
-                socketController.Send(player.GetUser().GetSocket(), message.ConvertMessage());
+                serverSocketHandler.Send(player.GetUser().GetSocket(), message.ConvertMessage());
             }
             catch (SocketException)
             {
@@ -286,7 +286,7 @@ public class Game
                 QuitPlayerFromGame(player);
 
                 // DisconnectFromMasterServer the user from the server.
-                socketController.DisconnectUserBySocketException(userToDisconnect);
+                serverSocketHandler.DisconnectUserBySocketException(userToDisconnect);
 
                 // Call the onPlayerLeaveGame delegate.
                 GameServerDelegates.onPlayerLeaveGame?.Invoke(player);
@@ -376,7 +376,6 @@ public class Game
     /// </summary>
     /// <returns>List of players in the game</returns>
     public List<NetworkPlayer> GetPlayers() { return players; }
-
 
     /// <summary>
     /// Getter for the Game Scene Name.

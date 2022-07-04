@@ -57,7 +57,9 @@ public class NetworkGameManager : MonoBehaviour
                 Destroy(script);
         }
     }
+    #endregion
 
+    #region Class Methods
     /// <summary>
     /// Method InitializeNetworkGameManager, that receive the NetworkPlayers list and send the start message.
     /// </summary>
@@ -123,9 +125,7 @@ public class NetworkGameManager : MonoBehaviour
         // Call the onGameStart delegate.
         GameServerDelegates.onGameStart?.Invoke(startUpdateData);
     }
-    #endregion
-
-    #region Class Methods
+    
     /// <summary>
     /// Method GetPlayerByID, that finds a player on the list by its ID.
     /// </summary>
@@ -147,7 +147,7 @@ public class NetworkGameManager : MonoBehaviour
     /// <summary>
     /// Setter for PlayersInGame.
     /// </summary>
-    /// <param name="p">New List of players in Game.</param>
-    public void SetPlayersInGame(List<NetworkPlayer> p) { playersInGame = p; }
+    /// <param name="playersInGame">New List of players in Game.</param>
+    public void SetPlayersInGame(List<NetworkPlayer> playersInGame) { this.playersInGame = playersInGame; }
     #endregion
 }

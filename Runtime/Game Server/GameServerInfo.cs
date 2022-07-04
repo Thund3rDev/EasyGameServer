@@ -50,7 +50,7 @@ public class GameServerInfo : MonoBehaviour
             string thisPlayerText = playerTemplate;
             thisPlayerText = thisPlayerText.Replace("{player_name}", thisUser.GetUsername());
 
-            string playerPing = GameServer.instance.GetGameServerSocketsManager().GetServerSocketHandler().GetLastRTTFromUser(thisUser).ToString();
+            string playerPing = GameServer.instance.GetGameServerSocketManager().GetServerSocketHandler().GetLastRTTFromUser(thisUser).ToString();
             thisPlayerText = thisPlayerText.Replace("{ping}", playerPing);
 
             newPlayersInfoText += thisPlayerText + "\n";

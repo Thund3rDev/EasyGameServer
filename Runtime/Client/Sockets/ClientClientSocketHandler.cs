@@ -220,6 +220,7 @@ public class ClientClientSocketHandler : ClientSocketHandler
                 // Call the onJoinMasterServer delegate.
                 ClientDelegates.onJoinMasterServer?.Invoke(updatedUser);
                 break;
+
             case ClientMessageTypes.DISCONNECT:
                 // Close the socket to disconnect from the server.
                 socketManager.CloseSocket();

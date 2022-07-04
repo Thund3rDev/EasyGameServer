@@ -35,9 +35,9 @@ public class PlayerData
     /// <summary>
     /// Base Constructor.
     /// </summary>
-    public PlayerData(int ingameID_)
+    public PlayerData(int ingameID)
     {
-        this.ingameID = ingameID_;
+        this.ingameID = ingameID;
         this.position = new Vector3();
         this.direction = new Vector3();
     }
@@ -45,11 +45,11 @@ public class PlayerData
     /// <summary>
     /// Full Constructor.
     /// </summary>
-    public PlayerData(int ingameID_, Vector3 position_, Vector3 direction_)
+    public PlayerData(int ingameID, Vector3 position, Vector3 direction)
     {
-        this.ingameID = ingameID_;
-        this.position = position_;
-        this.direction = direction_;
+        this.ingameID = ingameID;
+        this.position = position;
+        this.direction = direction;
     }
     #endregion
 

@@ -61,12 +61,12 @@ public class GameServerData
     /// Base Constructor.
     /// </summary>
     /// <param name="gameServerID">Game Server ID</param>
-    /// <param name="gamefoundData"> Game Found Data</param>
-    public GameServerData(int gameServerID, GameFoundData gamefoundData)
+    /// <param name="gameFoundData"> Game Found Data</param>
+    public GameServerData(int gameServerID, GameFoundData gameFoundData)
     {
         this.gameServerID = gameServerID;
-        this.gameFoundData = gamefoundData;
-        this.room = gamefoundData.GetRoom();
+        this.gameFoundData = gameFoundData;
+        this.room = gameFoundData.GetRoom();
         this.status = EnumGameServerState.LAUNCHED;
         this.ipAddress = "";
     }

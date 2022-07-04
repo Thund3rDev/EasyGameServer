@@ -330,16 +330,16 @@ public class Client : MonoBehaviour
     public void SetConnectedToGameServer(bool connectedToGameServer) { this.connectedToGameServer = connectedToGameServer; }
 
     /// <summary>
-    /// Getter for the client socket controller.
+    /// Getter for the client socket manager.
     /// </summary>
-    /// <returns>Instance of the client socket controller</returns>
-    public ClientSocketManager GetClientSocketsController() { return clientSocketManager; }
+    /// <returns>Instance of the client socket manager</returns>
+    public ClientSocketManager GetClientSocketManager() { return clientSocketManager; }
 
     /// <summary>
-    /// Setter for the client socket controller.
+    /// Setter for the client socket manager.
     /// </summary>
-    /// <param name="clientSocketController">New instance of the client socket controller</param>
-    public void SetClientSocketController(ClientSocketManager clientSocketController) { this.clientSocketManager = clientSocketController; }
+    /// <param name="clientSocketManager">New instance of the client socket manager</param>
+    public void SetClientSocketManager(ClientSocketManager clientSocketManager) { this.clientSocketManager = clientSocketManager; }
 
     /// <summary>
     /// Getter for the client user.

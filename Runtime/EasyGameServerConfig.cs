@@ -8,7 +8,7 @@ public struct EasyGameServerConfig
     #region Variables
     [Header("Server")]
     [Tooltip("Easy Game Server version")]
-    public static readonly string version = "0.1.0";
+    public static readonly string VERSION = "1.0.0";
 
     [Tooltip("Level of debug of the server console log")]
     public static EasyGameServerControl.EnumLogDebugLevel DEBUG_MODE_CONSOLE;

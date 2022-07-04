@@ -26,7 +26,7 @@ public class Log : MonoBehaviour
 
     [Tooltip("Scrollbar from the log")]
     [SerializeField]
-    private Scrollbar scrolbar;
+    private Scrollbar scrollbar;
 
     [Tooltip("Bool that indicates if scrollbar must be updated")]
     private bool scrollbarMustUpdate;
@@ -81,7 +81,8 @@ public class Log : MonoBehaviour
             {
                 if (scrollbarUpdateCounter > 2)
                 {
-                    scrolbar.value = 0;
+                    if (scrollbar != null)
+                        scrollbar.value = 0;
                     scrollbarMustUpdate = false;
                     scrollbarUpdateCounter = 0;
                 }
@@ -117,7 +118,7 @@ public class Log : MonoBehaviour
         text_log.text = "";
 
         // Log that server started.
-        WriteLog("Started <color=green>EasyGameServer</color> with version <color=orange>" + EasyGameServerConfig.version + "</color>.", EasyGameServerControl.EnumLogDebugLevel.Minimal);
+        WriteLog("Started <color=green>EasyGameServer</color> with VERSION <color=orange>" + EasyGameServerConfig.VERSION + "</color>.", EasyGameServerControl.EnumLogDebugLevel.Minimal);
     }
 
     /// <summary>
